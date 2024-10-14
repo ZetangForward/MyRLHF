@@ -4,7 +4,8 @@ import os
 import torch
 from collections import OrderedDict
 from copy import deepcopy
-from datetime import datetime, load_from_disk
+from datasets import load_from_disk
+from datetime import datetime
 from transformers.trainer import get_scheduler
 from openrlhf.datasets import RewardDataset
 from openrlhf.models import Actor
@@ -12,7 +13,28 @@ from openrlhf.trainer import DPOTrainer
 from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 import torch.nn.functional as F
 
-def CustomRewardDataset(RewardDataset):
+class CustomDataset:
+    def __init__(self, dataset, tokenizer, max_len, strategy, input_template=None, is_dpo=False, multiple_of=1):
+        self.dataset = dataset
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+        self.strategy = strategy
+        self.input_template = input_template
+        self.is_dpo = is_dpo
+        self.multiple_of = multiple_of
+
+    def __getitem__(self, index):
+        return self.dataset[index]
+    
+    def __len__(self):
+        return len(self.dataset)
+    
+    def collate_fn(self, item_list):
+        return item_list
+    
+
+
+class CustomRewardDataset(RewardDataset):
     def __init__(self, dataset_path: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.margin_key = getattr(self.strategy.args, "margin_key", None)
@@ -108,21 +130,22 @@ def train(args):
 
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
-
+    dataset = load_from_disk(args.dataset)
+    train_data, eval_data = dataset['train'], dataset['test']
     # prepare for data and dataset
-    train_data, eval_data = blending_datasets(
-        args.dataset,
-        args.dataset_probs,
-        strategy,
-        args.seed,
-        max_count=args.max_samples,
-        stopping_strategy="all_exhausted",
-        train_split=args.train_split,
-        eval_split=args.eval_split,
-    )
-    train_data = train_data.select(range(min(args.max_samples, len(train_data))))
-    eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
-    train_dataset = RewardDataset(
+    # train_data, eval_data = blending_datasets(
+    #     args.dataset,
+    #     args.dataset_probs,
+    #     strategy,
+    #     args.seed,
+    #     max_count=args.max_samples,
+    #     stopping_strategy="all_exhausted",
+    #     train_split=args.train_split,
+    #     eval_split=args.eval_split,
+    # )
+    # train_data = train_data.select(range(min(args.max_samples, len(train_data))))
+    # eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
+    train_dataset = CustomDataset(
         train_data,
         tokenizer,
         args.max_len,

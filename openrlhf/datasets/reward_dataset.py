@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from tqdm import tqdm
-
 from .utils import exist_and_not_none, zero_pad_sequences
 
 
@@ -205,7 +204,6 @@ class RewardDataset(Dataset):
 
     def packing_collate_fn(self, item_list):
         extras = []
-
         chosen_ids = []
         chosen_att_masks = []
         chosen_seq_lens = []
