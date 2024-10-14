@@ -30,8 +30,50 @@ class CustomDataset:
         return len(self.dataset)
     
     def collate_fn(self, item_list):
-        return item_list
+        wrap_batch = {}
+        batch_size = len(item_list)
+        keys = list(item_list[0].keys())
+        if isinstance(item_list[0][keys[0]], list):
+            for key in keys:
+                if self.filter_fun(key):
+                    wrap_batch[key] = torch.stack([self.auto_cut_length(torch.tensor(item_list[i][key])) for i in range(batch_size)])
+        else:
+            for key in keys:
+                if self.filter_fun(key):
+                    wrap_batch[key] = torch.stack([self.auto_cut_length(item_list[i][key]) for i in range(batch_size)])
+        return wrap_batch
     
+    def packing_collate_fn(self, item_list):
+        import pdb; pdb.set_trace()
+        extras = []
+        chosen_ids = []
+        chosen_att_masks = []
+        chosen_seq_lens = []
+        rejected_ids = []
+        rejected_att_masks = []
+        rejected_seq_lens = []
+        index = 1
+        for chosen_id, chosen_mask, reject_id, rejects_mask, extra in item_list:
+            chosen_ids.append(chosen_id.flatten())
+            chosen_att_masks.append(torch.full_like(chosen_id.flatten(), index))
+            chosen_seq_lens.append(len(chosen_id.flatten()))
+            extras.append(extra)
+
+            rejected_ids.append(reject_id.flatten())
+            rejected_att_masks.append(torch.full_like(reject_id.flatten(), index + len(item_list)))
+            rejected_seq_lens.append(len(reject_id.flatten()))
+            index += 1
+
+        packed_input_ids = torch.cat(chosen_ids + rejected_ids, dim=0).unsqueeze(0)
+        packed_attention_masks = torch.cat(chosen_att_masks + rejected_att_masks, dim=0).unsqueeze(0)
+        packed_seq_lens = chosen_seq_lens + rejected_seq_lens
+
+        if self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0:
+            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
+            packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
+            packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
+
+        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras
 
 
 class CustomRewardDataset(RewardDataset):
@@ -53,7 +95,6 @@ class CustomRewardDataset(RewardDataset):
         return item_list
     
     def packing_collate_fn(self, item_list):
-        import pdb; pdb.set_trace()
         extras = []
         chosen_ids = []
         chosen_att_masks = []
@@ -154,7 +195,7 @@ def train(args):
         is_dpo=True,
         multiple_of=args.ring_attn_size,
     )
-    eval_dataset = RewardDataset(
+    eval_dataset = CustomDataset(
         eval_data,
         tokenizer,
         args.max_len,
