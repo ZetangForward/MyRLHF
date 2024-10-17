@@ -3,8 +3,8 @@ SAVE_DIR=/nvme/zecheng/ckpt
 DATA_DIR=/nvme/zecheng/data/iclr2025/llama3-80k-train-data/dpo_data/chunk_16_size_1024
 MODEL_DIR=${BASE_DIR}/hf_models
 
-CUDA_VISIBLE_DEVICES=0,1 deepspeed --include localhost:0,1 openrlhf/cli/train_dpo_dev.py \
-   --save_path /data/zecheng/MyRLHF/ckpt/llama3-8b-dpo \
+CUDA_VISIBLE_DEVICES=0,1 deepspeed --include localhost:0,1 openrlhf/cli/train_simpo_dev.py \
+   --save_path /data/zecheng/MyRLHF/ckpt/llama3-8b-simpo \
    --save_steps -1 \
    --logging_steps 1 \
    --eval_steps -1 \
@@ -25,6 +25,6 @@ CUDA_VISIBLE_DEVICES=0,1 deepspeed --include localhost:0,1 openrlhf/cli/train_dp
    --ring_head_stride 2 \
    --packing_samples \
    --flash_attn \
-   --use_tensorboard /data/zecheng/MyRLHF/ckpt/llama3-8b-dpo \
+   --use_tensorboard /data/zecheng/MyRLHF/ckpt/llama3-8b-simpo \
    --load_checkpoint \
    --gradient_checkpointing;
