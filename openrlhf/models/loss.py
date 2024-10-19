@@ -148,7 +148,7 @@ class SimPOLoss(nn.Module):
     DPO Loss
     """
 
-    def __init__(self, beta: float, label_smoothing: float = 0.0, ipo: bool = False, gamma_beta_ratio: float, ) -> None:
+    def __init__(self, beta: float, label_smoothing: float = 0.0, ipo: bool = False, gamma_beta_ratio: float = 0.5, *args) -> None:
         super().__init__()
         self.beta = beta
         self.label_smoothing = label_smoothing

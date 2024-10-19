@@ -44,17 +44,18 @@ def train(args):
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
     # prepare for data and dataset
-    train_data, eval_data = blending_datasets(
+    train_data = blending_datasets(
         args.dataset,
         args.dataset_probs,
         strategy,
         args.seed,
+        return_eval=False,
         max_count=args.max_samples,
         train_split=args.train_split,
         eval_split=args.eval_split,
     )
     train_data = train_data.select(range(min(args.max_samples, len(train_data))))
-    eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
+    # eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
     train_dataset = SFTDataset(
         train_data,
         tokenizer,
@@ -63,14 +64,15 @@ def train(args):
         pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
     )
-    eval_dataset = SFTDataset(
-        eval_data,
-        tokenizer,
-        args.max_len,
-        strategy,
-        pretrain_mode=args.pretrain_mode,
-        input_template=args.input_template,
-    )
+    eval_dataset = None
+    # eval_dataset = SFTDataset(
+    #     eval_data,
+    #     tokenizer,
+    #     args.max_len,
+    #     strategy,
+    #     pretrain_mode=args.pretrain_mode,
+    #     input_template=args.input_template,
+    # )
 
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
@@ -80,13 +82,14 @@ def train(args):
         True,
         train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
     )
-    eval_dataloader = strategy.setup_dataloader(
-        eval_dataset,
-        args.micro_train_batch_size,
-        True,
-        False,
-        eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
-    )
+    if eval_dataset is not None:
+        eval_dataloader = strategy.setup_dataloader(
+            eval_dataset,
+            args.micro_train_batch_size,
+            True,
+            False,
+            eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
+        )
 
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size

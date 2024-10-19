@@ -10,10 +10,12 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --output_key pred_str \
    --train_batch_size 64 \
    --micro_train_batch_size 2 \
+   --lora_rank 32 \
+   --apply_chat_template \
    --max_samples 500000 \
    --pretrain '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct' \
    --save_path ./checkpoint/llama3-8b-sft \
-   --save_steps -1 \
+   --save_steps 100 \
    --logging_steps 1 \
    --eval_steps -1 \
    --zero_stage 3 \
@@ -25,5 +27,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --flash_attn \
    --learning_rate 5e-6 \
    --load_checkpoint \
-   --gradient_checkpointing
+   --gradient_checkpointing \
+   --use_tensorboard \
+   --packing_samples;
 
