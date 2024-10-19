@@ -64,6 +64,7 @@ def train(args):
         strategy,
         pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
+        num_processors=64,
     )
     eval_dataset = None
     # eval_dataset = SFTDataset(
