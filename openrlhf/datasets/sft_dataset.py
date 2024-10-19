@@ -78,7 +78,7 @@ class SFTDataset(Dataset):
 
         # Parallel loading datasets
         processed_dataset = dataset.map(
-            self.process_data, remove_columns=dataset.column_names, num_proc=num_processors
+            self.process_data, remove_columns=dataset.column_names, num_proc=num_processors, keep_in_memory=True
         )
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 
@@ -95,6 +95,8 @@ class SFTDataset(Dataset):
             self.output_key,
             apply_chat_template=None if self.pretrain_mode else self.apply_chat_template,
         )
+        print(len(prompt), len(response))
+        
         if not self.pretrain_mode:
             prompt_token = self.tokenizer(
                 prompt,
@@ -105,8 +107,7 @@ class SFTDataset(Dataset):
                 add_special_tokens=False,
             )
             prompt_ids_len = prompt_token["attention_mask"].int().sum().item()
-
-            # filter the sample whose length is greater than max_length (2 for answer length)
+            # print(prompt_ids_len)
             if not prompt or not response or prompt_ids_len >= self.max_length - 2:
                 prompt = None
         else:
