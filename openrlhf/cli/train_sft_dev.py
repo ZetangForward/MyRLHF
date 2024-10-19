@@ -201,6 +201,17 @@ if __name__ == "__main__":
     parser.add_argument("--max_samples", type=int, default=1e8, help="Max number of samples")
     parser.add_argument("--max_len", type=int, default=2048, help="Max tokens for the samples")
 
+    # Context Parallel
+    parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")
+    parser.add_argument(
+        "--ring_head_stride",
+        type=int,
+        default=1,
+        help="the number of heads to do ring attention each time. "
+        "It should be a divisor of the number of heads. "
+        "A larger value may results in faster training but will consume more memory.",
+    )
+    
     # wandb parameters
     parser.add_argument("--use_wandb", type=str, default=None)
     parser.add_argument("--wandb_org", type=str, default=None)

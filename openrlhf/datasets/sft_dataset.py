@@ -43,12 +43,14 @@ class SFTDataset(Dataset):
         input_template=None,
         pretrain_mode=False,
         num_processors=8,  # Specify the number of processors you want to use
+        multiple_of=1,
     ) -> None:
         super().__init__()
         self.tokenizer = tokenizer
         self.strategy = strategy
         self.pretrain_mode = pretrain_mode
         self.max_length = max_length
+        self.multiple_of = multiple_of
 
         # chat template
         self.input_template = input_template
@@ -166,5 +168,10 @@ class SFTDataset(Dataset):
 
         packed_input_ids = torch.cat(packed_input_ids, dim=0).unsqueeze(0)
         packed_attention_masks = torch.cat(packed_attention_masks, dim=0).unsqueeze(0)
+        
+        if self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0:
+            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
+            packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
+            packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
 
         return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos
