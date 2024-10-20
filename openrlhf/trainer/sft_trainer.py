@@ -163,8 +163,8 @@ class SFTTrainer(ABC):
                     loss_masks = attention_mask.clone().bool()
 
                     index = 0
-                    for i, seq_len in enumerate(packed_seq_lens):
-                        loss_masks[0, index : index + prompt_id_lens[i]] = False
+                    for i, seq_len in enumerate(prompts_id_lens):
+                        loss_masks[0, index : index + prompts_id_lens[i]] = False
                         index = index + seq_len
 
                     loss_masks = loss_masks[:, 1:]
@@ -172,7 +172,7 @@ class SFTTrainer(ABC):
                     logprobs_sums = []
                     logprobs_means = []
                     index = 0
-                    for i, seq_len in enumerate(packed_seq_lens):
+                    for i, seq_len in enumerate(prompts_id_lens):
                         seq = per_token_logps[0, index : index + seq_len - 1]
                         mask = loss_masks[0, index : index + seq_len - 1]
                         logprobs_sums.append((seq * mask).sum())
