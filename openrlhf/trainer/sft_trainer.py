@@ -135,7 +135,12 @@ class SFTTrainer(ABC):
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                output = self.model(inputs, attention_mask=attention_mask, return_output=True)
+                output = self.model(
+                    inputs, attention_mask=attention_mask, 
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=prompts_id_lens, 
+                    return_output=True,
+                )
 
                 # loss function
                 labels = torch.where(
@@ -143,23 +148,42 @@ class SFTTrainer(ABC):
                     inputs,
                     self.loss_fn.IGNORE_INDEX,
                 )
+
+                rank = self.strategy.ring_attn_rank
+                total_seq_len = labels.numel()
+                local_seq_len = total_seq_len // self.strategy.ring_attn_size
+                local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
+                local_label = labels[:, local_slice]
+                if rank == self.strategy.ring_attn_size - 1:
+                # add a dummy label to the last logit
+                    local_label = F.pad(local_label, (0, 1), value=0)
+                local_per_token_logps = torch.gather(
+                    logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
+                ).squeeze(2)
+                per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+                
+                token_ce_loss = -per_token_logps
+                valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
+                valid_token_ce_loss = token_ce_loss.view(-1)[valid_mask]
+                gpt_loss = valid_token_ce_loss.mean()
+
                 # mixtral
-                if self.aux_loss:
-                    aux_loss = output.aux_loss
-                else:
-                    aux_loss = 0
+                # if self.aux_loss:
+                #     aux_loss = output.aux_loss
+                # else:
+                #     aux_loss = 0
 
-                if not self.pretrain_mode:
-                    if self.packing_samples:
-                        index = 0
-                        for input_length, source_len in zip(infos["input_length"], prompts_id_lens):
-                            labels[0][index: index + source_len] = self.loss_fn.IGNORE_INDEX
-                            index += input_length
-                    else:
-                        for label, source_len in zip(labels, prompts_id_lens):
-                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+                # if not self.pretrain_mode:
+                #     if self.packing_samples:
+                #         index = 0
+                #         for input_length, source_len in zip(infos["input_length"], prompts_id_lens):
+                #             labels[0][index: index + source_len] = self.loss_fn.IGNORE_INDEX
+                #             index += input_length
+                #     else:
+                #         for label, source_len in zip(labels, prompts_id_lens):
+                #             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
-                gpt_loss = self.loss_fn(output.logits, labels)
+                # gpt_loss = self.loss_fn(output.logits, labels)
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)

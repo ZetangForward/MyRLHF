@@ -141,7 +141,6 @@ class DPOTrainer(ABC):
                     c_mask = c_mask.squeeze(1).to(torch.cuda.current_device())
                     reject_ids = reject_ids.squeeze(1).to(torch.cuda.current_device())
                     r_mask = r_mask.squeeze(1).to(torch.cuda.current_device())
-
                     chosen_logps, rejected_logps, aux_loss, nll_loss = self.concatenated_forward(
                         self.model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
                     )
