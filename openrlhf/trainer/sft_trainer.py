@@ -162,7 +162,10 @@ class SFTTrainer(ABC):
                 local_per_token_logps = torch.gather(
                     logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
                 ).squeeze(2)
+                
                 per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+                print("----> per_token_logps shape <-----")
+                print(per_token_logps.shape)
                 
                 token_ce_loss = -per_token_logps
                 valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
