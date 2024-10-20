@@ -157,14 +157,16 @@ class SFTTrainer(ABC):
                     # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=0)
 
-                    print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, locak_label min: {local_label.min()}, logits_shape: {logits.shape}\n")
+                    # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, locak_label min: {local_label.min()}, logits_shape: {logits.shape}\n")
                     local_per_token_logps = torch.gather(
                         logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
                     ).squeeze(2)
 
+                    print(f"Before gathering, local_per_token_logps shape is: {local_per_token_logps.shape} max per token logps: {local_per_token_logps.max()}, min per token logps: {local_per_token_logps.min()}\n")
+
                     per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
-                    
-                    print(f"after gathering, per_token_logps shape is: {per_token_logps.shape}\n")
+                    if rank == 0:
+                        print(f"after gathering, per_token_logps shape is: {per_token_logps.shape} max per token logps: {per_token_logps.max()}, min per token logps: {per_token_logps.min()}\n")
                     
                     loss_masks = attention_mask.clone().bool()
 
@@ -174,7 +176,6 @@ class SFTTrainer(ABC):
                         index = index + seq_len
 
                     loss_masks = loss_masks[:, 1:]
-
                     logprobs_sums = []
                     logprobs_means = []
                     index = 0
@@ -211,33 +212,11 @@ class SFTTrainer(ABC):
                     gpt_loss = (-per_token_logps).view(-1)[attention_mask]
                     
                 
-                # print("----> per_token_logps shape start <-----")
-                # print(per_token_logps.shape)
-                # print(per_token_logps[0][:10])
-                # print(attention_mask.shape)
-                # print(attention_mask[0][:10])
-                # print("----> per_token_logps shape end <-----")
-                
-                # valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
-
-                
-
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
                 else:
                     aux_loss = 0
-
-                # if not self.pretrain_mode:
-                #     if self.packing_samples:
-                #         index = 0
-                #         for input_length, source_len in zip(infos["input_length"], prompts_id_lens):
-                #             labels[0][index: index + source_len] = self.loss_fn.IGNORE_INDEX
-                #             index += input_length
-                #     else:
-                #         for label, source_len in zip(labels, prompts_id_lens):
-                #             label[:source_len] = self.loss_fn.IGNORE_INDEX
-                # gpt_loss = self.loss_fn(output.logits, labels)
 
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
