@@ -216,7 +216,6 @@ class RewardDataset(Dataset):
             chosen_att_masks.append(torch.full_like(chosen_id.flatten(), index))
             chosen_seq_lens.append(len(chosen_id.flatten()))
             extras.append(extra)
-
             rejected_ids.append(reject_id.flatten())
             rejected_att_masks.append(torch.full_like(reject_id.flatten(), index + len(item_list)))
             rejected_seq_lens.append(len(reject_id.flatten()))

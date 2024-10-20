@@ -100,6 +100,7 @@ class DPOTrainer(ABC):
             log_dir = os.path.join(self.strategy.args.use_tensorboard, strategy.args.wandb_run_name)
             self._tensorboard = SummaryWriter(log_dir=log_dir)
 
+
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
         if args.eval_steps == -1:
@@ -234,6 +235,7 @@ class DPOTrainer(ABC):
                 self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             )
 
+
     def evaluate(self, eval_dataloader, steps=0):
         self.model.eval()
         with torch.no_grad():
@@ -297,6 +299,7 @@ class DPOTrainer(ABC):
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
         self.model.train()  # reset model state
 
+
     def concatenated_forward(self, model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens):
         """Run the given model on the given batch of inputs, concatenating the chosen and rejected inputs together.
 
@@ -314,6 +317,7 @@ class DPOTrainer(ABC):
         rejected_logps = all_logps_sum[chosen_ids.shape[0] :]
         aux_loss = output.aux_loss if "aux_loss" in output else []
         return chosen_logps, rejected_logps, aux_loss, -all_logps_mean[: chosen_ids.shape[0]].mean()
+
 
     def concatenated_inputs(self, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens):
         """Concatenate the chosen and rejected inputs into a single tensor.
@@ -385,6 +389,7 @@ class DPOTrainer(ABC):
         logprobs_means = (per_token_logps * loss_masks).sum(-1) / loss_masks.sum(-1)
         return logprobs_sums, logprobs_means
 
+
     def packed_samples_forward(self, model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens):
         output = model(
             packed_input_ids,
@@ -406,6 +411,7 @@ class DPOTrainer(ABC):
         rejected_logps = all_logps_sum[len(packed_seq_lens) // 2 :]
         aux_loss = output.aux_loss if "aux_loss" in output else []
         return chosen_logps, rejected_logps, aux_loss, -all_logps_mean[: len(packed_seq_lens) // 2].mean()
+
 
     def _packed_get_batch_logps(
         self,

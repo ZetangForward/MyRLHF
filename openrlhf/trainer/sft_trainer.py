@@ -164,12 +164,15 @@ class SFTTrainer(ABC):
                 ).squeeze(2)
                 
                 per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
-                print("----> per_token_logps shape <-----")
+                print("----> per_token_logps shape start <-----")
                 print(per_token_logps.shape)
-                
+                print(per_token_logps[0][:10])
+                print(attention_mask.shape)
+                print(attention_mask[0][:10])
+                print("----> per_token_logps shape end <-----")
                 token_ce_loss = -per_token_logps
-                valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
-                valid_token_ce_loss = token_ce_loss.view(-1)[valid_mask]
+                # valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
+                valid_token_ce_loss = token_ce_loss.view(-1)[attention_mask]
                 gpt_loss = valid_token_ce_loss.mean()
 
                 # mixtral
@@ -187,8 +190,8 @@ class SFTTrainer(ABC):
                 #     else:
                 #         for label, source_len in zip(labels, prompts_id_lens):
                 #             label[:source_len] = self.loss_fn.IGNORE_INDEX
-
                 # gpt_loss = self.loss_fn(output.logits, labels)
+
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
