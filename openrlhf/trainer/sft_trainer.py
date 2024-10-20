@@ -132,7 +132,22 @@ class SFTTrainer(ABC):
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    
+                    logits = self.model(
+                        inputs, attention_mask=attention_mask, 
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=prompts_id_lens, 
+                        return_output=True,
+                    )["logits"]
+                    
                     rank = self.strategy.ring_attn_rank
+                    
+                    labels = torch.where(
+                        attention_mask.bool(),
+                        inputs,
+                        self.loss_fn.IGNORE_INDEX,
+                    )
+
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
@@ -169,13 +184,13 @@ class SFTTrainer(ABC):
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                    output = self.model(
+                    logits = self.model(
                         inputs, attention_mask=attention_mask, 
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=prompts_id_lens, 
                         return_output=True,
-                    )
-                    logits = output["logits"]
+                    )["logits"]
+                    
 
                     # loss function
                     labels = torch.where(
