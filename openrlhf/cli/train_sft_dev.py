@@ -16,34 +16,8 @@ def train(args):
     strategy = get_strategy(args)
     strategy.setup_distributed()
 
-    # configure model
-    # load huggingface model
-    model = Actor(
-        args.pretrain,
-        use_flash_attention_2=args.flash_attn,
-        bf16=args.bf16,
-        load_in_4bit=args.load_in_4bit,
-        lora_rank=args.lora_rank,
-        lora_alpha=args.lora_alpha,
-        target_modules=args.target_modules,
-        lora_dropout=args.lora_dropout,
-        ds_config=strategy.get_ds_train_config(is_actor=True),
-        packing_samples=args.packing_samples,
-    )
-    # configure tokenizer
-    tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
-    strategy.print(model)
-
-    # gradient_checkpointing
-    if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable(
-            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
-        )
-
-    # configure optimizer
-    optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
-
     # prepare for data and dataset
+    tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
     train_data = blending_datasets(
         args.dataset,
         args.dataset_probs,
@@ -64,7 +38,7 @@ def train(args):
         strategy,
         pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
-        num_processors=8,
+        num_processors=args.num_process,
     )
     eval_dataset = None
     # eval_dataset = SFTDataset(
@@ -92,6 +66,34 @@ def train(args):
             False,
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
         )
+
+
+    # configure model
+    # load huggingface model
+    model = Actor(
+        args.pretrain,
+        use_flash_attention_2=args.flash_attn,
+        bf16=args.bf16,
+        load_in_4bit=args.load_in_4bit,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        target_modules=args.target_modules,
+        lora_dropout=args.lora_dropout,
+        ds_config=strategy.get_ds_train_config(is_actor=True),
+        packing_samples=args.packing_samples,
+    )
+    # configure tokenizer
+    tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
+    strategy.print(model)
+
+    # gradient_checkpointing
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
+        )
+
+    # configure optimizer
+    optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size
@@ -190,6 +192,7 @@ if __name__ == "__main__":
     # custom dataset
     parser.add_argument("--dataset", type=str, default=None)
     parser.add_argument("--dataset_probs", type=str, default="1.0", help="sampling probs for datasets")
+    parser.add_argument("--num_process", type=int, default=16, help="number of dataset processors")
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")
 
