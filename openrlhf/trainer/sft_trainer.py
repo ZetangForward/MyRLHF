@@ -13,6 +13,7 @@ from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 from flash_attn.utils.distributed import all_gather
 
+
 class SFTTrainer(ABC):
     """
         Trainer to use while training reward model.
@@ -169,10 +170,10 @@ class SFTTrainer(ABC):
                 gpt_loss = valid_token_ce_loss.mean()
 
                 # mixtral
-                # if self.aux_loss:
-                #     aux_loss = output.aux_loss
-                # else:
-                #     aux_loss = 0
+                if self.aux_loss:
+                    aux_loss = output.aux_loss
+                else:
+                    aux_loss = 0
 
                 # if not self.pretrain_mode:
                 #     if self.packing_samples:
