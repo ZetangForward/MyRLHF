@@ -39,6 +39,7 @@ def train(args):
         pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
         num_processors=args.num_process,
+        multiple_of=args.ring_attn_size,
     )
     eval_dataset = None
     # eval_dataset = SFTDataset(
