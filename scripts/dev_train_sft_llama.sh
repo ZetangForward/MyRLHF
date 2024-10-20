@@ -3,7 +3,7 @@ SAVE_DIR=/nvme/zecheng/ckpt
 DATA_DIR=/nvme/zecheng/data/iclr2025/llama3-80k-train-data/dpo_data/chunk_16_size_1024
 MODEL_DIR=${BASE_DIR}/hf_models
 
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
+CUDA_VISIBLE_DEVICES=0,1 deepspeed --include localhost:0,1 openrlhf/cli/train_sft_dev.py \
    --max_len 48000 \
    --dataset /data/zecheng/lcm_stack/dataset/training_data/dev_Qwen_query_answer_gen \
    --input_key instruction_str \
@@ -21,8 +21,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --eval_steps -1 \
    --zero_stage 3 \
    --max_epochs 3 \
-   --ring_attn_size 2 \
-   --ring_head_stride 2 \
    --packing_samples \
    --bf16 \
    --flash_attn \
@@ -30,3 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --load_checkpoint \
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/llama3.1-8b-sft' \
+
+
+   # --ring_attn_size 2 \
+   # --ring_head_stride 2 \
