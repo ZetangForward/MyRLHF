@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
-
+from flash_attn.utils.distributed import all_gather
 
 class SFTTrainer(ABC):
     """
