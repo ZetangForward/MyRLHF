@@ -15,7 +15,6 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
                 ],
                 tokenize=False, add_generation_prompt=True
             )
-            print(len(prompt))
             # prompt = apply_chat_template(data[input_key], tokenize=False, add_generation_prompt=True)
             response = apply_chat_template(
                 conversation=[
@@ -24,7 +23,6 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
                 ],
                 tokenize=False, add_generation_prompt=True
             )[len(prompt) :]
-            print(len(response))
             # response = apply_chat_template(data[input_key] + data[output_key], tokenize=False)[len(prompt) :]
         else:
             prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)

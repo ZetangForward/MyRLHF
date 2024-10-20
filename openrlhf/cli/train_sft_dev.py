@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 from transformers.trainer import get_scheduler
-
+from transformers import AutoTokenizer
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import Actor
 from openrlhf.trainer import SFTTrainer
