@@ -7,7 +7,7 @@ from torch import nn
 from torch.optim import Optimizer
 from tqdm import tqdm
 from transformers.trainer import get_scheduler
-
+from torch.nn import functional as F
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
