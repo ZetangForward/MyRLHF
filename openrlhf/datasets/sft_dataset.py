@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from .utils import zero_pad_sequences
-
+from torch.nn import functional as F
 
 def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None):
     if apply_chat_template:
@@ -81,7 +81,7 @@ class SFTDataset(Dataset):
             self.process_data, 
             remove_columns=dataset.column_names, 
             num_proc=num_processors, 
-            # keep_in_memory=True
+            keep_in_memory=True
         )
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 

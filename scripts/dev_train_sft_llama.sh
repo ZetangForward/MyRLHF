@@ -16,6 +16,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --pretrain '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct' \
    --save_path './checkpoint/llama3.1-8b-sft' \
    --save_steps 100 \
+   --num_process 96 \
    --logging_steps 1 \
    --eval_steps -1 \
    --zero_stage 3 \
