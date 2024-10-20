@@ -73,7 +73,6 @@ def train(args):
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
         )
 
-
     # configure model
     # load huggingface model
     model = Actor(

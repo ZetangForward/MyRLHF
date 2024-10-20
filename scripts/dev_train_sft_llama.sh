@@ -2,6 +2,7 @@ BASE_DIR="/data/zecheng"
 SAVE_DIR=/nvme/zecheng/ckpt
 DATA_DIR=/nvme/zecheng/data/iclr2025/llama3-80k-train-data/dpo_data/chunk_16_size_1024
 MODEL_DIR=${BASE_DIR}/hf_models
+export CUDA_LAUNCH_BLOCKING=1
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
@@ -28,5 +29,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --load_checkpoint \
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/llama3.1-8b-sft' \
-   --ring_attn_size 2 \
-   --ring_head_stride 2;   
+   --ring_attn_size 8;  

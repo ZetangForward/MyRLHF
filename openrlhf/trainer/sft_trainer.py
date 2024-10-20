@@ -152,14 +152,20 @@ class SFTTrainer(ABC):
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
                     local_label = labels[:, local_slice]
+                    local_label[local_label == -100] = 0
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=0)
+
+                    print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, locak_label min: {local_label.min()}, logits_shape: {logits.shape}\n")
                     local_per_token_logps = torch.gather(
                         logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
                     ).squeeze(2)
-                    per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
 
+                    per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+                    
+                    print(f"after gathering, per_token_logps shape is: {per_token_logps.shape}\n")
+                    
                     loss_masks = attention_mask.clone().bool()
 
                     index = 0
@@ -178,7 +184,7 @@ class SFTTrainer(ABC):
                         logprobs_sums.append((seq * mask).sum())
                         logprobs_means.append((seq * mask).sum() / mask.sum())
                         index = index + seq_len
-                    gpt_loss = torch.stack(ce_losses).mean()
+                    gpt_loss = torch.stack(logprobs_means).mean()
                 
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
