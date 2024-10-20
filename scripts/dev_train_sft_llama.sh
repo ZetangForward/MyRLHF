@@ -20,8 +20,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --eval_steps -1 \
    --zero_stage 3 \
    --max_epochs 3 \
-   --ring_attn_size 2 \
-   --ring_head_stride 2 \
    --packing_samples \
    --bf16 \
    --flash_attn \
@@ -29,5 +27,3 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --load_checkpoint \
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/llama3.1-8b-sft' \
-   --packing_samples;
-

@@ -51,6 +51,7 @@ def train(args):
     # )
 
     # prepare dataloader
+    train_dataloader, eval_dataloader = None, None
     train_dataloader = strategy.setup_dataloader(
         train_dataset,
         args.micro_train_batch_size,

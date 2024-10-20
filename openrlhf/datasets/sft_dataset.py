@@ -78,7 +78,10 @@ class SFTDataset(Dataset):
 
         # Parallel loading datasets
         processed_dataset = dataset.map(
-            self.process_data, remove_columns=dataset.column_names, num_proc=num_processors, keep_in_memory=True
+            self.process_data, 
+            remove_columns=dataset.column_names, 
+            num_proc=num_processors, 
+            # keep_in_memory=True
         )
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 
