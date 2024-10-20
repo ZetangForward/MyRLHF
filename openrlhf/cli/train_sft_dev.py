@@ -18,6 +18,10 @@ def train(args):
 
     # prepare for data and dataset
     tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+        
     train_data = blending_datasets(
         args.dataset,
         args.dataset_probs,

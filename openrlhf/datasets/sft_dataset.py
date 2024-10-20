@@ -103,7 +103,7 @@ class SFTDataset(Dataset):
             prompt_token = self.tokenizer(
                 prompt,
                 max_length=self.max_length,
-                padding=False,
+                padding="max_length",
                 truncation=True,
                 return_tensors="pt",
                 add_special_tokens=False,

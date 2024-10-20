@@ -99,7 +99,7 @@ class SFTTrainer(ABC):
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
         if args.eval_steps == -1:
-            args.eval_steps = num_update_steps_per_epoch  # Evaluate once per epoch
+            args.eval_steps = float("inf")  # Evaluate once per epoch
         if args.save_steps == -1:
             args.save_steps = float("inf")  # do not save ckpt
 
@@ -151,19 +151,25 @@ class SFTTrainer(ABC):
                     self.loss_fn.IGNORE_INDEX,
                 )
 
-                rank = self.strategy.ring_attn_rank
-                total_seq_len = labels.numel()
-                local_seq_len = total_seq_len // self.strategy.ring_attn_size
-                local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                local_label = labels[:, local_slice]
-                if rank == self.strategy.ring_attn_size - 1:
-                # add a dummy label to the last logit
-                    local_label = F.pad(local_label, (0, 1), value=0)
-                local_per_token_logps = torch.gather(
-                    logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
-                ).squeeze(2)
+                if self.strategy.ring_attn_group is None:
+                    assert logits.shape[:-1] == labels.shape
+                    labels = labels[:, 1:]
+                    logits = logits[:, :-1, :]
+                    per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
+                else:
+                    rank = self.strategy.ring_attn_rank
+                    total_seq_len = labels.numel()
+                    local_seq_len = total_seq_len // self.strategy.ring_attn_size
+                    local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
+                    local_label = labels[:, local_slice]
+                    if rank == self.strategy.ring_attn_size - 1:
+                    # add a dummy label to the last logit
+                        local_label = F.pad(local_label, (0, 1), value=0)
+                    local_per_token_logps = torch.gather(
+                        logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
+                    ).squeeze(2)
+                    per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
                 
-                per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
                 print("----> per_token_logps shape start <-----")
                 print(per_token_logps.shape)
                 print(per_token_logps[0][:10])
