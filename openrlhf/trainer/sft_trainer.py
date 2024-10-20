@@ -141,7 +141,7 @@ class SFTTrainer(ABC):
                     packed_seq_lens=prompts_id_lens, 
                     return_output=True,
                 )
-                all_logits = output["logits"]
+                logits = output["logits"]
 
                 # loss function
                 labels = torch.where(
