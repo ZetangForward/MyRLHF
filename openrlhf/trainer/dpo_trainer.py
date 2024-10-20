@@ -149,7 +149,7 @@ class DPOTrainer(ABC):
                         reference_chosen_logps, reference_rejected_logps, _, _ = self.concatenated_forward(
                             self.ref_model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
                         )
-                else:
+                else:  # ring attention
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens = data
                     packed_input_ids, packed_attention_masks = packed_input_ids.to(
                         torch.cuda.current_device()

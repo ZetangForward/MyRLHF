@@ -99,7 +99,7 @@ class SFTTrainer(ABC):
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
         if args.eval_steps == -1:
-            args.eval_steps = float("inf")  # Evaluate once per epoch
+            args.eval_steps = 10000000  # Evaluate once per epoch
         if args.save_steps == -1:
             args.save_steps = float("inf")  # do not save ckpt
 
@@ -132,31 +132,6 @@ class SFTTrainer(ABC):
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
-                else:
-                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
-
-                output = self.model(
-                    inputs, attention_mask=attention_mask, 
-                    ring_attn_group=self.strategy.ring_attn_group,
-                    packed_seq_lens=prompts_id_lens, 
-                    return_output=True,
-                )
-                logits = output["logits"]
-
-                # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
-                )
-
-                if self.strategy.ring_attn_group is None:
-                    assert logits.shape[:-1] == labels.shape
-                    labels = labels[:, 1:]
-                    logits = logits[:, :-1, :]
-                    per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
-                else:
                     rank = self.strategy.ring_attn_rank
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
@@ -169,17 +144,62 @@ class SFTTrainer(ABC):
                         logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
                     ).squeeze(2)
                     per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+
+                    loss_masks = attention_mask.clone().bool()
+
+                    index = 0
+                    for i, seq_len in enumerate(packed_seq_lens):
+                        loss_masks[0, index : index + prompt_id_lens[i]] = False
+                        index = index + seq_len
+
+                    loss_masks = loss_masks[:, 1:]
+
+                    logprobs_sums = []
+                    logprobs_means = []
+                    index = 0
+                    for i, seq_len in enumerate(packed_seq_lens):
+                        seq = per_token_logps[0, index : index + seq_len - 1]
+                        mask = loss_masks[0, index : index + seq_len - 1]
+                        logprobs_sums.append((seq * mask).sum())
+                        logprobs_means.append((seq * mask).sum() / mask.sum())
+                        index = index + seq_len
+                    gpt_loss = torch.stack(ce_losses).mean()
                 
-                print("----> per_token_logps shape start <-----")
-                print(per_token_logps.shape)
-                print(per_token_logps[0][:10])
-                print(attention_mask.shape)
-                print(attention_mask[0][:10])
-                print("----> per_token_logps shape end <-----")
-                token_ce_loss = -per_token_logps
+                else:
+                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
+                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
+
+                    output = self.model(
+                        inputs, attention_mask=attention_mask, 
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=prompts_id_lens, 
+                        return_output=True,
+                    )
+                    logits = output["logits"]
+
+                    # loss function
+                    labels = torch.where(
+                        attention_mask.bool(),
+                        inputs,
+                        self.loss_fn.IGNORE_INDEX,
+                    )
+                    assert logits.shape[:-1] == labels.shape
+                    labels = labels[:, 1:]
+                    logits = logits[:, :-1, :]
+                    per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
+                    gpt_loss = (-per_token_logps).view(-1)[attention_mask]
+                    
+                
+                # print("----> per_token_logps shape start <-----")
+                # print(per_token_logps.shape)
+                # print(per_token_logps[0][:10])
+                # print(attention_mask.shape)
+                # print(attention_mask[0][:10])
+                # print("----> per_token_logps shape end <-----")
+                
                 # valid_mask = (labels != self.loss_fn.IGNORE_INDEX).view(-1)
-                valid_token_ce_loss = token_ce_loss.view(-1)[attention_mask]
-                gpt_loss = valid_token_ce_loss.mean()
+
+                
 
                 # mixtral
                 if self.aux_loss:

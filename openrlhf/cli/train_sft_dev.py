@@ -21,7 +21,7 @@ def train(args):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
-        
+
     train_data = blending_datasets(
         args.dataset,
         args.dataset_probs,
@@ -91,7 +91,7 @@ def train(args):
     # configure tokenizer
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
-
+    model.print_trainable_parameters()
     # gradient_checkpointing
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable(
