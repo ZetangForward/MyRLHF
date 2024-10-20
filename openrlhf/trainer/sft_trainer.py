@@ -140,6 +140,7 @@ class SFTTrainer(ABC):
                         return_output=True,
                     )["logits"]
                     
+                    print(f"before ring attention --> max logits {logits.max()}, min logits {logits.min()}\n")
                     rank = self.strategy.ring_attn_rank
                     
                     labels = torch.where(
