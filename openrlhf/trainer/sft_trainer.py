@@ -173,6 +173,7 @@ class SFTTrainer(ABC):
                         local_label = F.pad(local_label, (0, 1), value=0)
                     local_gpt_loss = self.loss_fn(local_logits, local_label)
                     print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
+                    print()
                     
                     all_loss = all_gather(logits, self.strategy.ring_attn_group)
                     
