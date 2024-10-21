@@ -154,7 +154,7 @@ class SFTTrainer(ABC):
                     attention_mask = attention_masks.to(torch.cuda.current_device())
                     labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
                     
-                    print(f"local rank: {rank} before model --> inputs shape: {inputs.shape}, attention_mask shape: {attention_mask.shape}\n")
+                    # print(f"local rank: {rank} before model --> inputs shape: {inputs.shape}, attention_mask shape: {attention_mask.shape}\n")
                     
                     local_logits = self.model(
                         inputs,
