@@ -172,19 +172,39 @@ class SFTTrainer(ABC):
                     print(f"local rank: {rank} after model --> local_slice: {local_slice}\n")
                     
                     labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    labels[:, -1] = -100  # pad the last token with -100 to avoid the loss computation
+                    labels[:, -1] = self.loss_fn.IGNORE_INDEX  # pad the last token with -100 to avoid the loss computation
 
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
-                        local_label = F.pad(local_label, (0, 1), value=-100)
+                        local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
 
-                    local_loss = self.loss_fn(local_logits, local_label)
-                    print(f"local rank: {rank} after model --> self.strategy.ring_attn_group is {self.strategy.ring_attn_group} local_loss: {local_loss}\n")
+                    # convert -100 in local_label into 0  
+                    local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
+                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
+
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group)
+
+                    mask = gathered_logps.new_zeros(gathered_logps.shape)  # Create a tensor of zeros
+                    mask[attention_mask.bool()] = 1  # Set valid positions to 1
+
+                    # Apply the mask
+                    masked_logps = gathered_logps * mask
+
+                    # Flatten the masked log probabilities for loss computation
+                    masked_logps_flat = masked_logps.view(-1)
+
+                    # Calculate the cross-entropy loss
+                    # Note: Ensure that local_label is also gathered and flattened accordingly
+                    # The local_label should not contain the ignored indices
+                    gpt_loss = -torch.sum(masked_logps_flat[local_label.view(-1) != self.loss_fn.IGNORE_INDEX]) / mask.sum()
+
+                    # local_loss = self.loss_fn(local_logits, local_label)
+                    print(f"local rank: {rank} --> gpt_loss is: {gpt_loss}\n")
                     
                     # Initialize gathered_losses here, after local_loss is computed
-                    gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_group.size())]
-                    torch.distributed.all_gather(gathered_losses, local_loss, group=self.strategy.ring_attn_group)
+                    # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_group.size())]
+                    # torch.distributed.all_gather(gathered_losses, local_loss, group=self.strategy.ring_attn_group)
                     # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_size)]
                     # print(f"local rank: {rank} after model --> local_label: {local_label.shape}\n")
                     # # print(f"after model --> local rank: {rank}, local_logits shape: {local_logits.shape}, attention_mask shape: {attention_mask.shape}")
