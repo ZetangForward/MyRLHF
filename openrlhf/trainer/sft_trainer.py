@@ -14,6 +14,23 @@ from openrlhf.utils.distributed_sampler import DistributedSampler
 from flash_attn.utils.distributed import all_gather
 
 
+class GPTLMLoss(nn.Module):
+    """
+    GPT Language Model Loss
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.IGNORE_INDEX = -100
+        self.loss = nn.CrossEntropyLoss(ignore_index=self.IGNORE_INDEX)
+
+    def forward(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+        # Flatten the tokens
+        return self.loss(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+
+
 class SFTTrainer(ABC):
     """
         Trainer to use while training reward model.
@@ -113,6 +130,9 @@ class SFTTrainer(ABC):
             desc="Train epoch",
             disable=not self.strategy.is_rank_0(),
         )
+
+        rank = self.strategy.ring_attn_rank
+
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -140,6 +160,16 @@ class SFTTrainer(ABC):
                         return_output=True,
                     )["logits"]
                     
+                    print(f"before ring attention gathering --> rank: {rank} size: {logits.shape} max logits {logits.max()}, min logits {logits.min()}\n")
+                    all_logits = all_gather(logits, self.strategy.ring_attn_group).reshape((1, -1, logits.size(-1)))
+                    print(f"after ring attention gathering --> size: {all_logits.shape} max logits {all_logits.max()}, min logits {all_logits.min()}\n")
+
+                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+
+                    print(f"labels shape", labels.shape)
+                    gpt_loss = self.loss_fn(all_logits, labels)
+
+                    """
                     print(f"before ring attention --> max logits {logits.max()}, min logits {logits.min()}\n")
                     rank = self.strategy.ring_attn_rank
                     
@@ -170,12 +200,11 @@ class SFTTrainer(ABC):
                         print(f"after gathering, per_token_logps shape is: {per_token_logps.shape} max per token logps: {per_token_logps.max()}, min per token logps: {per_token_logps.min()}\n")
                     
                     # loss_masks = attention_mask.clone().bool()
-                    
+                    per_token_logps = per_token_logps
                     valid_logps = per_token_logps[attention_mask[:, 1:]] 
                     nll_loss = -valid_logps.sum()
                     num_valid_tokens = loss_masks[:, 1:].sum()
                     gpt_loss = nll_loss / num_valid_tokens
-
 
                     # index = 0
                     # for i, seq_len in enumerate(prompts_id_lens):
@@ -193,7 +222,7 @@ class SFTTrainer(ABC):
                     #     logprobs_means.append((seq * mask).sum() / mask.sum())
                     #     index = index + seq_len
                     # gpt_loss = torch.stack(logprobs_means).mean()
-                
+                """
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
