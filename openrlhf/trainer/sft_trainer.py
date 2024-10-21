@@ -169,24 +169,30 @@ class SFTTrainer(ABC):
                     if rank == 0:
                         print(f"after gathering, per_token_logps shape is: {per_token_logps.shape} max per token logps: {per_token_logps.max()}, min per token logps: {per_token_logps.min()}\n")
                     
-                    loss_masks = attention_mask.clone().bool()
+                    # loss_masks = attention_mask.clone().bool()
+                    
+                    valid_logps = per_token_logps[attention_mask[:, 1:]] 
+                    nll_loss = -valid_logps.sum()
+                    num_valid_tokens = loss_masks[:, 1:].sum()
+                    gpt_loss = nll_loss / num_valid_tokens
 
-                    index = 0
-                    for i, seq_len in enumerate(prompts_id_lens):
-                        loss_masks[0, index : index + prompts_id_lens[i]] = False
-                        index = index + seq_len
 
-                    loss_masks = loss_masks[:, 1:]
-                    logprobs_sums = []
-                    logprobs_means = []
-                    index = 0
-                    for i, seq_len in enumerate(prompts_id_lens):
-                        seq = per_token_logps[0, index : index + seq_len - 1]
-                        mask = loss_masks[0, index : index + seq_len - 1]
-                        logprobs_sums.append((seq * mask).sum())
-                        logprobs_means.append((seq * mask).sum() / mask.sum())
-                        index = index + seq_len
-                    gpt_loss = torch.stack(logprobs_means).mean()
+                    # index = 0
+                    # for i, seq_len in enumerate(prompts_id_lens):
+                    #     loss_masks[0, index : index + prompts_id_lens[i]] = False
+                    #     index = index + seq_len
+
+                    # loss_masks = loss_masks[:, 1:]
+                    # logprobs_sums = []
+                    # logprobs_means = []
+                    # index = 0
+                    # for i, seq_len in enumerate(prompts_id_lens):
+                    #     seq = per_token_logps[0, index : index + seq_len - 1]
+                    #     mask = loss_masks[0, index : index + seq_len - 1]
+                    #     logprobs_sums.append((seq * mask).sum())
+                    #     logprobs_means.append((seq * mask).sum() / mask.sum())
+                    #     index = index + seq_len
+                    # gpt_loss = torch.stack(logprobs_means).mean()
                 
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
