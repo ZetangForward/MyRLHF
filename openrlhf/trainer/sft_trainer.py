@@ -167,9 +167,9 @@ class SFTTrainer(ABC):
                     rank = self.strategy.ring_attn_rank
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
-                    print(f"local rank: {rank} after model --> local_seq_len: {local_seq_len}, total_seq_len: {total_seq_len}, self.strategy.ring_attn_size: {self.strategy.ring_attn_size}\n")
+                    # print(f"local rank: {rank} after model --> local_seq_len: {local_seq_len}, total_seq_len: {total_seq_len}, self.strategy.ring_attn_size: {self.strategy.ring_attn_size}\n")
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    print(f"local rank: {rank} after model --> local_slice: {local_slice}\n")
+                    # print(f"local rank: {rank} after model --> local_slice: {local_slice}\n")
                     
                     labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
                     labels[:, -1] = self.loss_fn.IGNORE_INDEX  # pad the last token with -100 to avoid the loss computation
