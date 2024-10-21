@@ -178,26 +178,18 @@ class SFTTrainer(ABC):
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
+                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX).unsqueeze(2)  # Shape: (batch_size, seq_len, 1)
 
                     # convert -100 in local_label into 0  
                     local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
+                    per_token_logps *= ~local_mask
+                    
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+                    masked_logps_flat = gathered_logps.view(-1)
 
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group)
-
-                    mask = gathered_logps.new_zeros(gathered_logps.shape)  # Create a tensor of zeros
-                    mask[attention_mask.bool()] = 1  # Set valid positions to 1
-
-                    # Apply the mask
-                    masked_logps = gathered_logps * mask
-
-                    # Flatten the masked log probabilities for loss computation
-                    masked_logps_flat = masked_logps.view(-1)
-
-                    # Calculate the cross-entropy loss
-                    # Note: Ensure that local_label is also gathered and flattened accordingly
-                    # The local_label should not contain the ignored indices
-                    gpt_loss = -torch.sum(masked_logps_flat[local_label.view(-1) != self.loss_fn.IGNORE_INDEX]) / mask.sum()
+                    # Calculate the cross-entropy loss, ensuring local_label is gathered and flattened accordingly
+                    gpt_loss = -torch.mean(masked_logps_flat)
 
                     # local_loss = self.loss_fn(local_logits, local_label)
                     print(f"local rank: {rank} --> gpt_loss is: {gpt_loss}\n")
