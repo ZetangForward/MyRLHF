@@ -153,76 +153,43 @@ class SFTTrainer(ABC):
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
                     
-                    logits = self.model(
+                    local_logits = self.model(
                         inputs, attention_mask=attention_mask, 
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=prompts_id_lens, 
                         return_output=True,
                     )["logits"]
                     
-                    print(f"before ring attention gathering --> rank: {rank} size: {logits.shape} max logits {logits.max()}, min logits {logits.min()}\n")
-                    all_logits = all_gather(logits, self.strategy.ring_attn_group).reshape((1, -1, logits.size(-1)))
-                    print(f"after ring attention gathering --> size: {all_logits.shape} max logits {all_logits.max()}, min logits {all_logits.min()}\n")
-
-                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-
-                    print(f"labels shape", labels.shape)
-                    gpt_loss = self.loss_fn(all_logits, labels)
-
-                    """
-                    print(f"before ring attention --> max logits {logits.max()}, min logits {logits.min()}\n")
                     rank = self.strategy.ring_attn_rank
                     
-                    labels = torch.where(
-                        attention_mask.bool(),
-                        inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
+                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
                     local_label = labels[:, local_slice]
-                    local_label[local_label == -100] = 0
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=0)
-
-                    # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, locak_label min: {local_label.min()}, logits_shape: {logits.shape}\n")
-                    local_per_token_logps = torch.gather(
-                        logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
-                    ).squeeze(2)
-
-                    print(f"Before gathering, local_per_token_logps shape is: {local_per_token_logps.shape} max per token logps: {local_per_token_logps.max()}, min per token logps: {local_per_token_logps.min()}\n")
-
-                    per_token_logps = all_gather(local_per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
-                    if rank == 0:
-                        print(f"after gathering, per_token_logps shape is: {per_token_logps.shape} max per token logps: {per_token_logps.max()}, min per token logps: {per_token_logps.min()}\n")
+                    local_gpt_loss = self.loss_fn(local_logits, local_label)
+                    print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
                     
-                    # loss_masks = attention_mask.clone().bool()
-                    per_token_logps = per_token_logps
-                    valid_logps = per_token_logps[attention_mask[:, 1:]] 
-                    nll_loss = -valid_logps.sum()
-                    num_valid_tokens = loss_masks[:, 1:].sum()
-                    gpt_loss = nll_loss / num_valid_tokens
+                    all_loss = all_gather(logits, self.strategy.ring_attn_group)
+                    
+                    print(f"after gathering, rank {rank} | all_loss is: ", all_loss)
+                    
+                    # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, logits_shape: {logits.shape}\n")
+                    # local_per_token_logps = torch.gather(
+                    #     logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
+                    # ).squeeze(2)
+                    
+                    # all_logits = all_gather(logits, self.strategy.ring_attn_group).reshape((1, -1, logits.size(-1)))
+                    # print(f"after ring attention gathering --> size: {all_logits.shape} max logits {all_logits.max()}, min logits {all_logits.min()}\n")
 
-                    # index = 0
-                    # for i, seq_len in enumerate(prompts_id_lens):
-                    #     loss_masks[0, index : index + prompts_id_lens[i]] = False
-                    #     index = index + seq_len
+                    # labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+                    # print(f"labels shape", labels.shape)
+                    # gpt_loss = self.loss_fn(all_logits, labels)
 
-                    # loss_masks = loss_masks[:, 1:]
-                    # logprobs_sums = []
-                    # logprobs_means = []
-                    # index = 0
-                    # for i, seq_len in enumerate(prompts_id_lens):
-                    #     seq = per_token_logps[0, index : index + seq_len - 1]
-                    #     mask = loss_masks[0, index : index + seq_len - 1]
-                    #     logprobs_sums.append((seq * mask).sum())
-                    #     logprobs_means.append((seq * mask).sum() / mask.sum())
-                    #     index = index + seq_len
-                    # gpt_loss = torch.stack(logprobs_means).mean()
-                """
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -234,7 +201,6 @@ class SFTTrainer(ABC):
                         return_output=True,
                     )["logits"]
                     
-
                     # loss function
                     labels = torch.where(
                         attention_mask.bool(),
