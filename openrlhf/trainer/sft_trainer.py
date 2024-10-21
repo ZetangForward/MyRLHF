@@ -47,18 +47,18 @@ class SFTTrainer(ABC):
     """
 
     def __init__(
-            self,
-            model,
-            strategy,
-            optim: Optimizer,
-            train_dataloader,
-            eval_dataloader,
-            scheduler,
-            max_norm: float = 1,
-            pretrain_mode: bool = False,
-            batch_size: int = 1,
-            max_epochs: int = 2,
-            tokenizer=None,
+        self,
+        model,
+        strategy,
+        optim: Optimizer,
+        train_dataloader,
+        eval_dataloader,
+        scheduler,
+        max_norm: float = 1,
+        pretrain_mode: bool = False,
+        batch_size: int = 1,
+        max_epochs: int = 2,
+        tokenizer=None,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -152,33 +152,49 @@ class SFTTrainer(ABC):
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+                    
+                    print(f"local rank: {rank} before model --> inputs shape: {inputs.shape}, attention_mask shape: {attention_mask.shape}\n")
                     
                     local_logits = self.model(
-                        inputs, attention_mask=attention_mask, 
+                        inputs,
+                        attention_mask=attention_mask,
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=prompts_id_lens, 
                         return_output=True,
                     )["logits"]
                     
                     rank = self.strategy.ring_attn_rank
-                    
-                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
+                    print(f"local rank: {rank} after model --> local_seq_len: {local_seq_len}, total_seq_len: {total_seq_len}, self.strategy.ring_attn_size: {self.strategy.ring_attn_size}\n")
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
+                    print(f"local rank: {rank} after model --> local_slice: {local_slice}\n")
+                    
+                    labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    labels[:, -1] = -100  # pad the last token with -100 to avoid the loss computation
+
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
-                        local_label = F.pad(local_label, (0, 1), value=0)
-                    local_gpt_loss = self.loss_fn(local_logits, local_label)
-                    print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
-                    print()
+                        local_label = F.pad(local_label, (0, 1), value=-100)
+
+                    local_loss = self.loss_fn(local_logits, local_label)
+                    print(f"local rank: {rank} after model --> self.strategy.ring_attn_group is {self.strategy.ring_attn_group} local_loss: {local_loss}\n")
                     
-                    all_loss = all_gather(logits, self.strategy.ring_attn_group)
+                    # Initialize gathered_losses here, after local_loss is computed
+                    gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_group.size())]
+                    torch.distributed.all_gather(gathered_losses, local_loss, group=self.strategy.ring_attn_group)
+                    # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_size)]
+                    # print(f"local rank: {rank} after model --> local_label: {local_label.shape}\n")
+                    # # print(f"after model --> local rank: {rank}, local_logits shape: {local_logits.shape}, attention_mask shape: {attention_mask.shape}")
                     
-                    print(f"after gathering, rank {rank} | all_loss is: ", all_loss)
                     
+                    # print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
+                    # print()
+                    
+                    print(f"after gathering, rank {rank} | all_loss is: {gathered_losses}\n")
+                    gpt_loss = sum(gathered_losses) / len(gathered_losses)
                     # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, logits_shape: {logits.shape}\n")
                     # local_per_token_logps = torch.gather(
                     #     logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
@@ -275,6 +291,7 @@ class SFTTrainer(ABC):
             self.strategy.save_ckpt(
                 self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             )
+
 
     def evaluate(self, eval_dataloader, steps=0):
         times = 0

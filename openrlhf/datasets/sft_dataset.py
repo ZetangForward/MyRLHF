@@ -168,8 +168,7 @@ class SFTDataset(Dataset):
 
 
     def packing_collate_fn(self, item_list):
-        packed_input_ids = []
-        packed_attention_masks = []
+        packed_input_ids, packed_attention_masks = [], []
         prompt_ids_lens = []
         infos = {"input_length": []}
         index = 1
