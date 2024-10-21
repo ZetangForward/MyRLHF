@@ -178,11 +178,13 @@ class SFTTrainer(ABC):
                     if rank == self.strategy.ring_attn_size - 1:
                     # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX).unsqueeze(2)  # Shape: (batch_size, seq_len, 1)
+                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)  # Shape: (batch_size, seq_len)
 
                     # convert -100 in local_label into 0  
                     local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
+                    # print(f"local rank: {rank} after model --> per_token_logps shape: {per_token_logps.shape}\n")
+
                     per_token_logps *= ~local_mask
                     
                     gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
@@ -192,7 +194,7 @@ class SFTTrainer(ABC):
                     gpt_loss = -torch.mean(masked_logps_flat)
 
                     # local_loss = self.loss_fn(local_logits, local_label)
-                    print(f"local rank: {rank} --> gpt_loss is: {gpt_loss}\n")
+                    # print(f"local rank: {rank} --> gpt_loss is: {gpt_loss}\n")
                     
                     # Initialize gathered_losses here, after local_loss is computed
                     # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_group.size())]
@@ -205,8 +207,8 @@ class SFTTrainer(ABC):
                     # print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
                     # print()
                     
-                    print(f"after gathering, rank {rank} | all_loss is: {gathered_losses}\n")
-                    gpt_loss = sum(gathered_losses) / len(gathered_losses)
+                    # print(f"after gathering, rank {rank} | all_loss is: {gathered_losses}\n")
+                    # gpt_loss = sum(gathered_losses) / len(gathered_losses)
                     # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, logits_shape: {logits.shape}\n")
                     # local_per_token_logps = torch.gather(
                     #     logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
