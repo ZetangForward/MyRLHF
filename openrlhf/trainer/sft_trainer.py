@@ -154,8 +154,6 @@ class SFTTrainer(ABC):
                     attention_mask = attention_masks.to(torch.cuda.current_device())
                     labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
                     
-                    # print(f"local rank: {rank} before model --> inputs shape: {inputs.shape}, attention_mask shape: {attention_mask.shape}\n")
-                    
                     local_logits = self.model(
                         inputs,
                         attention_mask=attention_mask,
@@ -183,7 +181,8 @@ class SFTTrainer(ABC):
                     # convert -100 in local_label into 0  
                     local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
-                    # print(f"local rank: {rank} after model --> per_token_logps shape: {per_token_logps.shape}\n")
+                    # if rank == 0:
+                    #     print(f"local rank: {rank} after model --> per_token_logps shape: {per_token_logps.shape}\n")
 
                     per_token_logps *= ~local_mask
                     
@@ -302,8 +301,10 @@ class SFTTrainer(ABC):
             self.evaluate(self.eval_dataloader, global_step)
         # save ckpt
         # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
+        # print(f"check save states ---> global_step: {global_step}, save_steps: {args.save_steps}")
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
+            print(f"check eval states ---> global_step: {global_step}, save_steps: {args.save_steps}, tag: {tag}")
             self.strategy.save_ckpt(
                 self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             )
