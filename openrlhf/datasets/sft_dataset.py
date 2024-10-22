@@ -81,7 +81,7 @@ class SFTDataset(Dataset):
             self.process_data, 
             remove_columns=dataset.column_names, 
             num_proc=num_processors, 
-            keep_in_memory=True
+            keep_in_memory=False,
         )
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 
