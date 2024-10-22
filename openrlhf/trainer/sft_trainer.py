@@ -302,6 +302,7 @@ class SFTTrainer(ABC):
             self.evaluate(self.eval_dataloader, global_step)
         # save ckpt
         # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
+        print(f"check save states ---> global_step: {global_step}, save_steps: {args.save_steps}")
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
             self.strategy.save_ckpt(

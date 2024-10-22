@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --input_key instruction_str \
    --output_key pred_str \
    --train_batch_size 64 \
-   --micro_train_batch_size 1 \
+   --micro_train_batch_size 2 \
    --lora_rank 32 \
    --apply_chat_template \
    --max_samples 500000 \
