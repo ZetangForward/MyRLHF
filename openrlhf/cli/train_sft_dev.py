@@ -15,34 +15,12 @@ def train(args):
     strategy = get_strategy(args)
     strategy.setup_distributed()
 
-    # configure model (load huggingface model)
-    model = Actor(
-        args.pretrain,
-        use_flash_attention_2=args.flash_attn,
-        bf16=args.bf16,
-        load_in_4bit=args.load_in_4bit,
-        lora_rank=args.lora_rank,
-        lora_alpha=args.lora_alpha,
-        target_modules=args.target_modules,
-        lora_dropout=args.lora_dropout,
-        ds_config=strategy.get_ds_train_config(is_actor=True),
-        packing_samples=args.packing_samples,
-    )
-    strategy.print(model)
-    model.print_trainable_parameters()
-
     # configure tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrain, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
-        model.config.pad_token_id = tokenizer.pad_token_id
-
-    # gradient_checkpointing
-    if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable(
-            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
-        )
+        # model.model.config.pad_token_id = tokenizer.pad_token_id
 
     # prepare for data and dataset
     train_data, eval_data = blending_datasets(  
@@ -95,6 +73,28 @@ def train(args):
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
         )
 
+
+    # configure model (load huggingface model)
+    model = Actor(
+        args.pretrain,
+        use_flash_attention_2=args.flash_attn,
+        bf16=args.bf16,
+        load_in_4bit=args.load_in_4bit,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        target_modules=args.target_modules,
+        lora_dropout=args.lora_dropout,
+        ds_config=strategy.get_ds_train_config(is_actor=True),
+        packing_samples=args.packing_samples,
+    )
+    strategy.print(model)
+    model.print_trainable_parameters()
+     # gradient_checkpointing
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
+        )
+    
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
