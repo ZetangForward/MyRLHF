@@ -149,7 +149,7 @@ class SFTTrainer(ABC):
             self.model.train()
             loss_mean = 0
             for prompts_id_lens, inputs, attention_masks, infos in self.train_dataloader:
-                if self.packing_samples:
+                if self.packing_samples and self.strategy.ring_attn_size != 1:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
                     labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
@@ -191,11 +191,15 @@ class SFTTrainer(ABC):
 
                     # Calculate the cross-entropy loss, ensuring local_label is gathered and flattened accordingly
                     gpt_loss = -torch.mean(masked_logps_flat)
-
-                   
+                    if rank == 0:
+                        print(f"local rank: {rank} --> gpt_loss: {gpt_loss}\n")
                 else:
-                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
+                    if self.packing_samples:
+                        inputs = inputs.to(torch.cuda.current_device())
+                        attention_mask = attention_masks.to(torch.cuda.current_device())
+                    else:
+                        inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
+                        attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     
@@ -207,7 +211,7 @@ class SFTTrainer(ABC):
                     gpt_loss = self.loss_fn(output.logits, labels)
 
                     print(f"local rank: {rank} after model --> gpt_loss: {gpt_loss}\n")
-                    
+
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
