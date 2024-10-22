@@ -6,7 +6,7 @@ export CUDA_LAUNCH_BLOCKING=1
 
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
-   --dataset /data/zecheng/lcm_stack/dataset/training_data/dev_Qwen_query_answer_gen \
+   --dataset /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen \
    --input_key instruction_str \
    --output_key pred_str \
    --train_batch_size 32 \
@@ -26,7 +26,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --bf16 \
    --flash_attn \
    --learning_rate 5e-6 \
-   --load_checkpoint \
    --gradient_checkpointing \
    --ckpt_path './checkpoint/llama3.1-8b-sft' \
    --use_tensorboard './checkpoint/llama3.1-8b-sft/tensorboard' \

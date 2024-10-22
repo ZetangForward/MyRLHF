@@ -54,6 +54,8 @@ def train(args):
             pretrain_mode=args.pretrain_mode,
             input_template=args.input_template,
         )
+    else:
+        eval_dataset = None 
 
     # prepare dataloader
     train_dataloader, eval_dataloader = None, None
@@ -73,7 +75,6 @@ def train(args):
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
         )
 
-
     # configure model (load huggingface model)
     model = Actor(
         args.pretrain,
@@ -89,12 +90,15 @@ def train(args):
     )
     strategy.print(model)
     model.print_trainable_parameters()
+    
      # gradient_checkpointing
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable(
             gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
         )
-    
+    if tokenizer.pad_token_id is None:
+        model.model.config.pad_token_id = tokenizer.pad_token_id
+
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
