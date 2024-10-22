@@ -90,8 +90,8 @@ def train(args):
     )
     strategy.print(model)
     model.print_trainable_parameters()
-    
-     # gradient_checkpointing
+
+    # gradient_checkpointing
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable(
             gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
