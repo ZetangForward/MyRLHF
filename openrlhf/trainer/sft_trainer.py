@@ -191,8 +191,8 @@ class SFTTrainer(ABC):
 
                     # Calculate the cross-entropy loss, ensuring local_label is gathered and flattened accordingly
                     gpt_loss = -torch.mean(masked_logps_flat)
-                    if rank == 0:
-                        print(f"local rank: {rank} --> gpt_loss: {gpt_loss}\n")
+                    # if rank == 0:
+                    #     print(f"local rank: {rank} --> gpt_loss: {gpt_loss}\n")
                 else:
                     if self.packing_samples:
                         inputs = inputs.to(torch.cuda.current_device())
