@@ -15,24 +15,46 @@ def train(args):
     strategy = get_strategy(args)
     strategy.setup_distributed()
 
-    # prepare for data and dataset
-    tokenizer = AutoTokenizer.from_pretrained(args.pretrain)
+    # configure model (load huggingface model)
+    model = Actor(
+        args.pretrain,
+        use_flash_attention_2=args.flash_attn,
+        bf16=args.bf16,
+        load_in_4bit=args.load_in_4bit,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
+        target_modules=args.target_modules,
+        lora_dropout=args.lora_dropout,
+        ds_config=strategy.get_ds_train_config(is_actor=True),
+        packing_samples=args.packing_samples,
+    )
+    strategy.print(model)
+    model.print_trainable_parameters()
+
+    # configure tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.pretrain, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
+        model.config.pad_token_id = tokenizer.pad_token_id
 
-    train_data = blending_datasets(
+    # gradient_checkpointing
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
+        )
+
+    # prepare for data and dataset
+    train_data, eval_data = blending_datasets(  
         args.dataset,
         args.dataset_probs,
         strategy,
         args.seed,
-        return_eval=False,
+        return_eval=args.return_eval, # if args.return_eval is True, return eval_data else return None
         max_count=args.max_samples,
         train_split=args.train_split,
         eval_split=args.eval_split,
     )
-    train_data = train_data.select(range(min(args.max_samples, len(train_data))))
-    # eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
 
     train_dataset = SFTDataset(
         train_data,
@@ -44,15 +66,16 @@ def train(args):
         num_processors=args.num_process,
         multiple_of=args.ring_attn_size,
     )
-    eval_dataset = None
-    # eval_dataset = SFTDataset(
-    #     eval_data,
-    #     tokenizer,
-    #     args.max_len,
-    #     strategy,
-    #     pretrain_mode=args.pretrain_mode,
-    #     input_template=args.input_template,
-    # )
+
+    if eval_data is not None:
+        eval_dataset = SFTDataset(
+            eval_data,
+            tokenizer,
+            args.max_len,
+            strategy,
+            pretrain_mode=args.pretrain_mode,
+            input_template=args.input_template,
+        )
 
     # prepare dataloader
     train_dataloader, eval_dataloader = None, None
@@ -70,30 +93,6 @@ def train(args):
             True,
             False,
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
-        )
-
-    # configure model
-    # load huggingface model
-    model = Actor(
-        args.pretrain,
-        use_flash_attention_2=args.flash_attn,
-        bf16=args.bf16,
-        load_in_4bit=args.load_in_4bit,
-        lora_rank=args.lora_rank,
-        lora_alpha=args.lora_alpha,
-        target_modules=args.target_modules,
-        lora_dropout=args.lora_dropout,
-        ds_config=strategy.get_ds_train_config(is_actor=True),
-        packing_samples=args.packing_samples,
-    )
-    # configure tokenizer
-    tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
-    strategy.print(model)
-    model.print_trainable_parameters()
-    # gradient_checkpointing
-    if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable(
-            gradient_checkpointing_kwargs={"use_reentrant": args.gradient_checkpointing_use_reentrant}
         )
 
     # configure optimizer
@@ -199,7 +198,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_process", type=int, default=16, help="number of dataset processors")
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")
-
+    parser.add_argument("--return_eval", action="store_true", default=False)
     parser.add_argument("--input_key", type=str, default="input", help="JSON dataset key")
     parser.add_argument("--output_key", type=str, default=None, help="JSON dataset key")
     parser.add_argument("--input_template", type=str, default="User: {}\nAssistant: ")

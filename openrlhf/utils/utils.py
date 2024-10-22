@@ -119,4 +119,4 @@ def blending_datasets(
         )
         return train_dataset, eval_dataset
     else:
-        return train_dataset
+        return train_dataset, None

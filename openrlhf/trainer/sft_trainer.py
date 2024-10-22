@@ -192,58 +192,22 @@ class SFTTrainer(ABC):
                     # Calculate the cross-entropy loss, ensuring local_label is gathered and flattened accordingly
                     gpt_loss = -torch.mean(masked_logps_flat)
 
-                    # local_loss = self.loss_fn(local_logits, local_label)
-                    # print(f"local rank: {rank} --> gpt_loss is: {gpt_loss}\n")
-                    
-                    # Initialize gathered_losses here, after local_loss is computed
-                    # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_group.size())]
-                    # torch.distributed.all_gather(gathered_losses, local_loss, group=self.strategy.ring_attn_group)
-                    # gathered_losses = [torch.zeros_like(local_loss) for _ in range(self.strategy.ring_attn_size)]
-                    # print(f"local rank: {rank} after model --> local_label: {local_label.shape}\n")
-                    # # print(f"after model --> local rank: {rank}, local_logits shape: {local_logits.shape}, attention_mask shape: {attention_mask.shape}")
-                    
-                    
-                    # print(f"before gathering, rank {rank}, local_gpt_loss is: ", local_gpt_loss)
-                    # print()
-                    
-                    # print(f"after gathering, rank {rank} | all_loss is: {gathered_losses}\n")
-                    # gpt_loss = sum(gathered_losses) / len(gathered_losses)
-                    # print(f"rank: {rank}, local_label shape: {local_label.shape}, locak_label max: {local_label.max()}, logits_shape: {logits.shape}\n")
-                    # local_per_token_logps = torch.gather(
-                    #     logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)
-                    # ).squeeze(2)
-                    
-                    # all_logits = all_gather(logits, self.strategy.ring_attn_group).reshape((1, -1, logits.size(-1)))
-                    # print(f"after ring attention gathering --> size: {all_logits.shape} max logits {all_logits.max()}, min logits {all_logits.min()}\n")
-
-                    # labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-                    # print(f"labels shape", labels.shape)
-                    # gpt_loss = self.loss_fn(all_logits, labels)
-
+                   
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                    logits = self.model(
-                        inputs, attention_mask=attention_mask, 
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=prompts_id_lens, 
-                        return_output=True,
-                    )["logits"]
+                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     
                     # loss function
-                    labels = torch.where(
-                        attention_mask.bool(),
-                        inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
-                    assert logits.shape[:-1] == labels.shape
-                    labels = labels[:, 1:]
-                    logits = logits[:, :-1, :]
-                    per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
-                    gpt_loss = (-per_token_logps).view(-1)[attention_mask]
+                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+                    if not self.pretrain_mode:
+                        for label, source_len in zip(labels, prompts_id_lens):
+                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+                    gpt_loss = self.loss_fn(output.logits, labels)
+
+                    print(f"local rank: {rank} after model --> gpt_loss: {gpt_loss}\n")
                     
-                
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
