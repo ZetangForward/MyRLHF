@@ -254,6 +254,8 @@ class SFTTrainer(ABC):
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
+                
+                torch.cuda.empty_cache()
 
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
                 logs_dict = {
