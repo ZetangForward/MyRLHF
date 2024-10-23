@@ -212,7 +212,10 @@ class SFTTrainer(ABC):
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
                     
                     per_token_logps *= ~local_mask
-                    gpt_loss = all_reduce(-torch.mean(per_token_logps), self.strategy.ring_attn_group)
+                    global_logits = all_gather(per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
+                    gpt_loss = -torch.sum(masked_logps_flat) / num_calculate_tokens
+                    # gpt_loss = -sum(global_logits.sum() / num_calculate_tokens)
+                    # gpt_loss = all_reduce(-torch.mean(per_token_logps), self.strategy.ring_attn_group)
 
                     if rank == 0:
                         print("--> ring attention <-- gpt_loss is:", gpt_loss)
