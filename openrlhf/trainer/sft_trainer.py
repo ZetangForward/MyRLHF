@@ -168,11 +168,15 @@ class SFTTrainer(ABC):
                     else:
                         for label, source_len in zip(labels, prompts_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
-
-                num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
+                
                 
                 if self.strategy.ring_attn_size == 1: # vanilla sft training
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
+                    gpt_loss = self.loss_fn(output.logits, labels)
+                    
+                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    
+                    """ debug code
                     import torch.distributed as dist
                     if dist.get_rank() == 0:
                         import pdb; pdb.set_trace()
@@ -186,12 +190,11 @@ class SFTTrainer(ABC):
                     back_labels[local_mask] = 0
                     per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
                     manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-
-                    gpt_loss = self.loss_fn(output.logits, labels)
-                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    """
                     
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
+                    num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
                     
                     local_logits = self.model(
                         inputs,
@@ -232,7 +235,7 @@ class SFTTrainer(ABC):
                     
                     gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) # .reshape((1, -1))
                     
-                    gpt_loss = -torch.sum(gathered_logps) / (~local_mask).sum()  # compute loss on non-masked tokens
+                    gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
                     if rank == 0:
                         print("--> ring attention <-- gpt_loss is:", gpt_loss)
