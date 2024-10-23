@@ -211,7 +211,7 @@ class SFTTrainer(ABC):
                     if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
                     
-                    local_loss = F.cross_entropy(local_logits, local_label, ignore_index=self.loss_fn.IGNORE_INDEX)
+                    local_loss = F.cross_entropy(local_logits.view(-1, local_logits.size(-1)), local_label.view(-1), ignore_index=self.loss_fn.IGNORE_INDEX)
 
                     print(f"--> ring attention, before all_reduce, local rank {rank} <-- local_loss is: {local_loss}")
 
