@@ -273,6 +273,7 @@ class SFTTrainer(ABC):
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
             print(f"check eval states ---> global_step: {global_step}, save_steps: {args.save_steps}, tag: {tag}")
+            self.strategy.save_model(self.model.model, self.tokenizer, os.path.join(args.save_path, tag))
             self.strategy.save_ckpt(
                 self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             )
