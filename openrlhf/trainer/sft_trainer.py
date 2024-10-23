@@ -179,10 +179,13 @@ class SFTTrainer(ABC):
                     dist.barrier()
 
                     # below is testing code
-                    local_mask = (labels == self.loss_fn.IGNORE_INDEX)
-                    local_label[local_mask] = 0
-                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
-                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / num_calculate_tokens
+                    back_labels = labels.clone()
+                    back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
+                    local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
+                    back_labels[local_mask] = 0
+                    per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
+                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
 
                     gpt_loss = self.loss_fn(output.logits, labels)
                     print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
@@ -211,23 +214,16 @@ class SFTTrainer(ABC):
                     ########################### loss computation ###########################
                     
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    labels = labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
                     labels[:, -1] = self.loss_fn.IGNORE_INDEX  # pad the last token with -100 to avoid the loss computation
                     
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                    
-                    # local_loss = F.cross_entropy(local_logits.view(-1, local_logits.size(-1)), local_label.view(-1), ignore_index=self.loss_fn.IGNORE_INDEX)
 
                     print(f"--> ring attention, before all_reduce, local rank {rank} <-- local_loss is: {local_loss}")
-
-                    # global_loss = all_reduce(local_loss, self.strategy.ring_attn_group)
-                    # gpt_loss = -global_loss / self.strategy.ring_attn_group
-
-                    # print(f"--> ring attention, after all_reduce, global rank {rank} <-- gpt_loss is: {gpt_loss}")
                     local_mask = (local_label == self.loss_fn.IGNORE_INDEX)  # Shape: (batch_size, seq_len)
-
+                    
                     # convert -100 in local_label into 0 for `torch.gather` operation
                     local_label[local_mask] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
@@ -235,16 +231,8 @@ class SFTTrainer(ABC):
                     per_token_logps = per_token_logps * (~local_mask)
                     gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) # .reshape((1, -1))
                     
-                    # import torch.distributed as dist
-                    # if dist.get_rank() == 0:
-                    #     import pdb; pdb.set_trace()
-                    # dist.barrier()
-                    
-                    # masked_logps_flat = gathered_logps.view(-1)
-                    # gpt_loss = -torch.sum(masked_logps_flat) / num_calculate_tokens
-                    # gpt_loss = -torch.sum(global_logits) / num_calculate_tokens
-                    # gpt_loss = -sum(global_logits.sum() / num_calculate_tokens)
-                    # gpt_loss = all_reduce(-torch.mean(per_token_logps), self.strategy.ring_attn_group)
+                    masked_logps_flat = gathered_logps.view(-1)
+                    gpt_loss = -torch.sum(masked_logps_flat) / (~local_mask).sum()  # compute loss on non-masked tokens
 
                     if rank == 0:
                         print("--> ring attention <-- gpt_loss is:", gpt_loss)
