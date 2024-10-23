@@ -214,6 +214,7 @@ class SFTTrainer(ABC):
                     masked_logps_flat = gathered_logps.view(-1)
 
                     gpt_loss = -torch.mean(masked_logps_flat)
+                    print("--> ring attention <-- gpt_loss is:", gpt_loss)
 
                 """
                 if self.packing_samples and self.strategy.ring_attn_size != 1:
