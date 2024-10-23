@@ -11,7 +11,7 @@ from torch.nn import functional as F
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
-from flash_attn.utils.distributed import all_gather
+from flash_attn.utils.distributed import all_gather, all_reduce
 
 
 class GPTLMLoss(nn.Module):
@@ -168,11 +168,13 @@ class SFTTrainer(ABC):
                         for label, source_len in zip(labels, prompts_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
+                num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
+                
                 if self.strategy.ring_attn_size == 1: # vanilla sft training
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
-
+                    
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
                     
@@ -203,84 +205,17 @@ class SFTTrainer(ABC):
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                        
+                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)  # Shape: (batch_size, seq_len)
+
                     # convert -100 in local_label into 0 for `torch.gather` operation
                     local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
                     
-                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)  # Shape: (batch_size, seq_len)
                     per_token_logps *= ~local_mask
-                    
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
-                    masked_logps_flat = gathered_logps.view(-1)
+                    gpt_loss = all_reduce(-torch.mean(per_token_logps), self.strategy.ring_attn_group)
 
-                    gpt_loss = -torch.mean(masked_logps_flat)
-                    print("--> ring attention <-- gpt_loss is:", gpt_loss)
-
-                """
-                if self.packing_samples and self.strategy.ring_attn_size != 1:
-                    inputs = inputs.to(torch.cuda.current_device())
-                    attention_mask = attention_masks.to(torch.cuda.current_device())
-                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-                    
-                    local_logits = self.model(
-                        inputs,
-                        attention_mask=attention_mask,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=prompts_id_lens, 
-                        return_output=True,
-                    )["logits"]
-                    
-                    rank = self.strategy.ring_attn_rank
-                    total_seq_len = labels.numel()
-                    local_seq_len = total_seq_len // self.strategy.ring_attn_size
-                    # print(f"local rank: {rank} after model --> local_seq_len: {local_seq_len}, total_seq_len: {total_seq_len}, self.strategy.ring_attn_size: {self.strategy.ring_attn_size}\n")
-                    local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    # print(f"local rank: {rank} after model --> local_slice: {local_slice}\n")
-                    
-                    labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    labels[:, -1] = self.loss_fn.IGNORE_INDEX  # pad the last token with -100 to avoid the loss computation
-
-                    local_label = labels[:, local_slice]
-                    if rank == self.strategy.ring_attn_size - 1:
-                    # add a dummy label to the last logit
-                        local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)  # Shape: (batch_size, seq_len)
-
-                    # convert -100 in local_label into 0  
-                    local_label[local_label==self.loss_fn.IGNORE_INDEX] = 0
-                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
-                    # if rank == 0:
-                    #     print(f"local rank: {rank} after model --> per_token_logps shape: {per_token_logps.shape}\n")
-
-                    per_token_logps *= ~local_mask
-                    
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group).reshape((1, -1))
-                    masked_logps_flat = gathered_logps.view(-1)
-
-                    # Calculate the cross-entropy loss, ensuring local_label is gathered and flattened accordingly
-                    gpt_loss = -torch.mean(masked_logps_flat)
-                    # if rank == 0:
-                    #     print(f"local rank: {rank} --> gpt_loss: {gpt_loss}\n")
-                else:
-                    if self.packing_samples:
-                        inputs = inputs.to(torch.cuda.current_device())
-                        attention_mask = attention_masks.to(torch.cuda.current_device())
-                    else:
-                        inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                        attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
-
-                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                    
-                    # loss function
-                    labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-                    if not self.pretrain_mode:
-                        for label, source_len in zip(labels, prompts_id_lens):
-                            label[:source_len] = self.loss_fn.IGNORE_INDEX
-                    gpt_loss = self.loss_fn(output.logits, labels)
-
-                    print(f"local rank: {rank} after model --> gpt_loss: {gpt_loss}\n")
-                """
+                    if rank == 0:
+                        print("--> ring attention <-- gpt_loss is:", gpt_loss)
 
                 # mixtral
                 if self.aux_loss:

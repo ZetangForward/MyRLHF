@@ -9,14 +9,14 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --dataset /data/zecheng/lcm_stack/dataset/training_data/dev_Nemotron_query_answer_gen \
    --input_key instruction_str \
    --output_key pred_str \
-   --train_batch_size 64 \
+   --train_batch_size 8 \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct' \
    --save_path './checkpoint/model/llama3.1-8b-sft/' \
    --ckpt_path './checkpoint/opt/llama3.1-8b-sft/' \
-   --save_steps 1 \
+   --save_steps 20 \
    --num_process 96 \
    --logging_steps 1 \
    --eval_steps -1 \
@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/tensorboard/llama3.1-8b-sft/tensorboard' \
    --disable_fast_tokenizer \
-   --ring_attn_size 1;
+   --ring_attn_size 8;
