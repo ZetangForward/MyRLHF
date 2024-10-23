@@ -171,6 +171,7 @@ class SFTTrainer(ABC):
                 if self.strategy.ring_attn_size == 1: # vanilla sft training
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
+                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
 
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"

@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/tensorboard/llama3.1-8b-sft/tensorboard' \
    --disable_fast_tokenizer \
-   --ring_attn_size 2;
+   --ring_attn_size 1;
