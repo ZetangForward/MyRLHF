@@ -148,7 +148,7 @@ class SFTTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
-            for prompts_id_lens, inputs, attention_masks, infos in self.train_dataloader:
+            for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
@@ -169,28 +169,27 @@ class SFTTrainer(ABC):
                         for label, source_len in zip(labels, prompts_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
                 
-                
                 if self.strategy.ring_attn_size == 1: # vanilla sft training
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     
                     print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
-                    """ debug code
+                    # """ debug code
                     import torch.distributed as dist
                     if dist.get_rank() == 0:
                         import pdb; pdb.set_trace()
                     dist.barrier()
 
                     # below is testing code
-                    back_labels = labels.clone()
-                    back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
-                    local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
-                    back_labels[local_mask] = 0
-                    per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
-                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-                    """
+                    # back_labels = labels.clone()
+                    # back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    # back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
+                    # local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
+                    # back_labels[local_mask] = 0
+                    # per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
+                    # manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
+                    # """
                     
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
@@ -200,7 +199,7 @@ class SFTTrainer(ABC):
                         inputs,
                         attention_mask=attention_mask,
                         ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=prompts_id_lens, 
+                        packed_seq_lens=packed_seq_lens, 
                         return_output=True,
                     )["logits"]
                     
@@ -215,10 +214,7 @@ class SFTTrainer(ABC):
                     # local labels (ring_attn_size=2)   [[1,2,3], [4,5,0]]
                     # local masks  (ring_attn_size=2)   [[0,0,0], [1,1,0]]
                     ########################### loss computation ###########################
-                    
-                    # labels = labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token computation
-                    # labels[:, -1] = self.loss_fn.IGNORE_INDEX  # pad the last token with -100 to avoid the loss computation
-                    
+
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
                     print(f"rank {rank}, local_slice: {local_slice}")
                     
@@ -233,15 +229,9 @@ class SFTTrainer(ABC):
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
                     per_token_logps = per_token_logps * (~local_mask)
                     
-                    import torch.distributed as dist
-                    if dist.get_rank() == self.strategy.ring_attn_size - 1:
-                        import pdb; pdb.set_trace()
-                    dist.barrier()
-                    
                     print(f"local rank {rank}, per_token_logps sum: {per_token_logps.sum()}")
-                    
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) # .reshape((1, -1))
-                    
+
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
                     if rank == 0:
