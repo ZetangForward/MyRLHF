@@ -1,7 +1,7 @@
 import math
 from abc import ABC
 import os
-
+import wandb
 import torch
 from torch import nn
 from torch.optim import Optimizer
@@ -86,8 +86,6 @@ class SFTTrainer(ABC):
         self._wandb = None
         self._tensorboard = None
         if self.strategy.args.use_wandb and self.strategy.is_rank_0():
-            import wandb
-
             self._wandb = wandb
             if not wandb.api.api_key:
                 wandb.login(key=strategy.args.use_wandb)
@@ -175,21 +173,21 @@ class SFTTrainer(ABC):
                     
                     print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
-                    # """ debug code
+                    """ debug code
                     import torch.distributed as dist
                     if dist.get_rank() == 0:
                         import pdb; pdb.set_trace()
                     dist.barrier()
 
-                    # below is testing code
-                    # back_labels = labels.clone()
-                    # back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    # back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
-                    # local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
-                    # back_labels[local_mask] = 0
-                    # per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
-                    # manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-                    # """
+                    below is testing code
+                    back_labels = labels.clone()
+                    back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
+                    local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
+                    back_labels[local_mask] = 0
+                    per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
+                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
+                    """
                     
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
