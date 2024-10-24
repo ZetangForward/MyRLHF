@@ -4,7 +4,7 @@ DATA_DIR=/nvme/zecheng/data/iclr2025/llama3-80k-train-data/dpo_data/chunk_16_siz
 MODEL_DIR=${BASE_DIR}/hf_models
 export CUDA_LAUNCH_BLOCKING=1
 
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 deepspeed --include localhost:0,1,2,3 openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
    --dataset /data/zecheng/lcm_stack/dataset/training_data/dev_Nemotron_query_answer_gen \
    --input_key instruction_str \
@@ -29,4 +29,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --gradient_checkpointing \
    --use_tensorboard './checkpoint/tensorboard/llama3.1-8b-sft/tensorboard' \
    --disable_fast_tokenizer \
-   --ring_attn_size 8;
+   --ring_attn_size 4;

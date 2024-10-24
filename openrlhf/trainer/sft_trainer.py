@@ -216,7 +216,7 @@ class SFTTrainer(ABC):
                     ########################### loss computation ###########################
 
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    print(f"rank {rank}, local_slice: {local_slice}")
+                    # print(f"rank {rank}, local_slice: {local_slice}")
                     
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
@@ -229,9 +229,10 @@ class SFTTrainer(ABC):
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
                     per_token_logps = per_token_logps * (~local_mask)
                     
-                    print(f"local rank {rank}, per_token_logps sum: {per_token_logps.sum()}")
+                    # print(f"local rank {rank}, per_token_logps sum: {per_token_logps.sum()}")
 
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) # 
+                    
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
                     if rank == 0:
