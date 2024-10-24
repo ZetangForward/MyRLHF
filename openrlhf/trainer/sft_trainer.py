@@ -233,8 +233,8 @@ class SFTTrainer(ABC):
                     
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
-                    # if rank == 0:
-                    #     print("--> ring attention <-- gpt_loss is:", gpt_loss)
+                    if rank == 0:
+                        print("--> ring attention <-- gpt_loss is:", gpt_loss)
 
                 # mixtral
                 if self.aux_loss:
