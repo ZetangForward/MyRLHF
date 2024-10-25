@@ -23,7 +23,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --flash_attn \
    --learning_rate 5e-6 \
    --gradient_checkpointing \
-   --use_tensorboard './checkpoint/tensorboard/llama3.1-8b-sft/tensorboard' \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project='openrlhf_train_sft' \

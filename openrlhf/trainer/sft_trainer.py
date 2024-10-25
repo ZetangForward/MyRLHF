@@ -171,7 +171,7 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     
-                    # print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
                     """ debug code
                     import torch.distributed as dist
@@ -233,8 +233,7 @@ class SFTTrainer(ABC):
                     
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
-                    if rank == 0:
-                        print("--> ring attention <-- gpt_loss is:", gpt_loss)
+                    print("\n--> ring attention; rank {rank} <-- gpt_loss is:", gpt_loss)
 
                 # mixtral
                 if self.aux_loss:
@@ -268,8 +267,9 @@ class SFTTrainer(ABC):
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
 
                 step += 1
-                step_logs = {"train/%s" % k: v for k, v in {**logs_dict, "steps": step}.items()}
-                self._wandb.log(step_logs)
+                # if self.strategy.is_rank_0():
+                #     step_logs = {"train/%s" % k: v for k, v in {**logs_dict, "steps": step}.items()}
+                #     self._wandb.log(step_logs)
 
             epoch_bar.update()
 
