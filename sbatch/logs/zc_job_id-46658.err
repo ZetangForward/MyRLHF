@@ -1,0 +1,128 @@
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank1]:     train(args)
+[rank1]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank1]:     train_data, eval_data = blending_datasets(  
+[rank1]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank1]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank1]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank1]:     builder_instance = load_dataset_builder(
+[rank1]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank1]:     dataset_module = dataset_module_factory(
+[rank1]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank1]:     raise FileNotFoundError(
+[rank1]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank3]:     train(args)
+[rank3]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank3]:     train_data, eval_data = blending_datasets(  
+[rank3]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank3]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank3]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank3]:     builder_instance = load_dataset_builder(
+[rank3]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank3]:     dataset_module = dataset_module_factory(
+[rank3]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank3]:     raise FileNotFoundError(
+[rank3]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank6]:     train(args)
+[rank6]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank6]:     train_data, eval_data = blending_datasets(  
+[rank6]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank6]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank6]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank6]:     builder_instance = load_dataset_builder(
+[rank6]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank6]:     dataset_module = dataset_module_factory(
+[rank6]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank6]:     raise FileNotFoundError(
+[rank6]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank5]:     train(args)
+[rank5]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank5]:     train_data, eval_data = blending_datasets(  
+[rank5]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank5]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank5]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank5]:     builder_instance = load_dataset_builder(
+[rank5]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank5]:     dataset_module = dataset_module_factory(
+[rank5]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank5]:     raise FileNotFoundError(
+[rank5]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank0]:     train(args)
+[rank0]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank0]:     train_data, eval_data = blending_datasets(  
+[rank0]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank0]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank0]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank0]:     builder_instance = load_dataset_builder(
+[rank0]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank0]:     dataset_module = dataset_module_factory(
+[rank0]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank0]:     raise FileNotFoundError(
+[rank0]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank4]:     train(args)
+[rank4]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank4]:     train_data, eval_data = blending_datasets(  
+[rank4]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank4]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank4]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank4]:     builder_instance = load_dataset_builder(
+[rank4]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank4]:     dataset_module = dataset_module_factory(
+[rank4]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank4]:     raise FileNotFoundError(
+[rank4]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank2]:     train(args)
+[rank2]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank2]:     train_data, eval_data = blending_datasets(  
+[rank2]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank2]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank2]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank2]:     builder_instance = load_dataset_builder(
+[rank2]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank2]:     dataset_module = dataset_module_factory(
+[rank2]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank2]:     raise FileNotFoundError(
+[rank2]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 251, in <module>
+[rank7]:     train(args)
+[rank7]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/cli/train_sft_dev.py", line 26, in train
+[rank7]:     train_data, eval_data = blending_datasets(  
+[rank7]:   File "/public/home/zecheng/workspace/zecheng/MyRLHF/openrlhf/utils/utils.py", line 86, in blending_datasets
+[rank7]:     data = load_dataset(dataset, data_dir=data_dir)
+[rank7]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2606, in load_dataset
+[rank7]:     builder_instance = load_dataset_builder(
+[rank7]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 2277, in load_dataset_builder
+[rank7]:     dataset_module = dataset_module_factory(
+[rank7]:   File "/public/home/zecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/datasets/load.py", line 1925, in dataset_module_factory
+[rank7]:     raise FileNotFoundError(
+[rank7]: FileNotFoundError: Couldn't find a dataset script at /data/zecheng/lcm_stack/dataset/training_data/Qwen_query_answer_gen/Qwen_query_answer_gen.py or any data file in the same directory.
