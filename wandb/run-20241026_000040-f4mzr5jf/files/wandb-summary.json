@@ -1,1 +1,1 @@
-{"train/gpt_loss": 0.793245255947113, "train/loss_mean": 0.24218077957630157, "train/lr": 4.999999873689376e-06, "train/global_step": 3, "_timestamp": 1729872124.2644775, "_runtime": 83.37772059440613, "_step": 2}
+{"train/gpt_loss": 0.8775632977485657, "train/loss_mean": 0.3057190477848053, "train/lr": 4.996700226911344e-06, "train/global_step": 4, "_timestamp": 1729872143.6861725, "_runtime": 102.7994155883789, "_step": 3}
