@@ -268,6 +268,8 @@ class SFTTrainer(ABC):
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
 
                 step += 1
+                step_logs = {"train/%s" % k: v for k, v in {**logs_dict, "steps": step}.items()}
+                self._wandb.log(step_logs)
 
             epoch_bar.update()
 
