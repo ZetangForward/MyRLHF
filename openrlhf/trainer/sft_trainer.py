@@ -146,6 +146,9 @@ class SFTTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
+            accumulated_loss = 0
+            accumulated_gpt_loss = 0
+            accumulated_aux_loss = 0
             for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
@@ -234,7 +237,7 @@ class SFTTrainer(ABC):
                     gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
                     
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
-
+                    gpt_loss = gpt_loss / self.strategy.accumulated_gradient
                     print(f"\n--> ring attention; rank {dist.get_rank()} <-- gpt_loss is:", gpt_loss)
 
                     # import torch.distributed as dist
@@ -247,36 +250,53 @@ class SFTTrainer(ABC):
                 else:
                     aux_loss = 0
 
+                accumulated_loss += gpt_loss
+                accumulated_gpt_loss += gpt_loss.item() / self.strategy.accumulated_gradient
+                if self.aux_loss:
+                    accumulated_aux_loss += aux_loss.item() / self.strategy.accumulated_gradient
+                
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 
-                loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
-                logs_dict = {
-                    "gpt_loss": gpt_loss.item(),
-                    "loss_mean": loss_mean,
-                    "lr": self.scheduler.get_last_lr()[0],
-                }
-                if self.aux_loss:
-                    logs_dict["aux_loss"] = aux_loss.item()
-                # step bar
-                logs_dict = self.strategy.all_reduce(logs_dict)
-                step_bar.set_postfix(logs_dict)
-                step_bar.update()
+                # loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
                 
-                if dist.get_rank() == 0:
-                    print(logs_dict)
-
+                # logs_dict = {
+                #     "gpt_loss": gpt_loss.item(),
+                #     "loss_mean": loss_mean,
+                #     "lr": self.scheduler.get_last_lr()[0],
+                # }
+                # if self.aux_loss:
+                #     logs_dict["aux_loss"] = aux_loss.item()
+                # step bar
+                # if dist.get_rank() == 0:
+                    # print(logs_dict)
+                
+                torch.cuda.empty_cache()
+                
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
                     global_step = step // self.strategy.accumulated_gradient
+                    loss_mean = loss_mean * 0.9 + 0.1 * accumulated_gpt_loss
+                    logs_dict = {
+                        "gpt_loss": accumulated_gpt_loss,
+                        "loss_mean": loss_mean,
+                        "lr": self.scheduler.get_last_lr()[0],
+                    }
+                    if self.aux_loss:
+                        logs_dict["aux_loss"] = accumulated_aux_loss
+                    logs_dict = self.strategy.all_reduce(logs_dict)
+                    step_bar.set_postfix(logs_dict)
+                    step_bar.update()
+                    
+                    accumulated_loss = 0
+                    accumulated_gpt_loss = 0
+                    accumulated_aux_loss = 0
+                    
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
 
                 step += 1
-                # if self.strategy.is_rank_0():
-                #     step_logs = {"train/%s" % k: v for k, v in {**logs_dict, "steps": step}.items()}
-                #     self._wandb.log(step_logs)
 
             epoch_bar.update()
 
