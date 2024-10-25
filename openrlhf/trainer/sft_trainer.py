@@ -171,7 +171,7 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     
-                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    # print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
                     """ debug code
                     import torch.distributed as dist
@@ -249,10 +249,7 @@ class SFTTrainer(ABC):
 
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
-                self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                 
-                torch.cuda.empty_cache()
-
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
                 logs_dict = {
                     "gpt_loss": gpt_loss.item(),
@@ -273,6 +270,7 @@ class SFTTrainer(ABC):
                 if step % self.strategy.accumulated_gradient == 0:
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
+                    self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
 
                 step += 1

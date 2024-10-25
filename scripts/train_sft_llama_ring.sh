@@ -28,4 +28,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed openrlhf/cli/train_sft_dev.py \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project='openrlhf_train_sft' \
    --wandb_run_name='llama3.1-8b-sft-ring' \
-   --ring_attn_size=4;
+   --ring_attn_size=2;
