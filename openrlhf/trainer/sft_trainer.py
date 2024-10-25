@@ -1,7 +1,7 @@
 import math
 from abc import ABC
 import os
-
+import wandb
 import torch
 from torch import nn
 from torch.optim import Optimizer
@@ -86,8 +86,6 @@ class SFTTrainer(ABC):
         self._wandb = None
         self._tensorboard = None
         if self.strategy.args.use_wandb and self.strategy.is_rank_0():
-            import wandb
-
             self._wandb = wandb
             if not wandb.api.api_key:
                 wandb.login(key=strategy.args.use_wandb)
@@ -173,23 +171,23 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     
-                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    # print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
-                    # """ debug code
+                    """ debug code
                     import torch.distributed as dist
                     if dist.get_rank() == 0:
                         import pdb; pdb.set_trace()
                     dist.barrier()
 
-                    # below is testing code
-                    # back_labels = labels.clone()
-                    # back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    # back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
-                    # local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
-                    # back_labels[local_mask] = 0
-                    # per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
-                    # manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-                    # """
+                    below is testing code
+                    back_labels = labels.clone()
+                    back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
+                    back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
+                    local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
+                    back_labels[local_mask] = 0
+                    per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
+                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
+                    """
                     
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
@@ -235,8 +233,8 @@ class SFTTrainer(ABC):
                     
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
 
-                    # if rank == 0:
-                    #     print("--> ring attention <-- gpt_loss is:", gpt_loss)
+                    if rank == 0:
+                        print("--> ring attention <-- gpt_loss is:", gpt_loss)
 
                 # mixtral
                 if self.aux_loss:
@@ -270,6 +268,8 @@ class SFTTrainer(ABC):
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
 
                 step += 1
+                step_logs = {"train/%s" % k: v for k, v in {**logs_dict, "steps": step}.items()}
+                self._wandb.log(step_logs)
 
             epoch_bar.update()
 
@@ -298,7 +298,7 @@ class SFTTrainer(ABC):
         # print(f"check save states ---> global_step: {global_step}, save_steps: {args.save_steps}")
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
-            print(f"check eval states ---> global_step: {global_step}, save_steps: {args.save_steps}, tag: {tag}")
+            # print(f"check eval states ---> global_step: {global_step}, save_steps: {args.save_steps}, tag: {tag}")
             self.strategy.save_model(self.model.model, self.tokenizer, os.path.join(args.save_path, tag))
             self.strategy.save_ckpt(
                 self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states

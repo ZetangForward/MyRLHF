@@ -1,6 +1,6 @@
 export CUDA_LAUNCH_BLOCKING=1
 
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
    --dataset /data/zecheng/lcm_stack/dataset/training_data/dev_Qwen_query_answer_gen \
    --input_key instruction_str \
@@ -27,4 +27,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project='openrlhf_train_sft' \
-   --wandb_run_name='llama3.1-8b-sft-vanilla';
+   --wandb_run_name='llama3.1-8b-sft-ring' \
+   --ring_attn_size=2;
