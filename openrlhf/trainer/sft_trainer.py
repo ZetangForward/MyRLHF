@@ -296,6 +296,7 @@ class SFTTrainer(ABC):
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                     self.optimizer.zero_grad()
+                    self.scheduler.step()
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
                     
                 step += 1
