@@ -32,6 +32,7 @@ def train(args):
         max_count=args.max_samples,
         train_split=args.train_split,
         eval_split=args.eval_split,
+        multiple_of=args.ring_attn_size,
     )
 
     train_dataset = SFTDataset(

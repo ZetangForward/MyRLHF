@@ -149,6 +149,7 @@ class SFTTrainer(ABC):
             accumulated_loss = 0
             accumulated_gpt_loss = 0
             accumulated_aux_loss = 0
+            
             for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
@@ -190,8 +191,7 @@ class SFTTrainer(ABC):
                     back_labels[local_mask] = 0
                     per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
                     manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-                    """
-                    
+                    """       
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
                     num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
@@ -238,12 +238,13 @@ class SFTTrainer(ABC):
                     
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
                     gpt_loss = gpt_loss / self.strategy.accumulated_gradient
-                    print(f"\n--> ring attention; rank {dist.get_rank()} <-- gpt_loss is:", gpt_loss)
+                    # print(f"\n--> ring attention; rank {dist.get_rank()} <-- gpt_loss is:", gpt_loss)
 
                     # import torch.distributed as dist
                     # if dist.get_rank() == 0:
                     #     import pdb; pdb.set_trace()
                     # dist.barrier()
+                
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
@@ -251,9 +252,9 @@ class SFTTrainer(ABC):
                     aux_loss = 0
 
                 accumulated_loss += gpt_loss
-                accumulated_gpt_loss += gpt_loss.item() / self.strategy.accumulated_gradient
+                accumulated_gpt_loss += gpt_loss.item()
                 if self.aux_loss:
-                    accumulated_aux_loss += aux_loss.item() / self.strategy.accumulated_gradient
+                    accumulated_aux_loss += aux_loss.item()
                 
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
@@ -270,11 +271,12 @@ class SFTTrainer(ABC):
                 # step bar
                 # if dist.get_rank() == 0:
                     # print(logs_dict)
-                
-                torch.cuda.empty_cache()
+                step_bar.update()
                 
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
+                    if dist.get_rank() == 0:
+                        print(f"current step: {step}, begin to log and update model parameters ...")
                     global_step = step // self.strategy.accumulated_gradient
                     loss_mean = loss_mean * 0.9 + 0.1 * accumulated_gpt_loss
                     logs_dict = {
@@ -286,7 +288,6 @@ class SFTTrainer(ABC):
                         logs_dict["aux_loss"] = accumulated_aux_loss
                     logs_dict = self.strategy.all_reduce(logs_dict)
                     step_bar.set_postfix(logs_dict)
-                    step_bar.update()
                     
                     accumulated_loss = 0
                     accumulated_gpt_loss = 0
@@ -294,8 +295,11 @@ class SFTTrainer(ABC):
                     
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
+                    self.optimizer.zero_grad()
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-
+                    
+                    torch.cuda.empty_cache()
+                    
                 step += 1
 
             epoch_bar.update()
