@@ -12,7 +12,7 @@ from openrlhf.datasets import SFTDataset
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 from flash_attn.utils.distributed import all_gather, all_reduce
-
+import torch.distributed as dist
 
 class GPTLMLoss(nn.Module):
     """
@@ -200,6 +200,8 @@ class SFTTrainer(ABC):
                         packed_seq_lens=packed_seq_lens, 
                         return_output=True,
                     )["logits"]
+                    # print(f"save inputs and logits for rank {rank}")
+                    # torch.save(inputs.cpu(), f"/data/zecheng/MyRLHF/debug_space/ring_attention/inputs_{rank}.pt")
                     
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
@@ -229,12 +231,16 @@ class SFTTrainer(ABC):
                     
                     # print(f"local rank {rank}, per_token_logps sum: {per_token_logps.sum()}")
 
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) # 
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
                     
-                    gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens  # compute loss on non-masked tokens
+                    gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
 
-                    print("\n--> ring attention; rank {rank} <-- gpt_loss is:", gpt_loss)
+                    print(f"\n--> ring attention; rank {dist.get_rank()} <-- gpt_loss is:", gpt_loss)
 
+                    # import torch.distributed as dist
+                    # if dist.get_rank() == 0:
+                    #     import pdb; pdb.set_trace()
+                    # dist.barrier()
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
@@ -259,6 +265,9 @@ class SFTTrainer(ABC):
                 logs_dict = self.strategy.all_reduce(logs_dict)
                 step_bar.set_postfix(logs_dict)
                 step_bar.update()
+                
+                if dist.get_rank() == 0:
+                    print(logs_dict)
 
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
