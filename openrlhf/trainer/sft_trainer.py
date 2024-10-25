@@ -275,8 +275,8 @@ class SFTTrainer(ABC):
                 torch.cuda.empty_cache()
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
-                    if dist.get_rank() == 0:
-                        print(f"current step: {step}, begin to log and update model parameters ...")
+                    # if dist.get_rank() == 0:
+                    #     print(f"current step: {step}, begin to log and update model parameters ...")
                     global_step = step // self.strategy.accumulated_gradient
                     loss_mean = loss_mean * 0.9 + 0.1 * accumulated_gpt_loss
                     logs_dict = {
