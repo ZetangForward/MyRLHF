@@ -32,7 +32,7 @@ def train(args):
         max_count=args.max_samples,
         train_split=args.train_split,
         eval_split=args.eval_split,
-        multiple_of=args.ring_attn_size,
+        train_batch_size=args.train_batch_size,
     )
 
     train_dataset = SFTDataset(
@@ -70,7 +70,7 @@ def train(args):
     if eval_dataset is not None:
         eval_dataloader = strategy.setup_dataloader(
             eval_dataset,
-            args.micro_train_batch_size,
+            args.train_batch_size,
             True,
             False,
             eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,

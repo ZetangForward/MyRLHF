@@ -272,7 +272,7 @@ class SFTTrainer(ABC):
                 # if dist.get_rank() == 0:
                     # print(logs_dict)
                 step_bar.update()
-                
+                torch.cuda.empty_cache()
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
                     if dist.get_rank() == 0:
@@ -297,8 +297,6 @@ class SFTTrainer(ABC):
                     self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                     self.optimizer.zero_grad()
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-                    
-                    torch.cuda.empty_cache()
                     
                 step += 1
 

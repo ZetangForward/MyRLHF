@@ -48,7 +48,7 @@ def blending_datasets(
     stopping_strategy="first_exhausted",
     train_split="train",
     eval_split="test",
-    multiple_of=1,
+    train_batch_size=8,
 ):
     datasets = datasets.split(",")
     probabilities = list(map(float, probabilities.split(",")))
@@ -87,10 +87,17 @@ def blending_datasets(
             data = load_dataset(dataset, data_dir=data_dir)
             strategy.print(f"loaded {dataset} from files")
 
+
         if train_split and train_split in data:
             train_data = data[train_split].select(range(min(max_count, len(data[train_split]))))
         else:
             train_data = data.select(range(min(max_count, len(data))))
+
+        # The residual data causes gradient accumulation issues in the last few steps, 
+        # here we automatically discard the extra samples at the end.
+        total_size = len(train_data)
+        keep_size = (total_size // train_batch_size) * train_batch_size
+        train_data = train_data.select(range(keep_size))
         train_data_list.append(train_data)
         
         if return_eval:
@@ -107,7 +114,9 @@ def blending_datasets(
 
     # The residual data causes gradient accumulation issues in the last few steps, 
     # here we automatically discard the extra samples at the end.
-    train_data_list = train_data_list[: len(train_data_list) // multiple_of * multiple_of]
+    # print(len(train_data_list))
+    # print(len(train_data_list) // multiple_of * multiple_of)
+    # train_data_list = train_data_list[: len(train_data_list) // multiple_of * multiple_of]
     
     train_dataset = interleave_datasets(
         train_data_list,
