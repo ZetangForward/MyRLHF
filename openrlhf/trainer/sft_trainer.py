@@ -171,7 +171,7 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
                     
-                    # print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
+                    print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
                     
                     """ debug code
                     import torch.distributed as dist
