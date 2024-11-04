@@ -73,10 +73,7 @@ class SFTTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
-
         self.loss_fn = GPTLMLoss()
-
-        # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
 
         # packing samples
@@ -185,8 +182,6 @@ class SFTTrainer(ABC):
                         packed_seq_lens=packed_seq_lens, 
                         return_output=True,
                     )["logits"]
-                    # print(f"save inputs and logits for rank {rank}")
-                    # torch.save(inputs.cpu(), f"/data/zecheng/MyRLHF/debug_space/ring_attention/inputs_{rank}.pt")
                     
                     total_seq_len = labels.numel()
                     local_seq_len = total_seq_len // self.strategy.ring_attn_size
@@ -201,8 +196,6 @@ class SFTTrainer(ABC):
                     ########################### loss computation ###########################
 
                     local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    # print(f"rank {rank}, local_slice: {local_slice}")
-                    
                     local_label = labels[:, local_slice]
                     if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
                         local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
@@ -213,19 +206,10 @@ class SFTTrainer(ABC):
                     local_label[local_mask] = 0
                     per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
                     per_token_logps = per_token_logps * (~local_mask)
-                    
-                    # print(f"local rank {rank}, per_token_logps sum: {per_token_logps.sum()}")
 
                     gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
-                    
                     gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
                     gpt_loss = gpt_loss / self.strategy.accumulated_gradient
-                    # print(f"\n--> ring attention; rank {dist.get_rank()} <-- gpt_loss is:", gpt_loss)
-
-                    # import torch.distributed as dist
-                    # if dist.get_rank() == 0:
-                    #     import pdb; pdb.set_trace()
-                    # dist.barrier()
                 
                 # mixtral
                 if self.aux_loss:
@@ -240,25 +224,12 @@ class SFTTrainer(ABC):
                 
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
+                self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                 
-                # loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
-                
-                # logs_dict = {
-                #     "gpt_loss": gpt_loss.item(),
-                #     "loss_mean": loss_mean,
-                #     "lr": self.scheduler.get_last_lr()[0],
-                # }
-                # if self.aux_loss:
-                #     logs_dict["aux_loss"] = aux_loss.item()
-                # step bar
-                # if dist.get_rank() == 0:
-                    # print(logs_dict)
                 step_bar.update()
                 torch.cuda.empty_cache()
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
-                    # if dist.get_rank() == 0:
-                    #     print(f"current step: {step}, begin to log and update model parameters ...")
                     global_step = step // self.strategy.accumulated_gradient
                     loss_mean = loss_mean * 0.9 + 0.1 * accumulated_gpt_loss
                     logs_dict = {
@@ -276,9 +247,6 @@ class SFTTrainer(ABC):
                     accumulated_aux_loss = 0
                     
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
-                    self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
-                    self.optimizer.zero_grad()
-                    self.scheduler.step()
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
                     
                 step += 1
@@ -328,7 +296,7 @@ class SFTTrainer(ABC):
                 disable=not self.strategy.is_rank_0(),
             )
 
-            for prompts_id_lens, inputs, attention_masks, infos in eval_dataloader:
+            for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
@@ -336,14 +304,8 @@ class SFTTrainer(ABC):
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-
-                # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
-                )
+                # create labels
+                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                 if not self.pretrain_mode:
                     if self.packing_samples:
@@ -355,7 +317,35 @@ class SFTTrainer(ABC):
                         for label, source_len in zip(labels, prompts_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
-                loss = self.loss_fn(output.logits, labels)
+                if self.strategy.ring_attn_size == 1: # vanilla sft training
+                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
+                    loss = self.loss_fn(output.logits, labels)
+                else:
+                    assert self.packing_samples, "Ring attention only works with packing samples"
+                    num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
+
+                    local_logits = self.model(
+                        inputs,
+                        attention_mask=attention_mask,
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=packed_seq_lens, 
+                        return_output=True,
+                    )["logits"]
+
+                    total_seq_len = labels.numel()
+                    local_seq_len = total_seq_len // self.strategy.ring_attn_size
+
+                    local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
+                    local_label = labels[:, local_slice]
+                    if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
+                        local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
+                    
+                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)
+                    local_label[local_mask] = 0
+                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
+                    per_token_logps = per_token_logps * (~local_mask)
+                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
+                    loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
 
                 times += 1
                 loss_sum += loss.item()
@@ -371,4 +361,5 @@ class SFTTrainer(ABC):
                 elif self._tensorboard is not None:
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
+                        
         self.model.train()  # reset model state
