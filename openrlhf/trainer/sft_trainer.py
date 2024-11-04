@@ -245,7 +245,6 @@ class SFTTrainer(ABC):
                     accumulated_loss = 0
                     accumulated_gpt_loss = 0
                     accumulated_aux_loss = 0
-                    
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
                     
@@ -361,5 +360,5 @@ class SFTTrainer(ABC):
                 elif self._tensorboard is not None:
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
-                        
+
         self.model.train()  # reset model state
