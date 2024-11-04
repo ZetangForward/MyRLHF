@@ -11,14 +11,14 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain '/public/home/zecheng/workspace/hf_models/aaronday3/Phi-3-small-128k-instruct' \
-   --save_path ${SAVE_DIR}/checkpoint/model/llama3.1-8b-tool-sft \
-   --ckpt_path ${SAVE_DIR}/checkpoint/opt/llama3.1-8b-tool-sft \
+   --save_path ${SAVE_DIR}/checkpoint/model/Phi-3-small-128k-tool-sft \
+   --ckpt_path ${SAVE_DIR}/checkpoint/opt/Phi-3-small-128k-tool-sft \
    --save_steps 50 \
    --num_process 20 \
    --logging_steps 1 \
    --eval_steps -1 \
-   --zero_stage 3 \
-   --max_epochs 3 \
+   --zero_stage 1 \
+   --max_epochs 1 \
    --packing_samples \
    --bf16 \
    --flash_attn \
@@ -26,6 +26,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project='debug_openrlhf_train_sft' \
-   --wandb_run_name='llama3.1-8b-sft-ring' \
+   --wandb_project='openrlhf_sft' \
+   --wandb_run_name='Phi-3-small-128k-tool-sft-ring-4' \
    --ring_attn_size 4;
