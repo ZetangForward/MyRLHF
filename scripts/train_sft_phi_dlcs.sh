@@ -10,7 +10,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --micro_train_batch_size 1 \
    --lora_rank 32 \
    --apply_chat_template \
-   --pretrain '/public/home/zecheng/workspace/hf_models/Meta-Llama-3.1-8B-Instruct' \
+   --pretrain '/public/home/zecheng/workspace/hf_models/aaronday3/Phi-3-small-128k-instruct' \
    --save_path ${SAVE_DIR}/checkpoint/model/llama3.1-8b-tool-sft \
    --ckpt_path ${SAVE_DIR}/checkpoint/opt/llama3.1-8b-tool-sft \
    --save_steps 50 \
@@ -24,6 +24,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --include localhost:0,1,2,3,4,5,6
    --flash_attn \
    --learning_rate 5e-6 \
    --gradient_checkpointing \
-   --use_tensorboard ${SAVE_DIR}/checkpoint/tensorboard/llama3.1-8b-tool-sft/tensorboard \
    --disable_fast_tokenizer \
-   --ring_attn_size 8;
+   --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
+   --wandb_project='debug_openrlhf_train_sft' \
+   --wandb_run_name='llama3.1-8b-sft-ring' \
+   --ring_attn_size 4;
