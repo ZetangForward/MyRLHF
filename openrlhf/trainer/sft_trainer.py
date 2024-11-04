@@ -174,24 +174,6 @@ class SFTTrainer(ABC):
                 if self.strategy.ring_attn_size == 1: # vanilla sft training
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                     gpt_loss = self.loss_fn(output.logits, labels)
-                    
-                    # print("--> vanilla attention <-- gpt_loss is:", gpt_loss)
-                    
-                    """ debug code
-                    import torch.distributed as dist
-                    if dist.get_rank() == 0:
-                        import pdb; pdb.set_trace()
-                    dist.barrier()
-
-                    below is testing code
-                    back_labels = labels.clone()
-                    back_labels = back_labels.roll(shifts=-1, dims=1)  # shift the label to the left to avoid the bos token 
-                    back_labels[:, -1] = self.loss_fn.IGNORE_INDEX
-                    local_mask = (back_labels == self.loss_fn.IGNORE_INDEX)
-                    back_labels[local_mask] = 0
-                    per_token_logps = torch.gather(output.logits.log_softmax(-1), dim=2, index=back_labels.unsqueeze(2)).squeeze(2)
-                    manual_cal_loss = -torch.sum(per_token_logps * (~local_mask)) / (~local_mask).sum()
-                    """       
                 else:
                     assert self.packing_samples, "Ring attention only works with packing samples"
                     num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
