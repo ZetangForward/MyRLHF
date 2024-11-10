@@ -1,7 +1,7 @@
 export CUDA_LAUNCH_BLOCKING=1
 SAVE_DIR='/public/home/zecheng/workspace/zecheng/ckpt/acl2025'
 
-deepspeed openrlhf/cli/train_sft_dev.py \
+deepspeed --include=localhost:0,1,2,3,4,5,6,7 openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
    --dataset /public/home/zecheng/workspace/zecheng/data/acl2025/Qwen_query_answer_gen \
    --input_key instruction_str \

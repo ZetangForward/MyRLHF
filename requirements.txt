@@ -3,7 +3,6 @@ bitsandbytes
 datasets
 deepspeed==0.15.0
 einops
-flash-attn==2.6.1
 isort
 jsonlines
 loralib
@@ -14,7 +13,7 @@ ray[default]==2.12.0
 torch
 torchmetrics
 tqdm
-transformers==4.44.2
+transformers==4.46.1
 transformers_stream_generator
 wandb
 tensorboard
