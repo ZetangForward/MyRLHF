@@ -22,7 +22,7 @@ TOOL_LOCATION_SYSTEM_PROMPT_TEMPLATE = (
     "Ensure that you provide a clear and concise description of each tool's capabilities and usage based on the documentation provided.\n"
     "Strictly follow the descriptions to locate and outline the relevant tool documentation listed below as needed.\n"
     "{tools}"
-) 
+)
 
 
 TOOL_LOCATION_DEMONSTRATION_PROMPT = (

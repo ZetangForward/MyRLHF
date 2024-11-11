@@ -100,10 +100,11 @@ class SingleAPIParser:
 
 
 class ToolSample:
-    def __init__(self, sample = None, model_name: str = 'llama-3', type: str = 'parallel', total_pool: List = None):  
+    def __init__(self, sample = None, model_name: str = 'llama-3', type: str = 'parallel', benchmark_type: str = 'tool_calling', total_pool: List = None):  
         self.model_name = model_name
         self.type = type
         self.all_apis = total_pool
+        self.benchmark_type = benchmark_type
 
         if sample is not None:
             self.query = sample["query"].strip()
@@ -148,8 +149,13 @@ class ToolSample:
             self.golden_api_names = set([rename_api(api["api_name"]) for api in self.selection_list])
 
         ### prompt template
-        self.system_prompt_template = TOOL_CALLING_SYSTEM_PROMPT_TEMPLATE
-        self.demonstration_prompt = TOOL_DEMONSTRATION_PROMPT
+        if benchmark_type == 'tool_calling':
+            self.system_prompt_template = TOOL_CALLING_SYSTEM_PROMPT_TEMPLATE
+            self.demonstration_prompt = TOOL_DEMONSTRATION_PROMPT
+        elif benchmark_type == 'tool_location':
+            self.system_prompt_template = TOOL_LOCATION_SYSTEM_PROMPT_TEMPLATE
+            self.demonstration_prompt = TOOL_LOCATION_DEMONSTRATION_PROMPT
+
         self.query_prompt = "<QUERY> {query} </QUERY>\n"
         self.plan_then_gen_prompt = "<PLAN> {plan} </PLAN>\n<ANSWER> {answer} </ANSWER>\n"
         self.call_parameter_prompts = {
@@ -164,14 +170,15 @@ class ToolSample:
 
     def create_demonstration(self, benchmark_type='tool_calling', return_str=False):
         system_prompt = self.create_system_prompt()
-
+        source_docs = self.create_current_api_str()
         if return_str:
-            return system_prompt + '\n' + self.demonstration_prompt.format(query=self.query, demonstration=self.flatten_conv())
+            return system_prompt + '\n' + self.demonstration_prompt.format(query=self.query, demonstration=self.flatten_conv(benchmark_type))
 
         return {
             "system_prompt": system_prompt,
             "query": self.query,
-            "answer": self.flatten_conv(benchmark_type)
+            "answer": self.flatten_conv(benchmark_type),
+            "source_docs": source_docs,
         }
 
     def post_process_api_list(self):
@@ -213,8 +220,10 @@ class ToolSample:
 
     def create_current_api_str(self):
         current_api_str = ""
-        for cnt, api in enumerate(self.api_list):
-            current_api_str += f"<API_{cnt}>\n{SingleAPIParser(api).flatten_api_info()}\n</API_{cnt}>\n"
+        for api in self.api_list:
+            parsed_api = SingleAPIParser(api)
+            parsed_api.api_id = self.search_api_id(parsed_api.api_name)
+            current_api_str += f"{parsed_api.flatten_api_info()}"
         return current_api_str
 
 
@@ -257,10 +266,6 @@ class ToolSample:
 
 
     def create_system_prompt(self):
-        """
-        1. add ``self check'', if one API is not in the api_list, then return False
-        2. add ``self add'', if the golden_api_names is not in the api_names, then add golden_api_names to api_names
-        """
         if not self.golden_api_names.issubset(self.all_api_names):
             return False
         return self.system_prompt
@@ -272,7 +277,10 @@ class ToolSample:
             return False
         # call_parameters = self.create_call_parameters()
         model_output = self.flatten_conv()
-        return {"system_prompt": system_prompt, "query": self.query_prompt.format(query=self.query), "call_parameters": self.call_parameter, "model_output": model_output}
+        source_docs = f'<TOOL_DOC>\n{self.create_current_api_str()}\n</TOOL_DOC>'
+
+        return {"system_prompt": system_prompt, "query": self.query_prompt.format(query=self.query), "call_parameters": self.call_parameter, "model_output": model_output, "source_docs": source_docs}
+
 
     def create_action_plan(self):
         action_plan = []
@@ -280,6 +288,7 @@ class ToolSample:
             single_api = SingleAPIParser(api)
             action_plan.append(single_api.get_call_parameter())
         return action_plan
+
 
     def parse_golden_message(self):
         golden_api_lst = []
@@ -289,6 +298,7 @@ class ToolSample:
             plan_answer = parsed_api.flatten_conv()
             golden_api_lst.append((golden_api_str, plan_answer))
         return golden_api_lst    
+
 
     def flatten_conv(self, benchmark_type='tool_calling'):
         if len(self.plan_list) == 1:
