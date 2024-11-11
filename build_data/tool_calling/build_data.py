@@ -1,13 +1,14 @@
 from modelzipper.tutils import *
 from tqdm import tqdm
 from typing import List, Optional, Dict, Any, Tuple
-import sys
+import math
 import random
 from transformers import AutoTokenizer
 from tool_parser import *
 from prompt_pool import *
 from tqdm import tqdm
 from loguru import logger
+
 logger.add("my_log_file.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}")
 
 
@@ -48,7 +49,7 @@ def build_single_api_benchmark(
     
     for api_pool_num in api_pool_nums:
         # re-calculate the num_samples since some apis are treated as the demonstration
-        cur_num_samples = num_samples + num_samples // api_pool_num
+        cur_num_samples = num_samples + math.ceil(num_samples / api_pool_num)
         bucket_pool = []
         query_bucket = [raw_content[:cur_num_samples][i: i + api_pool_num + 1] for i in range(0, cur_num_samples, api_pool_num + 1)]
 
