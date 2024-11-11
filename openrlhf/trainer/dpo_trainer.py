@@ -2,7 +2,6 @@ import math
 import os
 from abc import ABC
 from typing import Dict, List, Optional, Tuple, Union
-
 import torch
 import torch.distributed as dist
 from flash_attn.utils.distributed import all_gather

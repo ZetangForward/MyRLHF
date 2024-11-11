@@ -10,6 +10,7 @@
 #SBATCH --partition=belt_road             
 #SBATCH --exclusive
 
+source activate
 conda activate zecheng
 
 export http_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/ 

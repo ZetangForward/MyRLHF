@@ -2,18 +2,12 @@ MASTER_ADDR=`scontrol show hostname $SLURM_JOB_NODELIST | head -n1`
 MASTER_PORT=$((RANDOM % 101 + 20000))
 echo $MASTER_ADDR
 echo $MASTER_PORT
+export NCCL_SOCKET_IFNAME=eth0
+export NCCL_DEBUG=INFO
 
 SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 
-function makehostfile() {
-perl -e '$slots=split /,/, $ENV{"SLURM_STEP_GPUS"};
-$slots=8 if $slots==0; # workaround 8 gpu machines
-@nodes = split /\n/, qx[scontrol show hostnames $ENV{"SLURM_JOB_NODELIST"}];
-print map { "$b$_ slots=$slots\n" } @nodes'
-}
-makehostfile > hostfile
-
-deepspeed --hostfile=hostfile --num_nodes 1 --no_ssh_check --master_addr $MASTER_ADDR --launcher SLURM openrlhf/cli/train_sft_dev.py \
+deepspeed --master_addr $MASTER_ADDR --launcher SLURM openrlhf/cli/train_sft_dev.py \
    --max_len 64000 \
    --dataset '/mnt/petrelfs/tangzecheng/transfer_data/Qwen_query_answer_gen' \
    --input_key instruction_str \

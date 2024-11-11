@@ -1,36 +1,29 @@
-MASTER_ADDR=`scontrol show hostname $SLURM_JOB_NODELIST | head -n1`
-MASTER_PORT=$((RANDOM % 101 + 20000))
-echo $MASTER_ADDR
-echo $MASTER_PORT
+set -x
 
-SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
-
-hostfile=''
-deepspeed --include localhost:0,1,2,3,4,5,6,7 --launcher SLURM openrlhf/cli/train_sft_dev.py \
-   --max_len 64000 \
-   --dataset '/mnt/petrelfs/tangzecheng/transfer_data/Qwen_query_answer_gen' \
-   --input_key instruction_str \
-   --output_key pred_str \
-   --train_batch_size 64 \
-   --micro_train_batch_size 1 \
-   --lora_rank 32 \
-   --apply_chat_template \
-   --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/checkpoint/model/Llama-3-8B-Instruct-128k-tool-sft \
-   --ckpt_path ${SAVE_DIR}/checkpoint/opt/Llama-3-8B-Instruct-tool-sft \
-   --save_steps 50 \
-   --num_process 20 \
-   --logging_steps 1 \
-   --eval_steps -1 \
+read -r -d '' training_commands <<EOF
+openrlhf.cli.train_sft \
+   --max_len 4096 \
+   --input_key text \
+   --dataset DKYoon/SlimPajama-6B \
+   --pretrain_mode \
+   --train_batch_size 128 \
+   --micro_train_batch_size 4 \
+   --max_samples 1000000 \
+   --pretrain meta-llama/Meta-Llama-3.1-8B-Instruct \
+   --save_path ./checkpoint/llama3.1-8b-cft \
+   --save_steps 5000 \
+   --logging_steps 100 \
+   --eval_steps 500 \
    --zero_stage 3 \
-   --max_epochs 2 \
-   --packing_samples \
+   --max_epochs 1 \
    --bf16 \
    --flash_attn \
-   --learning_rate 5e-6 \
+   --learning_rate 3e-4 \
    --gradient_checkpointing \
-   --disable_fast_tokenizer \
-   --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project='openrlhf_sft' \
-   --wandb_run_name='Llama-3-8B-Instruct-80K-tool-sft-ring-2' \
-   --ring_attn_size 2
+   --packing_samples
+EOF
+    # --wandb [WANDB_TOKENS]
+
+if [[ ${1} != "slurm" ]]; then
+    deepspeed --module $training_commands
+fi
