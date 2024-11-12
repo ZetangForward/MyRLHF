@@ -12,9 +12,10 @@ from loguru import logger
 logger.add("my_log_file.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}")
 
 
-def read_all_apis(api_list: List, api_type: str = 'single'):
+def read_all_apis(api_list: List, api_type: str = 'single', api_id_st: int = 0):
     unique_api_pool = []
     seen = set()
+
     if api_type == 'single':
         for api in api_list:
             identifier = (api['tool_name'], api['api_name'])
@@ -22,15 +23,29 @@ def read_all_apis(api_list: List, api_type: str = 'single'):
                 unique_api_pool.append(api)
                 seen.add(identifier)
     elif api_type == 'multiple':
+        for api in api_list:
+            api_1, api_2 = api['api_1'][0], api['api_2'][0]
+            for api in [api_1, api_2]:
+                identifier = (api['tool_name'], api['api_name'])
+                if identifier not in seen:
+                    unique_api_pool.append(api)
+                    seen.add(identifier)
+    elif api_type == 'parallel':
         pass
+    
     # re-allocate api_id for each api
-    query_api_mapping = dict()  # query to API id
     api_name_id_mapping = dict()
     for id_, api in enumerate(unique_api_pool):
-        api['api_cnt'] = id_
-        api_name_id_mapping[api['api_name']] = id_
+        api['api_cnt'] = id_ + api_id_st
+        api_name_id_mapping[api['api_name']] = id_ + api_id_st
+
+    query_api_mapping = dict()  # query to API id
     for sample in api_list:
-        query_api_mapping[sample['api_name']] = api_name_id_mapping[sample['api_name']]
+        if api_type == 'single':
+            query_api_mapping[sample['api_name'] ] = api_name_id_mapping[sample['api_name']]
+        else:
+            query_api_mapping[sample['api_1'][0]['api_name']] = api_name_id_mapping[sample['api_1'][0]['api_name']]
+            query_api_mapping[sample['api_2'][0]['api_name']] = api_name_id_mapping[sample['api_2'][0]['api_name']]
     return unique_api_pool, query_api_mapping
 
 
@@ -121,7 +136,7 @@ def build_single_api_benchmark(
             logger.info(f"Avg Length of {api_pool_num} is {total_length / num_samples}")
 
 
-def build_parallel_api_benchmark(
+def build_multiple_api_benchmark(
         raw_content: List[Dict],
         num_samples: int,
         tokenizer: AutoTokenizer,
@@ -132,60 +147,62 @@ def build_parallel_api_benchmark(
     ):
     for api_pool_num in api_pool_nums:
         # re-calculate the num_samples since some apis are treated as the demonstration
+        cur_api_pool_num = api_pool_num // 2  ## since each query has two queries
         cur_num_samples = num_samples + math.ceil(num_samples / api_pool_num)
         bucket_pool = []
-        query_bucket = [raw_content[:cur_num_samples][i: i + api_pool_num + 1] for i in range(0, cur_num_samples, api_pool_num + 1)]
-
+        query_bucket = [raw_content[:cur_num_samples][i: i + cur_api_pool_num + 1] for i in range(0, cur_num_samples, cur_api_pool_num + 1)]
+        logger.info(f"current setting has {len(query_bucket)} buckets, each has {len(query_bucket[-1])} unique APIs")
         # construct a global api pool
         for query_group in tqdm(query_bucket, unit="sample"):
-            current_api_pool, _ = read_all_apis(query_group, api_type='single')
+            # 50 queries -> 100 apis
+            current_api_pool, _ = read_all_apis(query_group, api_type='multiple')
             other_api_pool = [query for query in raw_content if query not in query_group]
             if len(current_api_pool) >= api_pool_num + 1:
                 bucket_pool.append(current_api_pool)
                 continue
-            remain_api_pool, _ = read_all_apis(other_api_pool, api_type='single')
+            remain_api_pool, _ = read_all_apis(other_api_pool, api_type='multiple')
             padded_apis = random.sample(remain_api_pool, api_pool_num+1-len(current_api_pool))
             bucket_pool.append(current_api_pool + padded_apis)
 
         logger.info(f"current setting has {len(bucket_pool)} buckets, each has {len(bucket_pool[-1])} unique APIs")
 
-        processed_rapid_single_api = [dict(system_prompt=None, query=[], model_output=[], call_parameters=[]) for _ in range(len(bucket_pool))]
+        processed_rapid_multiple_api = [dict(system_prompt=None, query=[], model_output=[], call_parameters=[], source_docs=[]) for _ in range(len(bucket_pool))]
         
         for b_id, query_group in enumerate(query_bucket):
             for sample in query_group:
-                tool_sample = ToolSample(sample, type="single", total_pool=bucket_pool[b_id])
+                tool_sample = ToolSample(sample, type="multiple", total_pool=bucket_pool[b_id])
                 tmp = tool_sample.create_reason_answer_mseeage()
                 if tmp:
-                    if processed_rapid_single_api[b_id]['system_prompt'] is None:
+                    if processed_rapid_multiple_api[b_id]['system_prompt'] is None:
                         system_prompt = tool_sample.create_demonstration(benchmark_type)['system_prompt']
                         query = tool_sample.create_demonstration(benchmark_type)['query']
                         answer = tool_sample.create_demonstration(benchmark_type)['answer']
-                        processed_rapid_single_api[b_id]['system_prompt'] = [
+                        processed_rapid_multiple_api[b_id]['system_prompt'] = [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": query},
                             {"role": "assistant", "content": answer},
                         ]
                         continue  # skip the first one since this case is used for demonstration
-                    processed_rapid_single_api[b_id]['query'].append(tmp['query'])
-                    processed_rapid_single_api[b_id]['call_parameters'].append(tmp['call_parameters'])
+                    processed_rapid_multiple_api[b_id]['query'].append(tmp['query'])
+                    processed_rapid_multiple_api[b_id]['call_parameters'].append(tmp['call_parameters'])
         
         # convert to json format
-        processed_single_apis_json = dict()
-        for b_id, api_pool in enumerate(processed_rapid_single_api):
-            processed_single_apis_json[str(b_id)] = api_pool  # to minimize the saving disk space
+        processed_multiple_apis_json = dict()
+        for b_id, api_pool in enumerate(processed_rapid_multiple_api):
+            processed_multiple_apis_json[str(b_id)] = api_pool  # to minimize the saving disk space
 
-        num_cases = sum(len(api['query']) for api in processed_rapid_single_api if api['query'])
+        num_cases = sum(len(api['query']) for api in processed_rapid_multiple_api if api['query'])
         logger.info(f"Total number of query: {num_cases}")
         
         if save_dir is not None:
-            auto_save_data(processed_single_apis_json, f"{save_dir}/rapid_single_api/rapid_single_api_{api_pool_num}_pool.json")
+            auto_save_data(processed_multiple_apis_json, f"{save_dir}/rapid_multiple_api/{benchmark_type}/num_{api_pool_num}_pool.json")
 
         if save_meta_data:
             total_length = 0
-            for bucket_id in tqdm(processed_single_apis_json.keys(), unit="sample", desc="Calculating Length"):
-                system_prompt = processed_single_apis_json[bucket_id]['system_prompt']
+            for bucket_id in tqdm(processed_multiple_apis_json.keys(), unit="sample", desc="Calculating Length"):
+                system_prompt = processed_multiple_apis_json[bucket_id]['system_prompt']
                 
-                for query in processed_single_apis_json[bucket_id]['query']:
+                for query in processed_multiple_apis_json[bucket_id]['query']:
                     if isinstance(system_prompt, dict):  # one-shot
                         message = system_prompt.append({"role": "user", "content": query})
                     else:  # zero-shot
@@ -211,7 +228,11 @@ if __name__ == "__main__":
     num_samples = 400
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3.1-8B-Instruct")
 
-    build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
+    # build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
 
-    build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
+    # build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
+
+    build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
+
+    build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir="/mnt/petrelfs/tangzecheng/local_data/benchmark_data", api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
 

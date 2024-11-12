@@ -40,4 +40,4 @@ echo "CUDA devices: $CUDA_VISIBLE_DEVICES"
 nvidia-smi
 
 # 运行训练脚本
-bash gen.sh rapid_single_api tool_location
+bash gen_offline.sh rapid_single_api tool_location

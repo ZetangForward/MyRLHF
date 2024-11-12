@@ -12,8 +12,7 @@ out_dir='/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Ins
 
 mkdir -p $out_dir
 
-python generate.py \
-    --ports 4100 4101 4102 4103 4104 4105 4106 4107 \
+python vllm_inference_offline.py \
     --model_path $model_path \
     --data_dir $benchmark_dir \
     --save_path $out_dir \
@@ -22,9 +21,9 @@ python generate.py \
     --max_workers 16 \
     --num_gpus 8;
 
-# bash gen.sh rapid_parallel_api tool_calling
-# bash gen.sh rapid_multiple_api tool_calling
-# bash gen.sh rapid_single_api tool_calling
-# bash gen.sh rapid_parallel_api tool_location
-# bash gen.sh rapid_multiple_api tool_location
-# bash gen.sh rapid_single_api tool_location
+# bash gen_offline.sh rapid_parallel_api tool_calling
+# bash gen_offline.sh rapid_multiple_api tool_calling
+# bash gen_offline.sh rapid_single_api tool_calling
+# bash gen_offline.sh rapid_parallel_api tool_location
+# bash gen_offline.sh rapid_multiple_api tool_location
+# bash gen_offline.sh rapid_single_api tool_location

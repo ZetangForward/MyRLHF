@@ -15,7 +15,10 @@ def worker(gpu_id, prompts_chunk, model_path, inference_args, return_list):
     llm = LLM(model=model_path)
     sampling_params = SamplingParams(**inference_args)
     chunk_message = [item['message'] for item in prompts_chunk]
-    outputs = llm.generate(chunk_message, sampling_params=sampling_params)
+
+    logger.info(f"Start to generate {len(chunk_message)} samples")
+
+    outputs = llm.generate(chunk_message, sampling_params=sampling_params, use_tqdm=True)
 
     results = []
     for i, output in enumerate(outputs):
@@ -43,8 +46,6 @@ def main():
     parser.add_argument('--seed', type=int, default=27, help='default seed')
     parser.add_argument('--max_workers', type=int, default=2, help='max number of workers')
     parser.add_argument('--use_logn', action='store_true', help='use logn')
-    parser.add_argument('--jsonl_path', type=str, required=True, help='输入的 jsonl 文件路径，每一行是一个包含 prompt 的字典')
-    parser.add_argument('--out_path', type=str, required=True, help='生成结果的输出路径')
     parser.add_argument('--temperature', type=float, default=1.0, help='生成的温度参数')
     parser.add_argument('--k', type=int, default=1, help='每个 prompt 生成的数量 K')
     parser.add_argument('--num_gpus', type=int, default=8, help='使用的 GPU 数量')
@@ -62,9 +63,10 @@ def main():
         all_content[file_name.split('.')[0]] = auto_read_data(os.path.join(folder_name, file_name))
 
     torch.cuda.manual_seed_all(args.seed)
-    
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+
     out_file_path = os.path.join(args.save_path, f"preds_{args.dataset_name}.jsonl")
-    input_queries, results = [], []
+    input_queries = []
     for testing_setting, dataset_content in all_content.items():
         for bucket_id, bucket_sample in dataset_content.items():
             instruction = bucket_sample['system_prompt']
@@ -80,14 +82,15 @@ def main():
                         {'role': 'system', 'content': instruction}, 
                         {'role': 'user', 'content': q}
                     ]
-                input_queries.append({'bucket_id': bucket_id, 'query': q, "message": message, 'testing_setting': testing_setting, 'dataset_name': args.dataset_name, 'call_parameters': call_parameters[id_], 'source_docs': source_docs[id_]})
+                tokenized_message = tokenizer.apply_chat_template(message, add_generation_prompt=True, tokenize=False)
+                input_queries.append({'bucket_id': bucket_id, 'query': q, "message": tokenized_message, 'testing_setting': testing_setting, 'dataset_name': args.dataset_name, 'call_parameters': call_parameters[id_], 'source_docs': source_docs[id_]})
 
     logger.info(f"Total number of queries: {len(input_queries)}")
 
     default_args = {
         "n": 1,
         "temperature": 0.7,
-        "max_tokens": 2000,
+        "max_tokens": 2048,
         "seed": 42,
         "top_p": 0.95,
     }
@@ -95,7 +98,7 @@ def main():
     num_gpus = args.num_gpus
     chunk_size = (len(input_queries) + num_gpus - 1) // num_gpus
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(num_gpus)]
-
+  
     manager = mp.Manager()
     return_list = manager.list()
     processes = []
