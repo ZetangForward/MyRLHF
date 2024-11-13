@@ -7,7 +7,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
-
+from loguru import logger
 
 def worker(gpu_id, prompts_chunk, model_path, inference_args, return_list):
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
@@ -50,7 +50,6 @@ def main():
     parser.add_argument('--k', type=int, default=1, help='每个 prompt 生成的数量 K')
     parser.add_argument('--num_gpus', type=int, default=8, help='使用的 GPU 数量')
     args = parser.parse_args()
-
 
     assert args.save_path is not None, "save_path is not set"
     

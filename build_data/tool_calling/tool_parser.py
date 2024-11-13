@@ -173,47 +173,52 @@ class ToolSample:
         source_docs = self.create_current_api_str()
         if return_str:
             return system_prompt + '\n' + self.demonstration_prompt.format(query=self.query, demonstration=self.flatten_conv(benchmark_type))
-
+        query = self.query_prompt.format(query=self.query)
+        query = query.rstrip("\n")
         return {
             "system_prompt": system_prompt,
-            "query": self.query,
+            "query": query,
             "answer": self.flatten_conv(benchmark_type),
             "source_docs": source_docs,
         }
 
     def post_process_api_list(self):
-        if self.type == "multiple":
-            tmp_1 = set([rename_api(api['api_1'][0]["api_name"]) for api in self.all_apis if "api_1" in api])
-            tmp_2 = set([rename_api(api['api_2'][0]["api_name"]) for api in self.all_apis if "api_2" in api])
-            self.all_api_names = tmp_1.union(tmp_2)
-        else:
-            self.all_api_names = set([rename_api(api["api_name"]) for api in self.all_apis])
+        """
+        note: each sample in self.all_apis denotes one api
+        """
+        # if self.type == "multiple":
+        #     tmp_1 = set([rename_api(api['api_1'][0]["api_name"]) for api in self.all_apis if "api_1" in api])
+        #     tmp_2 = set([rename_api(api['api_2'][0]["api_name"]) for api in self.all_apis if "api_2" in api])
+        #     self.all_api_names = tmp_1.union(tmp_2)
+        # else:
+        self.all_api_names = set([rename_api(api["api_name"]) for api in self.all_apis])
 
         # create api list prompt
         api_list_prompt = ""
         self.all_api_dict = {}
-        self.all_str_api: List = []
+        self.all_str_api = []
         for api in self.all_apis:
-            if self.type == "multiple":
-                if 'api_1' not in api or 'api_2' not in api:
-                    return False
-                single_api_1 = SingleAPIParser(api['api_1'][0])
-                single_api_2 = SingleAPIParser(api['api_2'][0])
-                api_1_id, api_2_id = single_api_1.api_id, single_api_2.api_id
-                # api_1
-                api_list_prompt += single_api_1.flatten_api_info() + "\n"
-                self.all_api_dict[single_api_1.api_name] = api_1_id
-                # api_2
-                api_list_prompt += single_api_2.flatten_api_info() + "\n"
-                self.all_api_dict[single_api_2.api_name] = api_2_id
-                self.all_str_api.append(single_api_1.flatten_api_info())
-                self.all_str_api.append(single_api_2.flatten_api_info())
-            else:  
-                single_api = SingleAPIParser(api)
-                api_id = single_api.api_id
-                api_list_prompt += single_api.flatten_api_info() + "\n"
-                self.all_api_dict[single_api.api_name] = api_id
-                self.all_str_api.append(single_api.flatten_api_info())
+            # if self.type == "multiple":
+            #     if 'api_1' not in api or 'api_2' not in api:
+            #         return False
+            #     single_api_1 = SingleAPIParser(api['api_1'][0])
+            #     single_api_2 = SingleAPIParser(api['api_2'][0])
+            #     api_1_id, api_2_id = single_api_1.api_id, single_api_2.api_id
+            #     # api_1
+            #     api_list_prompt += single_api_1.flatten_api_info() + "\n"
+            #     self.all_api_dict[single_api_1.api_name] = api_1_id
+            #     # api_2
+            #     api_list_prompt += single_api_2.flatten_api_info() + "\n"
+            #     self.all_api_dict[single_api_2.api_name] = api_2_id
+            #     self.all_str_api.append(single_api_1.flatten_api_info())
+            #     self.all_str_api.append(single_api_2.flatten_api_info())
+            # else:  
+            single_api = SingleAPIParser(api)
+            api_id = single_api.api_id
+            api_list_prompt += single_api.flatten_api_info() + "\n"
+            self.all_api_dict[single_api.api_name] = api_id
+            self.all_str_api.append(single_api.flatten_api_info())
+
         api_list_prompt = api_list_prompt.rstrip("\n")
         self.system_prompt = self.system_prompt_template.format(tools=api_list_prompt)
         
@@ -223,7 +228,8 @@ class ToolSample:
         for api in self.api_list:
             parsed_api = SingleAPIParser(api)
             parsed_api.api_id = self.search_api_id(parsed_api.api_name)
-            current_api_str += f"{parsed_api.flatten_api_info()}"
+            current_api_str += f"{parsed_api.flatten_api_info()}\n"
+        current_api_str = current_api_str.rstrip("\n")
         return current_api_str
 
 
@@ -274,6 +280,7 @@ class ToolSample:
     def create_reason_answer_mseeage(self):
         system_prompt = self.create_system_prompt()
         if not system_prompt:
+            import pdb; pdb.set_trace()
             return False
         # call_parameters = self.create_call_parameters()
         model_output = self.flatten_conv()

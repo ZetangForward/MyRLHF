@@ -3,8 +3,8 @@
 #SBATCH --job-name=zecheng_test   
 #SBATCH --nodes=1                         
 #SBATCH --ntasks-per-node=1 
-#SBATCH --cpus-per-task=48        # 添加CPU配置
-#SBATCH --mem=400G                # 添加内存配置
+#SBATCH --cpus-per-task=24        # 添加CPU配置
+#SBATCH --mem=200G                # 添加内存配置
 #SBATCH --gres=gpu:8                       
 #SBATCH --time=14-00:00:00       # 设置具体的时间限制，比如14天     
 #SBATCH --output=sbatch/logs/zc_job_id-%J.out       
@@ -12,22 +12,30 @@
 #SBATCH --partition=belt_road             
 #SBATCH --exclusive
 
-# 确保日志目录存在
-mkdir -p sbatch/logs
-
-# 设置错误处理
-set -e  # 遇到错误立即退出
-set -x  # 打印执行的命令
+# 激活别名支持
+shopt -s expand_aliases
 
 # 激活conda环境
-source activate
+source ~/.bashrc
 conda activate zecheng_new
 
-# 设置代理
-export http_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/ 
-export https_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
-export HTTP_PROXY=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
-export HTTPS_PROXY=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
+proxy_off 
+
+cd ~
+
+rm -rf /mnt/petrelfs/tangzecheng/llm-data-exp-space
+mkdir -p '/mnt/petrelfs/tangzecheng/llm-data-exp-space'
+
+# 检查是否已经挂载
+if mount | grep -q '/mnt/petrelfs/tangzecheng/llm-data-exp-space'; then
+    echo "S3已经挂载."
+else
+    echo "正在挂载S3..."
+    ./s3mount wulijun_blob /mnt/petrelfs/tangzecheng/llm-data-exp-space --allow-delete --allow-overwrite --endpoint-url http://10.140.31.252:80
+    echo "挂载完成."
+fi
+
+proxy_on
 
 # 切换到工作目录
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference/llama3-1-8B
@@ -40,4 +48,4 @@ echo "CUDA devices: $CUDA_VISIBLE_DEVICES"
 nvidia-smi
 
 # 运行训练脚本
-bash gen_offline.sh rapid_single_api tool_calling
+bash gen_offline.sh rapid_multiple_api tool_calling

@@ -117,7 +117,6 @@ if __name__ == "__main__":
     print('Begin to query the model ...')
 
     # one_sample = query_model(input_queries[0], default_args, clients[0])
-    input_queries = input_queries[:8] # TODO: for debugging
     with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         result = [executor.submit(query_model, input_queries[i], default_args, clients[i % len(ports)]) for i in range(len(input_queries))]
         for _ in tqdm(as_completed(result), total=len(result)): pass  # use tqdm to show progress

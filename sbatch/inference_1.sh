@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=inference_2  
+#SBATCH --job-name=inference  
 #SBATCH --nodes=1                         
 #SBATCH --ntasks-per-node=1 
 #SBATCH --cpus-per-task=24        # 添加CPU配置
@@ -24,4 +24,4 @@ conda activate zecheng_new
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference/llama3-1-8B
 
 # 运行训练脚本
-bash gen_offline.sh rapid_multiple_api tool_location
+bash gen_offline.sh rapid_multiple_api tool_calling
