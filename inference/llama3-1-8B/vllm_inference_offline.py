@@ -12,7 +12,7 @@ from loguru import logger
 def worker(gpu_id, prompts_chunk, model_path, inference_args, return_list):
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
 
-    llm = LLM(model=model_path)
+    llm = LLM(model=model_path, gpu_memory_utilization=0.98, tensor_parallel_size=1, max_model_len=128000)
     sampling_params = SamplingParams(**inference_args)
     chunk_message = [item['message'] for item in prompts_chunk]
 
