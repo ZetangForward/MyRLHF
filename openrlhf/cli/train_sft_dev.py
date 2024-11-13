@@ -12,10 +12,8 @@ from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 
 def train(args):
     # configure strategy
-    print(0000000000)
     strategy = get_strategy(args)
     strategy.setup_distributed()
-    print(1111111111)
     # configure tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.pretrain, trust_remote_code=True)
     if tokenizer.pad_token is None:

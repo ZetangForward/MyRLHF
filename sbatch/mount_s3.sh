@@ -8,32 +8,24 @@
 #SBATCH --error=sbatch/logs/mount_job_id-%J.err   
 #SBATCH --ntasks-per-node=1             # 每节点一个任务
 
-# 切换到目标工作目录
-cd /mnt/petrelfs/tangzecheng
-
-# 确保目标目录存在
-# rm -rf /nvme/chenguanjie/bucket
-# rm -rf /nvme/chenguanjie/bucket_cache/mountpoint_cache
+echo "取消上次挂载"
+fusermount -u /mnt/petrelfs/tangzecheng/llm-data-exp-space-2
 
 if [ ! -d "/mnt/petrelfs/tangzecheng/llm-data-exp-space-2" ]; then
     mkdir -p /mnt/petrelfs/tangzecheng/llm-data-exp-space-2
 fi
 
 
-# 确保目标目录存在
-if [ ! -d "/mnt/petrelfs/tangzecheng/s3mount_cache" ]; then
-    mkdir -p /mnt/petrelfs/tangzecheng/s3mount_cache/mountpoint_cache
-fi
-
 # 等待几秒钟，确保文件系统准备就绪
 sleep 5
 
 # 执行挂载命令
+unset http_proxy; unset https_proxy; unset HTTP_PROXY; unset HTTPS_PROXY
 
-proxy_off
+echo "挂载磁盘"
+/mnt/petrelfs/tangzecheng/s3mount wulijun_blob /mnt/petrelfs/tangzecheng/llm-data-exp-space-2 --allow-delete --allow-overwrite --endpoint-url http://10.140.31.252:80
 
-/mnt/petrelfs/tangzecheng/s3mount wulijun_blob /mnt/petrelfs/tangzecheng/llm-data-exp-space-2 --cache /mnt/petrelfs/tangzecheng/s3mount_cache --checkpoint-dir mountpoint_cache --endpoint-url http://p-ceph-hdd2-outside.pjlab.org.cn --force-path-style --allow-delete --allow-overwrite --debug --log-directory /mnt/petrelfs/tangzecheng/MyRLHF/mount_log --max-threads 32 
-
-
-# 防止脚本退出，保持挂载
-sleep infinity
+export http_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
+export https_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
+export HTTP_PROXY=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
+export HTTPS_PROXY=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
