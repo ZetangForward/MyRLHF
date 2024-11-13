@@ -6,8 +6,8 @@ data_name=$1
 task_name=$2
 
 model_path='meta-llama/Meta-Llama-3.1-8B-Instruct'
-benchmark_dir='/mnt/hwfile/opendatalab/tangzecheng/benchmark_data'
-out_dir='/mnt/hwfile/opendatalab/tangzecheng/evaluation/inference_results/llama-3_1-8B-Instruct/'${data_name}/${task_name}
+benchmark_dir='/mnt/petrelfs/tangzecheng/local_data/benchmark_data'
+out_dir='/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct/'${data_name}/${task_name}
 
 
 mkdir -p $out_dir
