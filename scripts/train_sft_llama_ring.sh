@@ -10,7 +10,7 @@ deepspeed openrlhf/cli/train_sft_dev.py \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
    --apply_chat_template \
-   --pretrain 'meta-llama/Meta-Llama-3-8B-Instruct' \
+   --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
    --save_path ${CKPT_PATH}/model/llama3.1-8b-sft \
    --ckpt_path ${CKPT_PATH}/model/llama3.1-8b-sft \
    --save_steps 15 \

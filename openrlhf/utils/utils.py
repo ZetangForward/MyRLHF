@@ -56,7 +56,7 @@ def blending_datasets(
 
     train_data_list = []
     eval_data_list = []
-    for i, dataset in enumerate(datasets):
+    for _, dataset in enumerate(datasets):
         dataset = dataset.strip()
         strategy.print(f"dataset: {dataset}")
 
@@ -86,7 +86,6 @@ def blending_datasets(
         else:
             data = load_dataset(dataset, data_dir=data_dir)
             strategy.print(f"loaded {dataset} from files")
-
 
         if train_split and train_split in data:
             train_data = data[train_split].select(range(min(max_count, len(data[train_split]))))

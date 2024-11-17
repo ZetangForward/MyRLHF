@@ -1,13 +1,3 @@
-#!/bin/bash
-#SBATCH --job-name=mount_job            # 作业名称
-#SBATCH --partition=belt_road           # 分区名称
-#SBATCH --gres=gpu:0                    # 不需要GPU则设置为0
-#SBATCH --ntasks=1                      # 任务数
-#SBATCH --cpus-per-task=1              # 每个任务使用的CPU数量
-#SBATCH --output=sbatch/logs/mount_job_id-%J.out       
-#SBATCH --error=sbatch/logs/mount_job_id-%J.err   
-#SBATCH --ntasks-per-node=1             # 每节点一个任务
-
 echo "取消上次挂载"
 fusermount -u /mnt/petrelfs/tangzecheng/llm-data-exp-space-2
 
