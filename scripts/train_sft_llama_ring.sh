@@ -14,7 +14,7 @@ deepspeed openrlhf/cli/train_sft_dev.py \
    --save_path ${CKPT_PATH}/model/llama3.1-8b-sft \
    --ckpt_path ${CKPT_PATH}/model/llama3.1-8b-sft \
    --save_steps 15 \
-   --num_process 2 \
+   --num_process 4 \
    --logging_steps 1 \
    --eval_steps -1 \
    --zero_stage 3 \
