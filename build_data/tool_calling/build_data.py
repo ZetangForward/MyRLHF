@@ -97,7 +97,7 @@ def build_single_api_benchmark(
                             processed_rapid_single_api[b_id]['system_prompt'] = [
                                {"role": "system", "content": system_prompt},
                                 {"role": "user", "content": query},
-                                {"role": "assistant", "content": source_docs},
+                                {"role": "assistant", "content": f"<TOOL_DOC>{source_docs}</TOOL_DOC>"},
                             ]
                         continue  # skip the first one since this case is used for demonstration
                     processed_rapid_single_api[b_id]['query'].append(tmp['query'])
@@ -168,7 +168,7 @@ def build_multiple_api_benchmark(
         
         for b_id, query_group in enumerate(query_bucket):
             for sample in query_group:
-                tool_sample = ToolSample(sample, type="multiple", total_pool=bucket_pool[b_id])
+                tool_sample = ToolSample(sample, type="multiple", benchmark_type=benchmark_type, total_pool=bucket_pool[b_id])
                 tmp = tool_sample.create_reason_answer_mseeage()
                 if tmp:
                     if processed_rapid_multiple_api[b_id]['system_prompt'] is None:
@@ -187,7 +187,7 @@ def build_multiple_api_benchmark(
                             processed_rapid_multiple_api[b_id]['system_prompt'] = [
                                {"role": "system", "content": system_prompt},
                                 {"role": "user", "content": query},
-                                {"role": "assistant", "content": source_docs},
+                                {"role": "assistant", "content": f"<TOOL_DOC>{source_docs}</TOOL_DOC>"},
                             ]
                         continue  # skip the first one since this case is used for demonstration
                     processed_rapid_multiple_api[b_id]['query'].append(tmp['query'])
@@ -258,7 +258,7 @@ def build_parallel_api_benchmark(
         
         for b_id, query_group in enumerate(query_bucket):
             for sample in query_group:
-                tool_sample = ToolSample(sample, type="parallel", total_pool=bucket_pool[b_id])
+                tool_sample = ToolSample(sample, type="parallel", benchmark_type=benchmark_type, total_pool=bucket_pool[b_id])
                 tmp = tool_sample.create_reason_answer_mseeage()
                 if tmp:
                     if processed_rapid_prallel_api[b_id]['system_prompt'] is None:
@@ -277,7 +277,7 @@ def build_parallel_api_benchmark(
                             processed_rapid_prallel_api[b_id]['system_prompt'] = [
                                {"role": "system", "content": system_prompt},
                                 {"role": "user", "content": query},
-                                {"role": "assistant", "content": source_docs},
+                                {"role": "assistant", "content": f"<TOOL_DOC>{source_docs}</TOOL_DOC>"},
                             ]
                         continue  # skip the first one since this case is used for demonstration
                     processed_rapid_prallel_api[b_id]['query'].append(tmp['query'])
@@ -324,15 +324,15 @@ if __name__ == "__main__":
 
     num_samples = 400
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3.1-8B-Instruct")
-    save_dir = "/mnt/petrelfs/tangzecheng/local_data/benchmark_data"
-    # build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
+    save_dir = "/mnt/hwfile/opendatalab/tangzecheng/benchmark_data"
 
-    # build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
+    build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
 
-    # build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
+    build_single_api_benchmark(rapid_single_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
 
-    # build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
+    build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
 
+    build_multiple_api_benchmark(rapid_multiple_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_location')
 
     build_parallel_api_benchmark(rapid_parallel_api, num_samples, tokenizer, save_dir=save_dir, api_pool_nums=[400, 300, 200, 100], benchmark_type='tool_calling')
 

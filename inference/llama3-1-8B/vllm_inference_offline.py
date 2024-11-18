@@ -9,10 +9,27 @@ from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
 from loguru import logger
 
-def worker(gpu_id, prompts_chunk, model_path, inference_args, return_list):
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
+inference_args = dict(
+    top_p = dict(
+        n = 1, 
+        temperature = 0.7, 
+        max_tokens = 512, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
+    greedy = dict(
+         n = 1,
+        temperature = 0.0,
+        max_tokens = 512,
+        seed = 42,
+    )
+)
 
-    llm = LLM(model=model_path, gpu_memory_utilization=0.98, tensor_parallel_size=1, max_model_len=96000)
+
+def worker(gpu_ids, prompts_chunk, model_path, model_args, inference_args, return_list):
+    os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
+
+    llm = LLM(model=model_path, **model_args)
     sampling_params = SamplingParams(**inference_args)
     chunk_message = [item['message'] for item in prompts_chunk]
 
@@ -37,18 +54,13 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
     parser.add_argument('--peft_path', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
-    parser.add_argument('--rope_theta', type=float, default=None, help='RoPE theta value')
-    parser.add_argument('--rope_factor', type=float, default=None, help='RoPE factor')
-    parser.add_argument('--rope_type', type=str, default=None, help='RoPE type')
-    parser.add_argument('--max_position_embeddings', type=int, default=None, help='Maximum position embeddings')
-    parser.add_argument('--model_max_length_setting', type=str, default="normal_setting", help='Model max length setting')
-    parser.add_argument('--max_training_length', type=int, default=8192, help='Maximum training length')
     parser.add_argument('--seed', type=int, default=27, help='default seed')
     parser.add_argument('--max_workers', type=int, default=2, help='max number of workers')
     parser.add_argument('--use_logn', action='store_true', help='use logn')
     parser.add_argument('--temperature', type=float, default=1.0, help='生成的温度参数')
     parser.add_argument('--k', type=int, default=1, help='每个 prompt 生成的数量 K')
     parser.add_argument('--num_gpus', type=int, default=8, help='使用的 GPU 数量')
+    parser.add_argument('--tp_size', type=int, default=1, help='tensor_parallel_size')
     args = parser.parse_args()
 
     assert args.save_path is not None, "save_path is not set"
@@ -86,12 +98,11 @@ def main():
 
     logger.info(f"Total number of queries: {len(input_queries)}")
 
-    default_args = {
-        "n": 1,
-        "temperature": 0.7,
-        "max_tokens": 2048,
-        "seed": 42,
-        "top_p": 0.95,
+    model_args = {
+        "tensor_parallel_size": args.tp_size, 
+        "gpu_memory_utilization": 0.98,
+        "max_model_len": 128000, 
+        "trust_remote_code": True, 
     }
 
     num_gpus = args.num_gpus
@@ -102,9 +113,19 @@ def main():
     return_list = manager.list()
     processes = []
 
+    # construct gpu_ids list
+    if args.tp_size == 1:
+        gpu_id_lst = [str(i) for i in range(num_gpus)]
+    else:
+        gpu_id_lst = []
+
+        for i in range(0, num_gpus, args.tp_size):
+            tmp = list(range(i, i + args.tp_size))
+            gpu_id_lst.append(", ".join([str(i) for i in tmp]))
+
     # 使用 tqdm 显示总进度
-    for gpu_id in range(num_gpus):
-        p = mp.Process(target=worker, args=(gpu_id, prompts_chunks[gpu_id], args.model_path, default_args, return_list))
+    for chunk_id, gpu_ids in enumerate(gpu_id_lst):
+        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))
         p.start()
         processes.append(p)
 

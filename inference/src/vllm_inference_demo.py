@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--k', type=int, default=1, help='每个 prompt 生成的数量 K')
     parser.add_argument('--num_gpus', type=int, default=8, help='使用的 GPU 数量')
     args = parser.parse_args()
-
+    
     parent_dir = os.path.dirname(args.out_path)
     os.makedirs(parent_dir, exist_ok=True)
     
