@@ -54,14 +54,19 @@ class Evaluator:
         
         logger.info(f"begin to evaluate the model predictions")
         flatten_pred_ids, flatten_golden_ids = list(chain(*pred_ids)), list(chain(*label_ids))
-        bleu_scores = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids, max_order=1)  # just calculate 1 grams
-        rouge_scores = rouge_metric.compute(predictions=predictions, references=labels)
-        edit_distances = np.array([Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]).mena()
+        bleu_score = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids, max_order=1)  # just calculate 1 grams
+        rouge_score = rouge_metric.compute(predictions=predictions, references=labels)
+        edit_distance = np.array([Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]).mena()
 
-        logger.info(f"f1 scores\n{bleu_scores}")
-        logger.info(f"rouge scores\n{rouge_scores}")
-        logger.info(f"edit distances\n{edit_distances}")
-        import pdb; pdb.set_trace()
+        logger.info(f"bleu score\n{bleu_score}")
+        logger.info(f"rouge score\n{rouge_score}")
+        logger.info(f"edit distance\n{edit_distance}")
+        
+        return {
+            "bleu_score": bleu_score,
+            "rouge_score": rouge_score,
+            "edit_score": edit_distance
+        }
 
         
 def main(dataset_path, dataset_name):

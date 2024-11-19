@@ -2,10 +2,15 @@ import argparse
 import json
 import multiprocessing as mp
 import os
+import sys
 import copy
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
+import datasets
+sys.path.insert(0, "/mnt/hwfile/opendatalab/tangzecheng/babilong")
+from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+from babilong.babilong_utils import compare_answers
 
 inference_args = dict(
     top_p = dict(
@@ -24,8 +29,43 @@ inference_args = dict(
 )
 
 
-def prepare_babilong_data(data_dir):
-    pass
+def prepare_babilong_data(data_dir, tokenizer):
+    tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6']
+    split_names = ['8k', '16k', '32k', '64k', '128k']
+
+    for task in tqdm(tasks, desc='tasks'):
+        # configure the prompt
+        prompt_cfg = {
+            'instruction': DEFAULT_PROMPTS[task]['instruction'],
+            'examples': DEFAULT_PROMPTS[task]['examples'],
+            'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'],
+            'template': DEFAULT_TEMPLATE,
+            'chat_template': True,
+        }
+        prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
+        prompt_name = '_'.join(prompt_name)
+
+        for split_name in tqdm(split_names, desc='lengths'):
+            # load dataset
+            data = datasets.load_dataset("/mnt/hwfile/opendatalab/tangzecheng/RMT-team/babilong", split_name)
+            task_data = data[task]
+
+            for sample in tqdm(task_data, desc=f'task: {task} length: {split_name}'):
+                target, context, question = sample['target'], sample['input'], sample['question']
+
+                input_text = get_formatted_input(
+                    context, question, prompt_cfg['examples'],
+                    prompt_cfg['instruction'], prompt_cfg['post_prompt'],
+                    template=prompt_cfg['template']
+                )
+
+                model_inputs = tokenizer.apply_chat_template(
+                    [{'role': 'user', 'content': input_text}], 
+                    add_generation_prompt=True, tokenize=False
+                )
+                
+                import pdb; pdb.set_trace()
+
 
 
 def prepare_api_data(data_dir, dataset_name, task_name, tokenizer):
