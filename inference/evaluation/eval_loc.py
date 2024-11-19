@@ -5,7 +5,7 @@ import evaluate
 import re
 import Levenshtein
 from itertools import chain
-
+import numpy as np
 
 class Evaluator:
 
@@ -54,11 +54,13 @@ class Evaluator:
         
         logger.info(f"begin to evaluate the model predictions")
         flatten_pred_ids, flatten_golden_ids = list(chain(*pred_ids)), list(chain(*label_ids))
-        f1_scores = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids)
+        bleu_scores = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids, max_order=1)  # just calculate 1 grams
         rouge_scores = rouge_metric.compute(predictions=predictions, references=labels)
-        edit_distances = [Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]
+        edit_distances = np.array([Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]).mena()
 
-        logger.info(f"f1 scores" )
+        logger.info(f"f1 scores\n{bleu_scores}")
+        logger.info(f"rouge scores\n{rouge_scores}")
+        logger.info(f"edit distances\n{edit_distances}")
         import pdb; pdb.set_trace()
 
         
