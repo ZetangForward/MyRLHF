@@ -27,7 +27,8 @@ class Evaluator:
     def eval_api_res(self, dataset_path):
         logger.info(f"load evaluators, rouge and edit_distance scores")
         rouge_metric = evaluate.load("rouge")
-        f1_metric = evaluate.load("f1")
+        bleu_metric = evaluate.load("bleu")
+        
 
         logger.info(f"load and postprocess generated results")
         content = auto_read_data(dataset_path)
@@ -53,7 +54,7 @@ class Evaluator:
         
         logger.info(f"begin to evaluate the model predictions")
         flatten_pred_ids, flatten_golden_ids = list(chain(*pred_ids)), list(chain(*label_ids))
-        f1_scores = f1_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids)
+        f1_scores = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids)
         rouge_scores = rouge_metric.compute(predictions=predictions, references=labels)
         edit_distances = [Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]
 
