@@ -25,7 +25,7 @@ class Evaluator:
         return list(set([id  for id in matches]))
 
     def eval_api_res(self, dataset_path):
-        logger.info(f"load evaluators, rouge and edit_distance scores")
+        logger.info(f"load evaluators, rouge and bleu scores")
         rouge_metric = evaluate.load("rouge")
         bleu_metric = evaluate.load("bleu")
         
