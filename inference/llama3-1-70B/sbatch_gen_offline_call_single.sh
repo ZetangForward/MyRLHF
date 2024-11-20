@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=llama-3_1-70B-tool-loc-single
+#SBATCH --job-name=llama-3_1-70B-tool-call-single
 #SBATCH --nodes=1                         
 #SBATCH --ntasks-per-node=32 
 #SBATCH --cpus-per-task=4        # 添加CPU配置
@@ -23,4 +23,4 @@ conda activate zecheng_new
 
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference
 
-bash llama3-1-70B/gen_offline.sh rapid_single_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api
+bash llama3-1-70B/gen_offline.sh rapid_single_api tool_calling meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api

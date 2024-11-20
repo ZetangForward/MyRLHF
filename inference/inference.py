@@ -152,6 +152,7 @@ def main():
     model_args = {
         "tensor_parallel_size": args.tp_size, 
         "gpu_memory_utilization": 0.98,
+        "swap_space": 12,
         "max_model_len": args.max_model_len, 
         "trust_remote_code": True, 
     }
