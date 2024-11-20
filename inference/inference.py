@@ -7,7 +7,7 @@ import copy
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
-import datasets
+from datasets import load_dataset
 sys.path.insert(0, "/mnt/hwfile/opendatalab/tangzecheng/babilong")
 from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 from babilong.babilong_utils import compare_answers
@@ -28,10 +28,10 @@ inference_args = dict(
     )
 )
 
-
 def prepare_babilong_data(data_dir, tokenizer):
-    tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6']
-    split_names = ['8k', '16k', '32k', '64k', '128k']
+    tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
+    split_names = ['4k', '8k', '16k', '32k', '64k', '128k']
+    all_input_texts = []
 
     for task in tqdm(tasks, desc='tasks'):
         # configure the prompt
@@ -44,28 +44,24 @@ def prepare_babilong_data(data_dir, tokenizer):
         }
         prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
         prompt_name = '_'.join(prompt_name)
-
         for split_name in tqdm(split_names, desc='lengths'):
             # load dataset
-            data = datasets.load_dataset("/mnt/hwfile/opendatalab/tangzecheng/RMT-team/babilong", split_name)
-            task_data = data[task]
 
+            data = load_dataset(data_dir, split_name, cache_dir="/mnt/petrelfs/tangzecheng/local_data/cache")
+            task_data = data[task]
             for sample in tqdm(task_data, desc=f'task: {task} length: {split_name}'):
                 target, context, question = sample['target'], sample['input'], sample['question']
-
                 input_text = get_formatted_input(
                     context, question, prompt_cfg['examples'],
                     prompt_cfg['instruction'], prompt_cfg['post_prompt'],
                     template=prompt_cfg['template']
                 )
-
                 model_inputs = tokenizer.apply_chat_template(
                     [{'role': 'user', 'content': input_text}], 
                     add_generation_prompt=True, tokenize=False
                 )
-                
-                import pdb; pdb.set_trace()
-
+                all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name})
+    return all_input_texts             
 
 
 def prepare_api_data(data_dir, dataset_name, task_name, tokenizer):
@@ -98,7 +94,6 @@ def prepare_api_data(data_dir, dataset_name, task_name, tokenizer):
     return input_queries
 
 
-
 def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, return_list):
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
 
@@ -115,6 +110,7 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
         generations = [o.text for o in output.outputs]
         original_prompt_data = prompts_chunk[i]  # 获取原始数据
         original_prompt_data['pred'] = generations  # 插入生成的响应
+        original_prompt_data.pop('message')
         results.append(original_prompt_data)
 
     return_list.extend(results)
@@ -147,9 +143,11 @@ def main():
     
     if args.benchmark_name == 'api':
         input_queries = prepare_api_data(args.data_dir, args.dataset_name, args.task_name, tokenizer)
+    elif args.benchmark_name == 'babilong':
+        input_queries = prepare_babilong_data(args.data_dir, tokenizer)
     else:
         pass
-
+    
     out_file_path = os.path.join(args.save_path, f"preds_{args.dataset_name}.jsonl")
 
     model_args = {
@@ -159,9 +157,8 @@ def main():
         "trust_remote_code": True, 
     }
 
-    num_gpus = args.num_gpus
-    chunk_size = (len(input_queries) + num_gpus - 1) // num_gpus
-    prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(num_gpus)]
+    chunk_size = (len(input_queries) + args.num_gpus - 1) // args.num_gpus
+    prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(args.num_gpus)]
   
     manager = mp.Manager()
     return_list = manager.list()
@@ -169,11 +166,11 @@ def main():
 
     # construct gpu_ids list
     if args.tp_size == 1:
-        gpu_id_lst = [str(i) for i in range(num_gpus)]
+        gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []
 
-        for i in range(0, num_gpus, args.tp_size):
+        for i in range(0, args.num_gpus, args.tp_size):
             tmp = list(range(i, i + args.tp_size))
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
 

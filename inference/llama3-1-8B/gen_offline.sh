@@ -1,6 +1,4 @@
 export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
-export TRANSFORMERS_OFFLINE=1
-export HF_HUB_OFFLINE=1
 
 data_name=$1
 task_name=$2
@@ -19,8 +17,8 @@ python inference.py \
     --dataset_name $data_name \
     --benchmark_name $benchmark_name \
     --max_workers 16 \
-    --max_model_len 96000 \
-    --tp_size 1 \
+    --max_model_len 130000 \
+    --tp_size 2 \
     --num_gpus 8;
 
 # bash gen_offline.sh rapid_multiple_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api
@@ -28,6 +26,8 @@ python inference.py \
 # bash gen_offline.sh rapid_parallel_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api
 
 # bash gen_offline.sh rapid_single_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api
+
+# bash gen_offline.sh babilong reasoning meta-llama/Meta-Llama-3.1-8B-Instruct "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct babilong
 
 # bash gen_offline.sh rapid_multiple_api tool_calling
 # bash gen_offline.sh rapid_parallel_api tool_calling
