@@ -46,7 +46,6 @@ def prepare_babilong_data(data_dir, tokenizer):
         prompt_name = '_'.join(prompt_name)
         for split_name in tqdm(split_names, desc='lengths'):
             # load dataset
-
             data = load_dataset(data_dir, split_name, cache_dir="/mnt/petrelfs/tangzecheng/local_data/cache")
             task_data = data[task]
             for sample in tqdm(task_data, desc=f'task: {task} length: {split_name}'):
