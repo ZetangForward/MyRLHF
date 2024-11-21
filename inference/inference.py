@@ -8,9 +8,7 @@ from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
 from datasets import load_dataset
-sys.path.insert(0, "/mnt/hwfile/opendatalab/tangzecheng/babilong")
-from babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
-from babilong.babilong_utils import compare_answers
+from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 
 inference_args = dict(
     top_p = dict(
@@ -105,6 +103,7 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
     outputs = llm.generate(chunk_message, sampling_params=sampling_params, use_tqdm=True)
 
     results = []
+
     for i, output in enumerate(outputs):
         generations = [o.text for o in output.outputs]
         original_prompt_data = prompts_chunk[i]  # 获取原始数据
@@ -157,8 +156,9 @@ def main():
         "trust_remote_code": True, 
     }
 
-    chunk_size = (len(input_queries) + args.num_gpus - 1) // args.num_gpus
-    prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(args.num_gpus)]
+    chunk_num = args.num_gpus // args.tp_size
+    chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
+    prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
   
     manager = mp.Manager()
     return_list = manager.list()
@@ -173,7 +173,7 @@ def main():
         for i in range(0, args.num_gpus, args.tp_size):
             tmp = list(range(i, i + args.tp_size))
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-
+            
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
         p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))

@@ -8,6 +8,7 @@ model_path=$3
 benchmark_dir=$4
 out_dir=$5
 benchmark_name=$6
+num_gpus=$7
 
 mkdir -p $out_dir
 
@@ -19,9 +20,9 @@ python inference.py \
     --dataset_name $data_name \
     --benchmark_name $benchmark_name \
     --max_workers 24 \
-    --max_model_len 130000 \
+    --max_model_len 128000 \
     --tp_size 2 \
-    --num_gpus 8;
+    --num_gpus $num_gpus;
 
 # bash gen_offline.sh rapid_multiple_api tool_location Qwen/Qwen2.5-7B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/Qwen-2-5-7b-instruct api
 

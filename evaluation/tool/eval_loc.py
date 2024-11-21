@@ -1,10 +1,14 @@
 from loguru import logger
-import evaluate
+from rouge_score import rouge_scorer
 import re
 import Levenshtein
 from itertools import chain
 import numpy as np
+import nltk
+from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
 from modelzipper.tutils import *
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
 
 class API_Evaluator:
 
@@ -17,8 +21,8 @@ class API_Evaluator:
         return list(set([id  for id in matches]))
 
     def eval_api_res(self):
-        rouge_metric = evaluate.load("rouge")
-        bleu_metric = evaluate.load("bleu")
+        rouge_metric = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+        
         predictions, pred_ids, labels, label_ids = [], [], [], []         
         for item in self.content:
             pred_str = item['pred'][0]
@@ -41,15 +45,31 @@ class API_Evaluator:
         
         logger.info(f"begin to evaluate the model predictions")
         flatten_pred_ids, flatten_golden_ids = list(chain(*pred_ids)), list(chain(*label_ids))
-        bleu_score = bleu_metric.compute(predictions=flatten_pred_ids, references=flatten_golden_ids, max_order=1)  # just calculate 1 grams
-        rouge_score = rouge_metric.compute(predictions=predictions, references=labels)
-        edit_distance = np.array([Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]).mean()
+        precision = precision_score(flatten_golden_ids, flatten_pred_ids, average='macro', zero_division=0)
+        recall = recall_score(flatten_golden_ids, flatten_pred_ids, average='macro', zero_division=0)
+        f1_scores = f1_score(flatten_golden_ids, flatten_pred_ids, average='macro', zero_division=0)
+        rouge_results = [rouge_metric.score(pred_id, reference_id) for pred_id, reference_id in zip(predictions, labels)]
 
-        return {
-            "bleu_score": bleu_score,
-            "rouge_score": rouge_score,
-            "edit_score": edit_distance
-        }
+        # Initialize accumulators
+        rouge1_f1, rouge2_f1, rougeL_f1 = 0.0, 0.0, 0.0
+
+        # Accumulate F1 scores
+        for result in rouge_results:
+            rouge1_f1 += result['rouge1'].fmeasure
+            rouge2_f1 += result['rouge2'].fmeasure
+            rougeL_f1 += result['rougeL'].fmeasure
+
+        # Calculate the mean
+        num_results = len(rouge_results)
+        rouge1_f1_mean = rouge1_f1 / num_results
+        rouge2_f1_mean = rouge2_f1 / num_results
+        rougeL_f1_mean = rougeL_f1 / num_results
+
+        rouge_scores = {"ROUGE-1": rouge1_f1_mean, "ROUGE-2": rouge2_f1_mean, "ROUGE-3": rougeL_f1_mean}
+
+        # edit_distance = np.array([Levenshtein.distance(pred, ref) for pred, ref in zip(predictions, labels)]).mean()
+
+        return {"precision": precision, "recall": recall, "f1_score": f1_scores, "rouge_score": rouge_scores}
     
 
     def calculate_f1(self, true, pred):
@@ -134,19 +154,20 @@ class API_Evaluator:
         }
 
 
-    def test_api():
-        all_tool_subdirs = auto_read_dir("/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct", file_suffix="api")
-        tool_location_subdirs = [auto_read_dir(subdir, file_suffix="location")[0] for subdir in all_tool_subdirs]
-        tool_location_files = [auto_read_dir(subdir, file_suffix="jsonl")[0] for subdir in tool_location_subdirs]
+def test_api():
+    all_tool_subdirs = auto_read_dir("/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct", file_suffix="api")
+    tool_location_subdirs = [auto_read_dir(subdir, file_suffix="location")[0] for subdir in all_tool_subdirs]
+    tool_location_files = [auto_read_dir(subdir, file_suffix="jsonl")[0] for subdir in tool_location_subdirs]
 
-        logger.info(tool_location_files)
+    logger.info(tool_location_files)
 
-        all_content = dict([(os.path.basename(file).split('.')[0], auto_read_data(file)) for file in tool_location_files])
+    all_content = dict([(os.path.basename(file).split('.')[0], auto_read_data(file)) for file in tool_location_files])
 
-        for task, content in all_content.items():
-            api_evalator = API_Evaluator(content, task)
-            eval_res = api_evalator.eval_api_res()
-            logger.info(f"task: {task}\n{eval_res}")
+    for task, content in all_content.items():
+
+        api_evalator = API_Evaluator(content, task)
+        eval_res = api_evalator.eval_api_res()
+        logger.info(f"task: {task}\n{eval_res}")
 
 
 if __name__ == '__main__':

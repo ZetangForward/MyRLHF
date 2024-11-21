@@ -16,8 +16,8 @@ python inference.py \
     --task_name $task_name \
     --dataset_name $data_name \
     --benchmark_name $benchmark_name \
-    --max_workers 16 \
-    --max_model_len 130000 \
+    --max_workers 24 \
+    --max_model_len 128000 \
     --tp_size 2 \
     --num_gpus 8;
 
