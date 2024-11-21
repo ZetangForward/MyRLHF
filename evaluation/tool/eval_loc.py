@@ -20,10 +20,9 @@ class API_Evaluator:
         matches = re.findall(r"<API_(\d+)>", text)
         return list(set([id  for id in matches]))
 
-    def eval_api_res(self):
-        rouge_metric = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
-        
-        predictions, pred_ids, labels, label_ids = [], [], [], []         
+    def get_retrieval_res(self):
+        predictions, pred_ids, labels, label_ids = [], [], [], []  
+
         for item in self.content:
             pred_str = item['pred'][0]
             match_str = re.findall(r"<API_\d+>.*?</API_\d+>", pred_str, re.DOTALL)
@@ -42,7 +41,19 @@ class API_Evaluator:
                 pred_ids_str.extend([1000000] * (len(golden_ids_str) - len(pred_ids_str)))
             pred_ids.append(pred_ids_str)
             label_ids.append(golden_ids_str)
-        
+
+        return {
+            "predictions": predictions,
+            "pred_ids": pred_ids,
+            "labels": labels,
+            "label_ids": label_ids
+        }
+
+
+    def eval_api_res(self):
+        rouge_metric = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+        retrieval_res = self.get_retrieval_res()
+        predictions, pred_ids, labels, label_ids = retrieval_res['predictions'], retrieval_res['pred_ids'], retrieval_res['labels'], retrieval_res['label_ids']
         logger.info(f"begin to evaluate the model predictions")
         flatten_pred_ids, flatten_golden_ids = list(chain(*pred_ids)), list(chain(*label_ids))
         precision = precision_score(flatten_golden_ids, flatten_pred_ids, average='macro', zero_division=0)

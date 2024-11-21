@@ -88,7 +88,6 @@ def cal_overlap(offset_mapping, key_text_slices):
     return key_tokens
 
 
-
 def compute_longppl(
         text,
         model,
