@@ -32,17 +32,26 @@ class post_process_api_gen_res:
 
     def match_pred_benchmark(self, benchmark_data_paths: Dict, model_predictions, retrieval_res):
         benchmark_data = dict([(test_setting, auto_read_data(path)) for test_setting, path in benchmark_data_paths.items()])
+
+        for test_setting, content in benchmark_data.items():
+            for bucket_id, bucket_content in content.items():
+                bucket_content['retrieval_res'] = []
+
         for idx, item in enumerate(model_predictions):
             bucket_id, query, testing_setting, pred = item['bucket_id'], item['query'], item['testing_setting'], item['pred']
             
             # search for corresponding benchmark_data_path
             benchmark_samples = benchmark_data[testing_setting][bucket_id]
-            assert benchmark_samples[idx]['query'] == query, f"{benchmark_samples[idx]['query']} != {query}"
-            system_prompt = benchmark_samples[idx]['system_prompt']
+            assert benchmark_samples['query'][idx] == query, f"{benchmark_samples[idx]['query']} != {query}"
+            benchmark_samples['retrieval_res'].append(retrieval_res[idx])
             import pdb; pdb.set_trace()
+            
+            
             # modified system_prompt
 
 
+
+            
 
 
     def concate_retrieval(self):
@@ -69,8 +78,6 @@ class post_process_api_gen_res:
             all_benchmark_data_paths = dict([(file_name.split('.')[0], os.path.join(corresponding_benchmark_dir, file_name)) for file_name in auto_read_dir(corresponding_benchmark_dir)])
             
             res = self.match_pred_benchmark(all_benchmark_data_paths, content, retrieval_res)
-            
-            
             
             
 
