@@ -12,7 +12,7 @@ from eval_loc import API_Evaluator
 
 class post_process_api_gen_res:
 
-    def __init__(self, prediction_dir, benchmark_dir, task, prediction_path = None) -> None:
+    def __init__(self, prediction_dir, benchmark_dir, task, prediction_path=None, save_dir=None) -> None:
         self.prediction_dir = prediction_dir
         self.benchmark_dir = benchmark_dir
         self.prediction_path = prediction_path
@@ -44,15 +44,7 @@ class post_process_api_gen_res:
             benchmark_samples = benchmark_data[testing_setting][bucket_id]
             assert benchmark_samples['query'][idx] == query, f"{benchmark_samples[idx]['query']} != {query}"
             benchmark_samples['retrieval_res'].append(retrieval_res[idx])
-            import pdb; pdb.set_trace()
-            
-            
-            # modified system_prompt
-
-
-
-            
-
+        return benchmark_data
 
     def concate_retrieval(self):
         all_tool_subdirs = auto_read_dir(self.prediction_dir, file_suffix="api")
@@ -77,19 +69,18 @@ class post_process_api_gen_res:
             corresponding_benchmark_dir = self.benchmark_data_paths[task.split('preds_')[-1]]
             all_benchmark_data_paths = dict([(file_name.split('.')[0], os.path.join(corresponding_benchmark_dir, file_name)) for file_name in auto_read_dir(corresponding_benchmark_dir)])
             
-            res = self.match_pred_benchmark(all_benchmark_data_paths, content, retrieval_res)
+            # add retrieval res into the benchmark data
+            new_benchmark_data = self.match_pred_benchmark(all_benchmark_data_paths, content, retrieval_res)
             
             
-
-            import pdb; pdb.set_trace()
-
 
 
 if __name__ == "__main__":
     processor = post_process_api_gen_res(
         "/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct",
         "/mnt/petrelfs/tangzecheng/local_data/benchmark_data", 
-        "tool_location"
+        "tool_location", 
+        save_dir="/mnt/petrelfs/tangzecheng/local_data/first_retrieval_res"
     )
     processor.concate_retrieval()
 
