@@ -64,29 +64,45 @@ def compare_answers(target, output, task_labels):
 def eval_fn(pred_path):
     tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
     lengths = ['4k', '8k', '16k', '32k', '64k', '128k']
-    accuracy = np.ones((len(tasks), len(lengths))) * -1
-
     content = auto_read_data(pred_path)
 
-    df = pd.DataFrame(columns=['task', 'ctx_length', 'preds', 'goldens', 'task_labels'])
+    all_results = dict([(task, dict([(length, []) for length in lengths])) for task in tasks])
 
-    # 填充这个 DataFrame 的所有可能组合，使用列表来收集数据
-    for task in tasks:
-        for length in lengths:
-            df = df.append({'task': task, 'ctx_length': length, 'preds': [], 'goldens': [], 'task_labels': []}, ignore_index=True)
-    
     # 填充 DataFrame
     for item in content:
         task, ctx_length = item['task'], item['ctx_length']
         pred, golden = item['pred'][0], item['golden']
-        idx = df.index[(df['task'] == task) & (df['ctx_length'] == ctx_length)]
-        df.at[idx, 'preds'].append(pred)
-        df.at[idx, 'goldens'].append(golden)
-        df.at[idx, 'task_labels'].append(TASK_LABELS[task])
+        all_results[task][ctx_length].append((golden, pred, TASK_LABELS[task]))
 
-    df['accuracy'] = df.apply(lambda row: compare_answers(row['preds'], row['goldens'], row['task_labels']), axis=1)
+    for task, item in all_results.items():
+        for length, content in item.items():
+            acc = np.array([compare_answers(*item) for item in content]).mean()
+            all_results[task][length] = acc
+    
+    # 转换字典为DataFrame
+    df = pd.DataFrame(all_results).T
+    df.index.name = 'Task'
 
-    print(df)
+    # 重排序：任务按照qa1到qa10排序，长度按4k, 8k, 16k, 32k, 64k, 128k排序
+    df = df.sort_index(axis=0, ascending=True)  # 排序任务名
+    df = df[sorted(df.columns, key=lambda x: int(x.replace('k', '')))]  # 排序长度
+
+    # 绘制热力图
+    matplotlib.rc('font', size=14)  # 设置字体大小
+    cmap = LinearSegmentedColormap.from_list('ryg', ["red", "yellow", "green"], N=256)  # 自定义颜色
+    figsize = (5, 3.5)
+    fig, ax = plt.subplots(1, 1, figsize=figsize)  # 创建图形
+
+    # 使用seaborn绘制热力图
+    sns.heatmap(df, cmap=cmap, vmin=0, vmax=1, annot=True, fmt=".2f", linewidths=.5, ax=ax)
+
+    # 设置标题和标签
+    ax.set_xlabel('Context size')
+    ax.set_ylabel('Tasks')
+
+    # 调整边距以删除多余的白色边框
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+    plt.savefig('/mnt/petrelfs/tangzecheng/MyRLHF/evaluation/babailong/heatmap_result.png', bbox_inches='tight', dpi=300)
 
 
 if __name__ == "__main__":
