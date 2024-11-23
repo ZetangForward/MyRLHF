@@ -23,4 +23,4 @@ conda activate zecheng_new
 
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference
 
-bash llama3-1-70B/gen_offline.sh rapid_single_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api
+bash gen_offline.sh rapid_single_api tool_location meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct api 8 1

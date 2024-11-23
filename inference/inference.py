@@ -61,6 +61,42 @@ def prepare_babilong_data(data_dir, tokenizer):
     return all_input_texts             
 
 
+def prepare_second_turn_api_data(data_dir, dataset_name, task_name, tokenizer):
+    folder_name = os.path.join(data_dir, dataset_name, task_name)
+
+    all_content = dict()
+    for file_name in os.listdir(folder_name):
+        all_content[file_name.split('.')[0]] = auto_read_data(os.path.join(folder_name, file_name))
+
+    input_queries = []
+    for testing_setting, dataset_content in all_content.items():
+        for bucket_id, bucket_sample in dataset_content.items():
+            system_prompt = bucket_sample['system_prompt']
+            user_first_queries = bucket_sample['query']
+            user_second_queries = bucket_sample['user_second_query']
+            retrieval_results = bucket_sample['retrieval_res']
+            call_parameters = bucket_sample['call_parameters']
+            source_docs = bucket_sample['source_docs']
+            for id_, q in enumerate(user_first_queries):
+                if isinstance(system_prompt, list):
+                    message = copy.deepcopy(system_prompt)
+                    
+                else:
+                    message=[{'role': 'system', 'content': system_prompt}]
+                if len(message) > 1:
+                    message = message[:1]
+                message.extend([
+                    {'role': 'user', 'content': q},
+                    {'role': 'assistant', 'content': f'<TOOL_DOC>{retrieval_results[id_]}</TOOL_DOC>'},
+                    {'role': 'user', 'content': user_second_queries[id_]},
+                ])
+
+                tokenized_message = tokenizer.apply_chat_template(message, add_generation_prompt=True, tokenize=False)
+                input_queries.append({'bucket_id': bucket_id, 'query': q, "message": tokenized_message, 'testing_setting': testing_setting, 'dataset_name': dataset_name, 'call_parameters': call_parameters[id_], 'source_docs': source_docs[id_], 'retrieval_res': retrieval_results[id_], 'second_query': user_second_queries[id_]})
+
+    logger.info(f"Total number of queries: {len(input_queries)}")
+    return input_queries
+
 def prepare_api_data(data_dir, dataset_name, task_name, tokenizer):
     folder_name = os.path.join(data_dir, dataset_name, task_name)
 
@@ -117,6 +153,7 @@ def main():
     parser = argparse.ArgumentParser(description="Inference with VLLM")
     parser.add_argument('--dataset_name', type=str, default=None, help='Name of the dataset')
     parser.add_argument('--data_dir', type=str, default=None, help='Path to the data directory')
+    parser.add_argument('--dialogue_turn', type=int, default=1, help='Turn of the dialogue')
     parser.add_argument('--benchmark_name', type=str, default=None, help='Name of the benchmark')
     parser.add_argument('--task_name', type=str, default=None, help='Name of the task')
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
@@ -140,7 +177,11 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
     if args.benchmark_name == 'api':
-        input_queries = prepare_api_data(args.data_dir, args.dataset_name, args.task_name, tokenizer)
+        if args.dialogue_turn == 1:
+            input_queries = prepare_api_data(args.data_dir, args.dataset_name, args.task_name, tokenizer)
+        else:
+            input_queries = prepare_second_turn_api_data(args.data_dir, args.dataset_name, args.task_name, tokenizer)
+
     elif args.benchmark_name == 'babilong':
         input_queries = prepare_babilong_data(args.data_dir, tokenizer)
     else:
@@ -173,7 +214,9 @@ def main():
         for i in range(0, args.num_gpus, args.tp_size):
             tmp = list(range(i, i + args.tp_size))
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-            
+    
+    # worker(gpu_ids, prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
+    
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
         p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))

@@ -20,6 +20,55 @@ class API_Evaluator:
         matches = re.findall(r"<API_(\d+)>", text)
         return list(set([id  for id in matches]))
 
+
+    def extract_tool_calling_res(self, s):
+        try:
+            # Extracting ANSWER section
+            plan_match = re.search(r"<PLAN>(.*?)</PLAN>", s, re.DOTALL)
+            answer_match = re.search(r"<ANSWER>(.*?)</ANSWER>", s, re.DOTALL)
+
+            if answer_match is None:
+                return None
+
+            plan = plan_match.group(1).strip().split('\n')
+            answer_content = answer_match.group(1)
+
+            # Extract API blocks using a pattern that includes parameters
+            api_blocks_pattern = r"(<API_\d+>.*?</API_\d+>.*?)(?=<API_\d+>|$)"
+            api_blocks = re.findall(api_blocks_pattern, answer_content, re.DOTALL)
+
+            # Define patterns for extracting API name and parameters
+            api_id_name_pattern = r"<API_(\d+)>\s*(.*?)\s*</API_\d+>"
+            param_value_pattern = r"<PARAM>\s*(.*?)\s*</PARAM>\s*<VALUE>\s*(.*?)\s*</VALUE>"
+
+            result = []
+            for api_block in api_blocks:
+                # Extract API id and name
+                api_id_name = re.search(api_id_name_pattern, api_block)
+                if api_id_name:
+                    api_id, api_name = api_id_name.groups()
+                else:
+                    continue
+
+                # Extract parameters and values associated with this API block
+                params_values = re.findall(param_value_pattern, api_block)
+                call_parameters = [{param: value} for param, value in params_values]
+
+                result.append({
+                    "api_id": api_id,
+                    "api_name": api_name,
+                    "call_parameter": call_parameters
+                })
+
+            # Creating the final JSON structure
+            return {
+                "plan": plan,
+                "pred_param": result
+            }
+        except Exception as e:
+            return None
+
+
     def get_retrieval_res(self):
         predictions, pred_ids, labels, label_ids = [], [], [], []  
 
@@ -106,7 +155,7 @@ class API_Evaluator:
             
         return precision, recall, f1
 
-    def evaluate_model_output(self, model_results, golden_results):
+    def evaluate_model_output(self):
         api_name_recall = 0
         api_id_correct = 0
         param_name_precision = 0
@@ -115,8 +164,15 @@ class API_Evaluator:
         value_precision = 0
         value_recall = 0
         value_f1 = 0
-        num_samples = len(golden_results)
         
+
+        for item in self.content:
+            query, call_parameters, pred = item['query'], item['call_parameters'], item['prediction']
+            
+
+            
+
+
         for model, golden in zip(model_results, golden_results):
             # Check API Name Recall
             if model['api_name'] in [g['api_name'] for g in golden_results]:

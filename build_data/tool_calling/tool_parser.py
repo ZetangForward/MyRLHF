@@ -150,12 +150,10 @@ class ToolSample:
 
         ### prompt template
         if benchmark_type == 'tool_calling':
-            self.system_prompt_template = TOOL_CALLING_SYSTEM_PROMPT_TEMPLATE
-            self.demonstration_prompt = TOOL_DEMONSTRATION_PROMPT
+            self.system_prompt_template = ONCE_GENERATION_PROMPT
         elif benchmark_type == 'tool_location':
-            self.system_prompt_template = TOOL_LOCATION_SYSTEM_PROMPT_TEMPLATE
-            self.demonstration_prompt = TOOL_LOCATION_DEMONSTRATION_PROMPT
-
+            self.system_prompt_template = TWO_STEP_GENERATION_PROMPT
+        self.demonstration_prompt = TOOL_DEMONSTRATION_PROMPT
         self.query_prompt = "<QUERY> {query} </QUERY>\n"
         self.plan_then_gen_prompt = "<PLAN> {plan} </PLAN>\n<ANSWER> {answer} </ANSWER>\n"
         self.call_parameter_prompts = {
@@ -168,59 +166,33 @@ class ToolSample:
     def search_api_id(self, api_name):
         return self.all_api_dict[api_name]
 
-    def create_demonstration(self, benchmark_type='tool_calling', return_str=False):
+    def create_demonstration(self, benchmark_type='tool_calling'):
         system_prompt = self.create_system_prompt()
         source_docs = self.create_current_api_str()
-        if return_str:
-            return system_prompt + '\n' + self.demonstration_prompt.format(query=self.query, demonstration=self.flatten_conv(benchmark_type))
         query = self.query_prompt.format(query=self.query)
         query = query.rstrip("\n")
         return {
             "system_prompt": system_prompt,
             "query": query,
-            "answer": self.flatten_conv(benchmark_type),
+            "answer": self.flatten_conv(),
             "source_docs": source_docs,
         }
 
     def post_process_api_list(self):
-        """
-        note: each sample in self.all_apis denotes one api
-        """
-        # if self.type == "multiple":
-        #     tmp_1 = set([rename_api(api['api_1'][0]["api_name"]) for api in self.all_apis if "api_1" in api])
-        #     tmp_2 = set([rename_api(api['api_2'][0]["api_name"]) for api in self.all_apis if "api_2" in api])
-        #     self.all_api_names = tmp_1.union(tmp_2)
-        # else:
         self.all_api_names = set([rename_api(api["api_name"]) for api in self.all_apis])
-
         # create api list prompt
         api_list_prompt = ""
         self.all_api_dict = {}
         self.all_str_api = []
         for api in self.all_apis:
-            # if self.type == "multiple":
-            #     if 'api_1' not in api or 'api_2' not in api:
-            #         return False
-            #     single_api_1 = SingleAPIParser(api['api_1'][0])
-            #     single_api_2 = SingleAPIParser(api['api_2'][0])
-            #     api_1_id, api_2_id = single_api_1.api_id, single_api_2.api_id
-            #     # api_1
-            #     api_list_prompt += single_api_1.flatten_api_info() + "\n"
-            #     self.all_api_dict[single_api_1.api_name] = api_1_id
-            #     # api_2
-            #     api_list_prompt += single_api_2.flatten_api_info() + "\n"
-            #     self.all_api_dict[single_api_2.api_name] = api_2_id
-            #     self.all_str_api.append(single_api_1.flatten_api_info())
-            #     self.all_str_api.append(single_api_2.flatten_api_info())
-            # else:  
             single_api = SingleAPIParser(api)
             api_id = single_api.api_id
             api_list_prompt += single_api.flatten_api_info() + "\n"
             self.all_api_dict[single_api.api_name] = api_id
             self.all_str_api.append(single_api.flatten_api_info())
-
         api_list_prompt = api_list_prompt.rstrip("\n")
-        self.system_prompt = self.system_prompt_template.format(tools=api_list_prompt)
+        self.system_prompt = self.system_prompt_template['prefix'].format(tools=api_list_prompt) \
+                            + self.system_prompt_template['suffix']
         
 
     def create_current_api_str(self):
@@ -232,6 +204,14 @@ class ToolSample:
         current_api_str = current_api_str.rstrip("\n")
         return current_api_str
 
+
+    def flatten_conv(self):
+        if len(self.plan_list) == 1:
+            plan_str = self.plan_list[0]
+        else:
+            plan_str = ', '.join(self.plan_list)
+        call_parameters = self.create_call_parameters()
+        return self.plan_then_gen_prompt.format(plan=plan_str, answer=call_parameters)
 
     def create_call_parameters(self):
         # flatten the list of apis into a string
@@ -280,7 +260,6 @@ class ToolSample:
     def create_reason_answer_mseeage(self):
         system_prompt = self.create_system_prompt()
         if not system_prompt:
-            import pdb; pdb.set_trace()
             return False
         # call_parameters = self.create_call_parameters()
         model_output = self.flatten_conv()
@@ -307,16 +286,4 @@ class ToolSample:
         return golden_api_lst    
 
 
-    def flatten_conv(self, benchmark_type='tool_calling'):
-        if len(self.plan_list) == 1:
-            plan_str = self.plan_list[0]
-        else:
-            plan_str = ', '.join(self.plan_list)
-        
-        if len(self.answer_list) == 1:
-            answer_str = self.answer_list[0]
-        else:
-            answer_str = ', '.join(self.answer_list)
-        call_parameters = self.create_call_parameters()
-        # answer = json.dumps(call_parameters)
-        return self.plan_then_gen_prompt.format(plan=plan_str, answer=call_parameters)
+    

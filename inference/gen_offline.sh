@@ -9,6 +9,7 @@ benchmark_dir=$4
 out_dir=$5
 benchmark_name=$6
 num_gpus=$7
+dialogue_turn=$8
 
 mkdir -p $out_dir
 
@@ -22,6 +23,7 @@ python inference.py \
     --max_workers 24 \
     --max_model_len 128000 \
     --tp_size 2 \
+    --dialogue_turn $dialogue_turn \
     --num_gpus $num_gpus;
 
 # bash gen_offline.sh rapid_multiple_api tool_location Qwen/Qwen2.5-7B-Instruct /mnt/hwfile/opendatalab/tangzecheng/benchmark_data /mnt/petrelfs/tangzecheng/local_data/inference_results/Qwen-2-5-7b-instruct api
