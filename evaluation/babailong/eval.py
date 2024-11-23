@@ -89,4 +89,9 @@ def eval_fn(pred_path):
     print(df)
 
 
+if __name__ == "__main__":
+    eval_fn('/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct/babilong/reasoning/preds_babilong.jsonl')
+
+
+
         
