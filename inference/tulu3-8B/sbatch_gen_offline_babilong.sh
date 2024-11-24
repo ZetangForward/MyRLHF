@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=Qwen-2-5-7B-babilong
+#SBATCH --job-name=Tulu-3-8B-babilong
 #SBATCH --nodes=1                         
 #SBATCH --ntasks-per-node=32 
 #SBATCH --cpus-per-task=2        # 添加CPU配置
@@ -23,4 +23,4 @@ conda activate zecheng_new
 
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference
 
-bash gen_offline.sh babilong reasoning Qwen/Qwen2.5-7B-Instruct "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/Qwen-2-5-7b-instruct babilong 8 1
+bash llama3-1-8B/gen_offline.sh babilong reasoning allenai/Llama-3.1-Tulu-3-8B-DPO "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/tulu-3_1-8B-dpo babilong 8

@@ -6,7 +6,6 @@ import numpy as np
 import transformers
 
 def merge_intervals(intervals):
-    
     if intervals.size(0) == 0:
         return intervals
 
@@ -24,7 +23,7 @@ def merge_intervals(intervals):
     return merged_intervals 
 
 @torch.no_grad
-def find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path=None):
+def find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path=None, with_attn_sink=None):
     text_encoded = evaluator_tokenizer(text, return_tensors="pt", return_offsets_mapping=True)
     input_ids = text_encoded['input_ids'].to(evaluator_model.device)
     
@@ -59,8 +58,48 @@ def find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, slidin
         with open(save_path, "w", encoding="utf-8") as f:
             slices_str = ";".join([f"[{element[0]}, {element[1]}]" for element in key_text_intervals])
             f.write(slices_str)
+    return key_text_intervals
+
+
+@torch.no_grad
+def find_key_token_w_pattern(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path=None, with_attn_sink=None):
+    text_encoded = evaluator_tokenizer(text, return_tensors="pt", return_offsets_mapping=True)
+    input_ids = text_encoded['input_ids'].to(evaluator_model.device)
+    
+    output_full = evaluator_model(input_ids)
+    
+    loss_f = torch.nn.CrossEntropyLoss(reduction='none')
+    _, max_len = input_ids.shape
+    key_tokens = []
+    
+    chunk_num = int(np.ceil(max_len / sliding_window))
+    with tqdm(total=chunk_num) as pbar:
+        for i, start_token in enumerate(range(0, max_len-trunc_len, sliding_window)):
+            if start_token+trunc_len+sliding_window > max_len:
+                sliding_window = max_len-start_token-trunc_len
+            input_ids_short = input_ids[:, start_token: start_token+trunc_len+sliding_window]
+            output_short = evaluator_model(input_ids_short)
+
+            loss_full = loss_f(output_full.logits[0, start_token+trunc_len-1: start_token+trunc_len+sliding_window-1, :], input_ids[0, start_token+trunc_len: start_token+trunc_len+sliding_window])
+            loss_short = loss_f(output_short.logits[0, trunc_len-1: trunc_len+sliding_window-1, :], input_ids_short[0, trunc_len: trunc_len+sliding_window])
+
+            loss_discrepancy = (torch.logical_and((loss_short - loss_full) > 2, loss_full < 2)).squeeze()
+
+            for i, is_key in enumerate(loss_discrepancy):
+                if is_key:
+                    key_tokens.append(start_token+trunc_len+i)
+
+            pbar.update(1)
+
+    key_text_intervals = merge_intervals(text_encoded['offset_mapping'][0, key_tokens])
+
+    if save_path is not None:
+        with open(save_path, "w", encoding="utf-8") as f:
+            slices_str = ";".join([f"[{element[0]}, {element[1]}]" for element in key_text_intervals])
+            f.write(slices_str)
 
     return key_text_intervals
+
 
 def load_key_token(save_path):
     with open(save_path, "r+", encoding="utf-8") as f:
