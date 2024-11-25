@@ -23,28 +23,39 @@ def merge_intervals(intervals):
     return merged_intervals 
 
 @torch.no_grad
-def find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path=None, question_pos=None, answer_pos=None):
-    text_encoded = evaluator_tokenizer(text, return_tensors="pt", return_offsets_mapping=True)
-    input_ids = text_encoded['input_ids'].to(evaluator_model.device)
+def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, save_path=None, question_pos=None, answer_pos=None, theta=2.0):
     
-    output_full = evaluator_model(input_ids)
+    output_full = model(input_ids)
     
     loss_f = torch.nn.CrossEntropyLoss(reduction='none')
     _, max_len = input_ids.shape
     key_tokens = []
 
-    chunk_num = int(np.ceil(max_len / sliding_window))
+    chunk_num = int(np.ceil(max_len - trunc_len / sliding_window))
+    question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
+    answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
+    query_length = question_pos[1] - question_pos[0]
+
     with tqdm(total=chunk_num) as pbar:
-        for i, start_token in enumerate(range(0, max_len-trunc_len, sliding_window)):
+        for i, start_token in enumerate(range(query_length, max_len-trunc_len, sliding_window)):
             if start_token+trunc_len+sliding_window > max_len:
                 sliding_window = max_len-start_token-trunc_len
-            input_ids_short = input_ids[:, start_token: start_token+trunc_len+sliding_window]
-            output_short = evaluator_model(input_ids_short)
+            # create short input
+            sliding_ipt_ids = input_ids[:, start_token: start_token+trunc_len+sliding_window]
+            combine_short_ipt_ids = torch.cat([question_ipt_ids, sliding_ipt_ids, answer_ipt_ids], dim=1)
+            # compute short logits PPL
+            output_short = model(combine_short_ipt_ids)
+            loss_short = loss_f(
+                output_short.logits[0, trunc_len-1: trunc_len+sliding_window-1, :], 
+                combine_short_ipt_ids[0, trunc_len: trunc_len+sliding_window]
+            )
 
-            loss_full = loss_f(output_full.logits[0, start_token+trunc_len-1: start_token+trunc_len+sliding_window-1, :], input_ids[0, start_token+trunc_len: start_token+trunc_len+sliding_window])
-            loss_short = loss_f(output_short.logits[0, trunc_len-1: trunc_len+sliding_window-1, :], input_ids_short[0, trunc_len: trunc_len+sliding_window])
+            loss_full = loss_f(
+                output_full.logits[0, start_token+trunc_len-1: start_token+trunc_len+sliding_window-1, :], 
+                input_ids[0, start_token+trunc_len: start_token+trunc_len+sliding_window]
+            )
 
-            loss_discrepancy = (torch.logical_and((loss_short - loss_full) > 2, loss_full < 2)).squeeze()
+            loss_discrepancy = (torch.logical_and((loss_short - loss_full) > theta, loss_full < theta)).squeeze()
 
             for i, is_key in enumerate(loss_discrepancy):
                 if is_key:
@@ -52,7 +63,7 @@ def find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, slidin
 
             pbar.update(1)
 
-    key_text_intervals = merge_intervals(text_encoded['offset_mapping'][0, key_tokens])
+    key_text_intervals = merge_intervals(offset_mapping[0, key_tokens])
 
     if save_path is not None:
         with open(save_path, "w", encoding="utf-8") as f:
@@ -184,10 +195,11 @@ def compute_longppl(
     logger.info(f'Input length: {input_ids.shape}')
     
     if evaluator_model is not None:
-        key_text_slices = find_key_token(input_ids, offset_mapping, evaluator_model, trunc_len, sliding_window, save_path, question_pos, answer_pos)
+        key_text_slices = find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path, question_pos, answer_pos, 1.0)
     else:
         key_text_slices = load_key_token(save_path)
-
+    
+    import pdb; pdb.set_trace()
     key_tokens = cal_overlap(offset_mapping, key_text_slices)
     str_key_tokens = [tokenizer.decode(token_id) for token_id in key_tokens]
     logger.info(str_key_tokens)
