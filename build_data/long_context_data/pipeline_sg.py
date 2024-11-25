@@ -26,12 +26,11 @@ def merge_intervals(intervals):
 def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, save_path=None, question_pos=None, answer_pos=None, theta=2.0):
     
     output_full = model(input_ids)
-    
     loss_f = torch.nn.CrossEntropyLoss(reduction='none')
     _, max_len = input_ids.shape
     key_tokens = []
 
-    chunk_num = int(np.ceil(max_len - trunc_len / sliding_window))
+    chunk_num = int(np.ceil((max_len - trunc_len)) / sliding_window)
     question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
     answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
     query_length = question_pos[1] - question_pos[0]
@@ -102,7 +101,7 @@ def cal_overlap(offset_mapping, key_text_slices):
     return key_tokens
 
 
-def search_token_id(st, ed, offset_mapping):
+def search_token_id(st, ed, offset_mapping, s_c=None):
     r"""
     return the token id of the first token that overlaps with the given range
     
@@ -114,9 +113,15 @@ def search_token_id(st, ed, offset_mapping):
     i = 0
     token_ids = []
     while i < len(offset_mapping):
-        cur_st, cur_ed = offset_mapping[i]
-        if st >= cur_st and cur_ed <= ed:
+        cur_st, cur_ed = offset_mapping[i][0], offset_mapping[i][1]
+        
+        if (cur_st <= st and cur_ed >= st) or (cur_st <= ed and cur_ed >= ed) or (cur_st >= st and cur_ed <= ed):
             token_ids.append(i)
+        if cur_ed >= ed:
+            token_ids.append(i)
+            break
+        i += 1
+    
     return token_ids[0], token_ids[-1]
 
 
@@ -132,8 +137,8 @@ def locate_question_answer_offset(s_c, s_q, s_a, offset_mapping):
     """
     st_q, st_a = s_c.index(s_q), s_c.index(s_a)
     ed_q, ed_a = st_q + len(s_q), st_a + len(s_a)
-    question_pos = search_token_id(st_q, ed_q, offset_mapping)
-    answer_pos = search_token_id(st_a, ed_a, offset_mapping)
+    question_pos = search_token_id(st_q, ed_q, offset_mapping, s_c)
+    answer_pos = search_token_id(st_a, ed_a, offset_mapping, s_c)
     return question_pos, answer_pos
 
 
@@ -195,11 +200,10 @@ def compute_longppl(
     logger.info(f'Input length: {input_ids.shape}')
     
     if evaluator_model is not None:
-        key_text_slices = find_key_token(text, evaluator_model, evaluator_tokenizer, trunc_len, sliding_window, save_path, question_pos, answer_pos, 1.0)
+        key_text_slices = find_key_token(input_ids, offset_mapping, evaluator_model, trunc_len, sliding_window, save_path, question_pos, answer_pos, 1.0)
     else:
         key_text_slices = load_key_token(save_path)
     
-    import pdb; pdb.set_trace()
     key_tokens = cal_overlap(offset_mapping, key_text_slices)
     str_key_tokens = [tokenizer.decode(token_id) for token_id in key_tokens]
     logger.info(str_key_tokens)
@@ -221,13 +225,16 @@ def compute_longppl(
 if __name__ == '__main__':
     dir_path = '/mnt/hwfile/opendatalab/tangzecheng/long-context-gpt-build-data/gpt'
     all_files = auto_read_dir(dir_path, file_suffix='json')
-    content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
+    # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
     model_name = 'meta-llama/Meta-Llama-3-8B-Instruct'
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
-
-    test_case = content[0][0]['content']  # DEBUG
-    import pdb; pdb.set_trace()
+    
+    logger.info('begin to load datasets')
+    with open("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/test_sample.pkl", "rb") as f:
+        test_case = pickle.load(f)
+    # test_case = content[0][0]['content']  # DEBUG
+    # import pdb; pdb.set_trace()
     res = compute_longppl(test_case, model, model, tokenizer, tokenizer)
     print(res)

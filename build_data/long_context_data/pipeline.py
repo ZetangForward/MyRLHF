@@ -4,7 +4,7 @@ import datasets
 import torch
 import numpy as np
 import transformers
-
+import pickle
 def merge_intervals(intervals):
     if intervals.size(0) == 0:
         return intervals
@@ -209,13 +209,15 @@ def compute_longppl(
 if __name__ == '__main__':
     dir_path = '/mnt/hwfile/opendatalab/tangzecheng/long-context-gpt-build-data/gpt'
     all_files = auto_read_dir(dir_path, file_suffix='json')
-    content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
+    # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
     model_name = 'meta-llama/Meta-Llama-3-8B-Instruct'
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
-
-    test_case = content[0][0]['content']  # DEBUG
-    import pdb; pdb.set_trace()
+    logger.info('begin to load datasets')
+    with open("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/test_sample.pkl", "rb") as f:
+        test_case = pickle.load(f)
+    # test_case = content[0][0]['content']  # DEBUG
+    # import pdb; pdb.set_trace()
     res = compute_longppl(test_case, model, model, tokenizer, tokenizer)
     print(res)
