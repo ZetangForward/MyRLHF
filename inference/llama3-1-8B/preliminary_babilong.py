@@ -52,7 +52,7 @@ def get_free_gpu():
 
 def prepare_babilong_data(data_dir, tokenizer):
     tasks = ['qa2', 'qa3']
-    split_names = ['4k', '8k', '16k', '32k', '64k', '128k']
+    split_names = ['4k', '8k', '16k', '32k', '64k']
     all_input_texts = []
 
     for task in tqdm(tasks, desc='tasks'):
@@ -82,6 +82,8 @@ def prepare_babilong_data(data_dir, tokenizer):
                         add_generation_prompt=True, tokenize=False
                     )
                     all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name})
+    
+    all_input_texts = random.shuffle(all_input_texts)
     return all_input_texts             
 
 
