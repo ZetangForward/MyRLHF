@@ -2,8 +2,10 @@ import os
 from modelzipper.tutils import *
 import datasets
 import torch
+import copy
 import numpy as np
 import transformers
+import matplotlib.pyplot as plt
 
 def merge_intervals(intervals):
     if intervals.size(0) == 0:
@@ -23,25 +25,26 @@ def merge_intervals(intervals):
     return merged_intervals 
 
 @torch.no_grad
-def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, save_path=None, question_pos=None, answer_pos=None, theta=2.0):
-    
-    output_full = model(input_ids)
+def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, question_pos=None, answer_pos=None, theta=2.0, save_path=None):
     loss_f = torch.nn.CrossEntropyLoss(reduction='none')
+    output_full = model(input_ids)
+    loss_overall = loss_f(output_full.logits[0, :-1, :], input_ids[0, 1:]).to(torch.float).cpu().numpy()
+    ppl_full = np.exp(loss_overall.mean())
+
     _, max_len = input_ids.shape
     key_tokens = []
 
     chunk_num = int(np.ceil((max_len - trunc_len)) / sliding_window)
     question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
     answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
-    query_length = question_pos[1] - question_pos[0]
 
     with tqdm(total=chunk_num) as pbar:
-        for i, start_token in enumerate(range(query_length, max_len-trunc_len, sliding_window)):
+        for i, start_token in enumerate(range(0, max_len-trunc_len, sliding_window)):
             if start_token+trunc_len+sliding_window > max_len:
                 sliding_window = max_len-start_token-trunc_len
             # create short input
             sliding_ipt_ids = input_ids[:, start_token: start_token+trunc_len+sliding_window]
-            combine_short_ipt_ids = torch.cat([question_ipt_ids, sliding_ipt_ids, answer_ipt_ids], dim=1)
+            combine_short_ipt_ids = torch.cat([sliding_ipt_ids, question_ipt_ids, answer_ipt_ids], dim=1)
             # compute short logits PPL
             output_short = model(combine_short_ipt_ids)
             loss_short = loss_f(
@@ -54,6 +57,8 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
                 input_ids[0, start_token+trunc_len: start_token+trunc_len+sliding_window]
             )
 
+            tmp = loss_short - loss_full
+            plot_distribution(tmp, os.path.join("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/case_figs", f"chunk_{i}.png"))
             loss_discrepancy = (torch.logical_and((loss_short - loss_full) > theta, loss_full < theta)).squeeze()
 
             for i, is_key in enumerate(loss_discrepancy):
@@ -61,14 +66,13 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
                     key_tokens.append(start_token+trunc_len+i)
 
             pbar.update(1)
-
-    key_text_intervals = merge_intervals(offset_mapping[0, key_tokens])
+    key_text_intervals = merge_intervals(offset_mapping[key_tokens])
 
     if save_path is not None:
         with open(save_path, "w", encoding="utf-8") as f:
             slices_str = ";".join([f"[{element[0]}, {element[1]}]" for element in key_text_intervals])
             f.write(slices_str)
-    return key_text_intervals
+    return key_text_intervals, ppl_full, loss_overall
 
 def load_key_token(save_path):
     with open(save_path, "r+", encoding="utf-8") as f:
@@ -142,27 +146,74 @@ def locate_question_answer_offset(s_c, s_q, s_a, offset_mapping):
     return question_pos, answer_pos
 
 
-def preprocess_item(item, tokenizer, device):
+@torch.no_grad
+def model_prediction(message, model, tokenizer, device):
+    input_ids = tokenizer(message, return_tensors="pt").input_ids.to(device)
+    model_pred = model.generate(input_ids, max_new_tokens=100, do_sample=True)[0]
+    return tokenizer.decode(model_pred[input_ids.size(1):], skip_special_tokens=True)
+
+
+def preprocess_item(item, model, tokenizer, device):
     question = item[0]['content'].split('\r\n\n')[1]
     answer = item[1]['content']
 
-    input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
-    encoded_input = tokenizer(input_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
+    logger.info(f"question: {question}")
+    logger.info(f"answer: {answer}")
 
-    input_ids = encoded_input['input_ids'].to(device)
-    offset_mapping = encoded_input['offset_mapping'][0]
+    golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
+    input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
+    pred_str = model_prediction(input_query, model, tokenizer, device)
+    logger.info(f"model prediction: {pred_str}")
+    
+    model_pred_message = copy.deepcopy(item[:2])
+    model_pred_message[1]['content'] = pred_str
+    model_pred_text = tokenizer.apply_chat_template(model_pred_message, add_generation_prompt=False, tokenize=False)
 
-    question_pos, answer_pos = locate_question_answer_offset(input_text, question, answer, offset_mapping)
+    encoded_golden_input = tokenizer(golden_input_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
+    encoded_pred_input = tokenizer(model_pred_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
 
-    return input_text, input_ids, question_pos, answer_pos, offset_mapping
+    golden_input_ids = encoded_golden_input['input_ids'].to(device)
+    pred_input_ids = encoded_pred_input['input_ids'].to(device)
+    golden_offset_mapping = encoded_golden_input['offset_mapping'][0]
+    pred_offset_mapping = encoded_pred_input['offset_mapping'][0]
+
+    golden_question_pos, golden_answer_pos = locate_question_answer_offset(golden_input_text, question, answer, golden_offset_mapping)
+    pred_question_pos, pred_answer_pos = locate_question_answer_offset(model_pred_text, question, pred_str, pred_offset_mapping)
+   
+    return (
+        golden_input_text, model_pred_text,
+        golden_input_ids, pred_input_ids,
+        golden_question_pos, pred_question_pos,
+        golden_answer_pos, pred_answer_pos,
+        golden_offset_mapping, pred_offset_mapping
+    )
+
+
+def plot_distribution(data_tensor, save_path):
+    """
+    绘制数据的分布图。
+    
+    参数:
+        data_tensor (torch.Tensor): 要绘制的数据，应为一维。
+    """
+    # 将tensor转换为numpy array，因为matplotlib更容易与numpy配合
+    data_array = data_tensor.float().cpu().numpy()
+
+    # 创建一个直方图
+    plt.figure(figsize=(10, 6))
+    plt.hist(data_array, bins=50, alpha=0.75)
+    plt.title('Distribution of Data')
+    plt.xlabel('Value')
+    plt.ylabel('Frequency')
+    plt.grid(True)
+    plt.savefig(save_path)
+
 
 @torch.no_grad
 def compute_longppl(
         item,
         model,
-        evaluator_model,
-        tokenizer=None, 
-        evaluator_tokenizer=None, 
+        tokenizer=None,
         save_path=None, 
         trunc_len=4096, 
         sliding_window=1024
@@ -196,30 +247,51 @@ def compute_longppl(
             - 'ppl' (`np.float32`): The PPL score.
             - 'n_token' (`int`): The number of tokens in the input text.
     """
-    text, input_ids, question_pos, answer_pos, offset_mapping = preprocess_item(item, tokenizer, model.device)
-    logger.info(f'Input length: {input_ids.shape}')
+    # text, input_ids, question_pos, answer_pos, offset_mapping = preprocess_item(item, model, tokenizer, model.device)
+
+    golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping = preprocess_item(item, model, tokenizer, model.device) 
     
-    if evaluator_model is not None:
-        key_text_slices = find_key_token(input_ids, offset_mapping, evaluator_model, trunc_len, sliding_window, save_path, question_pos, answer_pos, 1.0)
+    torch.cuda.empty_cache()
+    
+    if model is not None:
+        logger.info("search key tokens within the golden answer")
+        golden_key_text_slices, golden_ppl_full, golden_loss_overall = find_key_token(golden_input_ids, golden_offset_mapping, model, trunc_len, sliding_window, golden_question_pos, golden_answer_pos, 2.0, save_path)
+        torch.cuda.empty_cache()
+        logger.info("search key tokens within the model prediction")
+        pred_key_text_slices, pred_ppl_full, pred_loss_overall = find_key_token(pred_input_ids, pred_offset_mapping, model, trunc_len, sliding_window, pred_question_pos, pred_answer_pos, 2.0, save_path)
     else:
         key_text_slices = load_key_token(save_path)
     
-    key_tokens = cal_overlap(offset_mapping, key_text_slices)
-    str_key_tokens = [tokenizer.decode(token_id) for token_id in key_tokens]
-    logger.info(str_key_tokens)
+    golden_key_tokens = cal_overlap(golden_offset_mapping, golden_key_text_slices)
+    pred_key_tokens = cal_overlap(pred_offset_mapping, pred_key_text_slices)
+
+    golden_str_key_tokens = [tokenizer.decode(token_id) for token_id in golden_key_tokens]
+    logger.info(golden_str_key_tokens)
+
+    pred_str_key_tokens = [tokenizer.decode(token_id) for token_id in pred_key_tokens]
+    logger.info(pred_str_key_tokens)
     
-    output_full = model(input_ids)
-
-    loss_f = torch.nn.CrossEntropyLoss(reduction='none')
-    loss_overall = loss_f(output_full.logits[0, :-1, :], input_ids[0, 1:]).to(torch.float).cpu().numpy()
     
-    if key_tokens is None or len(key_tokens) == 0:
-        print("No key tokens!")
-        return {"longppl": None, "n_key_token": None, "ppl": np.exp(loss_overall.mean()), "n_token": input_ids.shape[-1]}
+    if golden_key_tokens is None or len(golden_str_key_tokens) == 0:
+        logger.info("No essential tokens within the context with golden prediction")
+        return {"longppl": None, "n_key_token": None, "ppl": golden_ppl_full, "n_token": golden_input_ids.shape[-1]}
 
-    loss_key = loss_overall[key_tokens]
+    if pred_key_tokens is None or len(pred_str_key_tokens) == 0:
+        logger.info("No essential tokens within the context with self-generated text")
+        return {"longppl": None, "n_key_token": None, "ppl": pred_ppl_full, "n_token": pred_input_ids.shape[-1]}
 
-    return {"longppl": np.exp(loss_key.mean()), "n_key_token": len(key_tokens), "ppl": np.exp(loss_overall.mean()), "n_token": input_ids.shape[-1]}
+    golden_loss_key, pred_loss_key = golden_loss_overall[golden_key_tokens], pred_loss_overall[pred_key_tokens]
+
+    return {
+        "golden_longppl": np.exp(golden_loss_key.mean()), 
+        "pred_longppl": np.exp(pred_loss_key.mean()), 
+        "n_key_token (w golden answer)": len(golden_key_tokens), 
+        "n_key_token (w model self-prediction)": len(pred_key_tokens),
+        "ppl (w golden answer)": np.exp(golden_loss_overall.mean()), 
+        "ppl (w model self-prediction)": np.exp(pred_loss_overall.mean()), 
+        "n_token (w golden answer)": golden_input_ids.shape[-1],
+        "n_token (w model self-prediction)": pred_input_ids.shape[-1],
+    }
 
 
 if __name__ == '__main__':
@@ -227,7 +299,7 @@ if __name__ == '__main__':
     all_files = auto_read_dir(dir_path, file_suffix='json')
     # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
-    model_name = 'meta-llama/Meta-Llama-3-8B-Instruct'
+    model_name = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
     
@@ -235,6 +307,6 @@ if __name__ == '__main__':
     with open("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/test_sample.pkl", "rb") as f:
         test_case = pickle.load(f)
     # test_case = content[0][0]['content']  # DEBUG
-    # import pdb; pdb.set_trace()
-    res = compute_longppl(test_case, model, model, tokenizer, tokenizer)
+    
+    res = compute_longppl(test_case, model, tokenizer)
     print(res)
