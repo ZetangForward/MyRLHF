@@ -3,6 +3,7 @@ import json
 import multiprocessing as mp
 import os
 import sys
+import numpy as np
 import copy
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
@@ -25,6 +26,12 @@ inference_args = dict(
         seed = 42,
     )
 )
+
+def get_free_gpu():
+    os.system('nvidia-smi -q -d Memory |grep -A4 GPU|grep Free >tmp')
+    memory_available = [int(x.split()[2]) for x in open('tmp', 'r').readlines()]
+    os.remove('tmp')
+    return np.argmax(memory_available)
 
 def prepare_babilong_data(data_dir, tokenizer):
     tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
@@ -205,6 +212,8 @@ def main():
     return_list = manager.list()
     processes = []
 
+    avail_gpu_ids = get_free_gpu()
+    import pdb; pdb.set_trace()
     # construct gpu_ids list
     if args.tp_size == 1:
         gpu_id_lst = [str(i) for i in range(args.num_gpus)]

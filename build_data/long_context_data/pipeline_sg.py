@@ -169,12 +169,7 @@ def preprocess_item(item, model, tokenizer, device):
 
     logger.info(f"question: {question}")
     logger.info(f"answer: {answer}")
-<<<<<<< HEAD
-    
-    import pdb; pdb.set_trace()
-=======
  
->>>>>>> dbeec5deb8d9882c7ab30913aa6b95e23d59a2e0
     golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
     input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
     pred_str = model_prediction(input_query, model, tokenizer, device)

@@ -4,6 +4,7 @@ import multiprocessing as mp
 import os
 import sys
 import copy
+import numpy as np
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from modelzipper.tutils import *
@@ -26,6 +27,28 @@ inference_args = dict(
         seed = 42,
     )
 )
+
+def get_free_gpu():
+    # 检查是否有可用的 GPU
+    n_gpus = torch.cuda.device_count()
+    if n_gpus == 0:
+        print("No GPUs available.")
+        return []
+    
+    empty_gpus = []
+    for i in range(n_gpus):
+        torch.cuda.synchronize(i)
+        torch.cuda.empty_cache()
+        allocated_memory = torch.cuda.memory_allocated(i)
+        
+        # 如果 GPU 上没有分配内存，则认为它是空闲的
+        if allocated_memory == 0:
+            empty_gpus.append(i)
+            print(f"GPU {i} is empty.")
+        else:
+            print(f"GPU {i} allocated memory: {allocated_memory}")
+
+    return empty_gpus
 
 def prepare_babilong_data(data_dir, tokenizer):
     tasks = ['qa2', 'qa3']
@@ -206,14 +229,20 @@ def main():
     return_list = manager.list()
     processes = []
 
+    avail_gpu_ids = get_free_gpu()
+    avail_gpu_ids = avail_gpu_ids[:len(avail_gpu_ids)//args.tp_size * args.tp_size]
+    if len(avail_gpu_ids) == 0:
+        logger.error("No available GPUs.")
+        exit(1)
+    
     # construct gpu_ids list
     if args.tp_size == 1:
         gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []
 
-        for i in range(0, args.num_gpus, args.tp_size):
-            tmp = list(range(i, i + args.tp_size))
+        for j in range(0, len(avail_gpu_ids), args.tp_size):
+            tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
     # worker(gpu_ids, prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
