@@ -6,6 +6,7 @@ import copy
 import numpy as np
 import transformers
 import matplotlib.pyplot as plt
+from loguru import logger
 
 def merge_intervals(intervals):
     if intervals.size(0) == 0:
@@ -36,15 +37,20 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
 
     chunk_num = int(np.ceil((max_len - trunc_len)) / sliding_window)
     question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
-    answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
+    # answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
 
     with tqdm(total=chunk_num) as pbar:
         for i, start_token in enumerate(range(0, max_len-trunc_len, sliding_window)):
             if start_token+trunc_len+sliding_window > max_len:
                 sliding_window = max_len-start_token-trunc_len
-            # create short input
+            
+            # always append question into the context
             sliding_ipt_ids = input_ids[:, start_token: start_token+trunc_len+sliding_window]
-            combine_short_ipt_ids = torch.cat([sliding_ipt_ids, question_ipt_ids, answer_ipt_ids], dim=1)
+            if start_token == 0:
+                combine_short_ipt_ids = sliding_ipt_ids
+            else:
+                combine_short_ipt_ids = torch.cat([question_ipt_ids, sliding_ipt_ids], dim=1)
+            
             # compute short logits PPL
             output_short = model(combine_short_ipt_ids)
             loss_short = loss_f(
@@ -58,12 +64,13 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
             )
 
             tmp = loss_short - loss_full
-            plot_distribution(tmp, os.path.join("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/case_figs", f"chunk_{i}.png"))
+            fig_save_path = os.path.join("./case_figs_question_head", f"chunk_{i}.png")
+            plot_distribution(tmp, fig_save_path)
             loss_discrepancy = (torch.logical_and((loss_short - loss_full) > theta, loss_full < theta)).squeeze()
 
-            for i, is_key in enumerate(loss_discrepancy):
+            for j, is_key in enumerate(loss_discrepancy):
                 if is_key:
-                    key_tokens.append(start_token+trunc_len+i)
+                    key_tokens.append(start_token+trunc_len+j)
 
             pbar.update(1)
     key_text_intervals = merge_intervals(offset_mapping[key_tokens])
@@ -154,12 +161,15 @@ def model_prediction(message, model, tokenizer, device):
 
 
 def preprocess_item(item, model, tokenizer, device):
-    question = item[0]['content'].split('\r\n\n')[1]
+    context = '\n\n'.join(item[0]['content'].split('\n\n')[1:-1]).strip()
+    question = item[0]['content'].split('\r\n\n')[1].strip()
     answer = item[1]['content']
+
+    item[0]['content'] = f"{question}\n\nContext:\n\n{context}"
 
     logger.info(f"question: {question}")
     logger.info(f"answer: {answer}")
-
+ 
     golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
     input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
     pred_str = model_prediction(input_query, model, tokenizer, device)
@@ -295,16 +305,16 @@ def compute_longppl(
 
 
 if __name__ == '__main__':
-    dir_path = '/mnt/hwfile/opendatalab/tangzecheng/long-context-gpt-build-data/gpt'
-    all_files = auto_read_dir(dir_path, file_suffix='json')
+    # dir_path = '/mnt/hwfile/opendatalab/tangzecheng/long-context-gpt-build-data/gpt'
+    # all_files = auto_read_dir(dir_path, file_suffix='json')
     # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
-    model_name = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
+    model_name = '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct'
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
     
     logger.info('begin to load datasets')
-    with open("/mnt/petrelfs/tangzecheng/MyRLHF/build_data/long_context_data/test_sample.pkl", "rb") as f:
+    with open("test_sample.pkl", "rb") as f:
         test_case = pickle.load(f)
     # test_case = content[0][0]['content']  # DEBUG
     
