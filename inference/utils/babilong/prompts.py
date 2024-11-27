@@ -1,5 +1,6 @@
 TASK_TEMPLATE = '{instruction}\n\n{examples}\n\n{post_prompt}'
-USER_TEMPLATE = '<context>\n{context}\n</context>\n\nQuestion: {question}'
+# USER_TEMPLATE = '<context>\n{context}\n</context>\n\nQuestion: {question}'
+USER_TEMPLATE = 'Question: {question}\n\n<context>\n{context}\n</context>'
 DEFAULT_TEMPLATE = f'{TASK_TEMPLATE}\n\n{USER_TEMPLATE}'
 
 CUSTOM_SYSTEM_PROMPTS = {

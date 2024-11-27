@@ -11,6 +11,8 @@ from modelzipper.tutils import *
 from datasets import load_dataset
 sys.path.append('..')
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+from loguru import logger
+import subprocess
 
 inference_args = dict(
     top_p = dict(
@@ -28,26 +30,36 @@ inference_args = dict(
     )
 )
 
-def get_free_gpu():
-    # 检查是否有可用的 GPU
-    n_gpus = torch.cuda.device_count()
-    if n_gpus == 0:
+def get_gpu_memory():
+    """
+    获取所有GPU的显存使用情况
+    返回: [(GPU ID, 已用显存, 总显存), ...]
+    """
+    try:
+        output = subprocess.check_output(['nvidia-smi', '--query-gpu=index,memory.used,memory.total', '--format=csv,nounits,noheader'])
+        lines = output.decode().strip().split('\n')
+        return [tuple(map(int, line.split(','))) for line in lines]
+    except:
+        return []
+
+def get_free_gpu(threshold=300):  # threshold单位为MB
+    """
+    获取空闲的GPU ID
+    threshold: 小于此显存使用量(MB)的GPU被认为是空闲的
+    """
+    gpu_memory = get_gpu_memory()
+    if not gpu_memory:
         print("No GPUs available.")
         return []
     
     empty_gpus = []
-    for i in range(n_gpus):
-        torch.cuda.synchronize(i)
-        torch.cuda.empty_cache()
-        allocated_memory = torch.cuda.memory_allocated(i)
-        
-        # 如果 GPU 上没有分配内存，则认为它是空闲的
-        if allocated_memory == 0:
-            empty_gpus.append(i)
-            print(f"GPU {i} is empty.")
+    for gpu_id, memory_used, memory_total in gpu_memory:
+        if memory_used < threshold:
+            empty_gpus.append(gpu_id)
+            print(f"GPU {gpu_id} is available: {memory_used}MB/{memory_total}MB used")
         else:
-            print(f"GPU {i} allocated memory: {allocated_memory}")
-
+            print(f"GPU {gpu_id} is busy: {memory_used}MB/{memory_total}MB used")
+    
     return empty_gpus
 
 def prepare_babilong_data(data_dir, tokenizer):
@@ -82,8 +94,8 @@ def prepare_babilong_data(data_dir, tokenizer):
                         add_generation_prompt=True, tokenize=False
                     )
                     all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name})
-    
-    all_input_texts = random.shuffle(all_input_texts)
+
+    random.shuffle(all_input_texts)
     return all_input_texts             
 
 
@@ -247,6 +259,7 @@ def main():
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
+    import pdb; pdb.set_trace()
     # worker(gpu_ids, prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
     
     # 使用 tqdm 显示总进度

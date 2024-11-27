@@ -7,6 +7,57 @@ import numpy as np
 import transformers
 import matplotlib.pyplot as plt
 from loguru import logger
+import sys
+sys.path.append("/data/zecheng/acl2025/MyRLHF/inference")
+from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+
+
+def statistic_chunk_scores(chunk_scores, reference_chunks):
+    sorted_chunk_score = sorted(chunk_scores.items(), key=lambda x: x[0][0])
+
+    intervals = [item[0] for item in sorted_chunk_score]
+    scores = [item[1] for item in sorted_chunk_score]
+
+    # 对分数进行排名（从高到低）
+    sorted_scores = sorted(scores, reverse=True)  # 降序排列分数
+    score_rank = {score: rank + 1 for rank, score in enumerate(sorted_scores)}  # 分数对应的排名
+
+    results = []
+    for ref in reference_chunks:
+        for i, interval in enumerate(intervals):
+            if interval[0] <= ref[0] and interval[1] >= ref[1]:
+                interval_score = scores[i]
+                interval_rank = score_rank[interval_score]
+                results.append({
+                    'reference_chunk': ref,
+                    'interval': interval,
+                    'score': interval_score,
+                    'rank': interval_rank
+                })
+                break
+    return results
+
+
+    # 获取 reference_chunk 在所有区间中的信息
+    reference_chunk_info = find_chunk_info(reference_chunk, intervals, scores, score_rank)
+
+    # 打印结果并统计分布
+    for info in reference_chunk_info:
+        print(f"Reference Chunk: {info['reference_chunk']}, "
+            f"Interval: {info['interval']}, "
+            f"Score: {info['score']}, "
+            f"Rank: {info['rank']}")
+
+    # 统计分布：排名分布、分数分布
+    ranks = [info['rank'] for info in reference_chunk_info]
+    scores = [info['score'] for info in reference_chunk_info]
+
+    print("\nRank Distribution:")
+    print({rank: ranks.count(rank) for rank in set(ranks)})
+
+    print("\nScore Distribution:")
+    print({score: scores.count(score) for score in set(scores)})
+
 
 def merge_intervals(intervals):
     if intervals.size(0) == 0:
@@ -26,7 +77,7 @@ def merge_intervals(intervals):
     return merged_intervals 
 
 @torch.no_grad
-def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, question_pos=None, answer_pos=None, theta=2.0, save_path=None):
+def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, question_pos=None, answer_pos=None, reference_pos=None, theta=2.0, save_path=None, tag="golden"):
     loss_f = torch.nn.CrossEntropyLoss(reduction='none')
     output_full = model(input_ids)
     loss_overall = loss_f(output_full.logits[0, :-1, :], input_ids[0, 1:]).to(torch.float).cpu().numpy()
@@ -34,16 +85,36 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
 
     _, max_len = input_ids.shape
     key_tokens = []
+    chunk_score = dict()
 
     chunk_num = int(np.ceil((max_len - trunc_len)) / sliding_window)
     question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
-    # answer_ipt_ids = input_ids[:, answer_pos[0]: answer_pos[1]]
+    question_length = question_ipt_ids.size(1)
+    # testing reference chunks
+    for ref_pos in reference_pos:
+        ref_ipt_ids = input_ids[:, ref_pos[0]: ref_pos[1]]
+        combined_ref_ipt_ids = torch.cat([question_ipt_ids, ref_ipt_ids], dim=1)
+        
+        output_ref = model(combined_ref_ipt_ids)
+        loss_ref = loss_f(
+            output_ref.logits[0, question_length-1:-1, :], 
+            combined_ref_ipt_ids[0, question_length:]
+        )
+
+        loss_full = loss_f(
+            output_full.logits[0, ref_pos[0]-1: ref_pos[1]-1, :], 
+            input_ids[0, ref_pos[0]: ref_pos[1]]
+        )
+     
+        loss_discrepancy = (torch.logical_and(torch.abs(loss_ref - loss_full) > theta, loss_full < theta)).squeeze()
+
+        import pdb; pdb.set_trace()
+
 
     with tqdm(total=chunk_num) as pbar:
         for i, start_token in enumerate(range(0, max_len-trunc_len, sliding_window)):
             if start_token+trunc_len+sliding_window > max_len:
                 sliding_window = max_len-start_token-trunc_len
-            
             # always append question into the context
             sliding_ipt_ids = input_ids[:, start_token: start_token+trunc_len+sliding_window]
             if start_token == 0:
@@ -64,10 +135,14 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
             )
 
             tmp = loss_short - loss_full
-            fig_save_path = os.path.join("./case_figs_question_head", f"chunk_{i}.png")
-            plot_distribution(tmp, fig_save_path)
+            fig_save_dir = os.path.join("./case_figs_question_head/", tag)
+            if not os.path.exists(fig_save_dir):
+                os.makedirs(fig_save_dir)
+            plot_distribution(tmp, os.path.join(fig_save_dir, f"chunk_{i}.png"))
             loss_discrepancy = (torch.logical_and((loss_short - loss_full) > theta, loss_full < theta)).squeeze()
-
+            
+            chunk_score[(start_token+trunc_len-1, start_token+trunc_len+sliding_window-1)] = loss_discrepancy.sum().item()
+            
             for j, is_key in enumerate(loss_discrepancy):
                 if is_key:
                     key_tokens.append(start_token+trunc_len+j)
@@ -79,7 +154,7 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
         with open(save_path, "w", encoding="utf-8") as f:
             slices_str = ";".join([f"[{element[0]}, {element[1]}]" for element in key_text_intervals])
             f.write(slices_str)
-    return key_text_intervals, ppl_full, loss_overall
+    return key_text_intervals, ppl_full, loss_overall, chunk_score
 
 def load_key_token(save_path):
     with open(save_path, "r+", encoding="utf-8") as f:
@@ -153,6 +228,22 @@ def locate_question_answer_offset(s_c, s_q, s_a, offset_mapping):
     return question_pos, answer_pos
 
 
+def locate_reference_offset(s_c, references: List[str], offset_mapping):
+    r"""
+    locate reference offset in the context
+    
+    Args:
+        s_c (`str`): context
+        references (`List[str]`): all reference text in the context
+        offset_mapping (`torch.Tensor`): offset mapping
+    """
+    ref_pos = []
+    for ref in references:
+        st, ed = s_c.index(ref), s_c.index(ref) + len(ref)
+        ref_pos.append(search_token_id(st, ed, offset_mapping, s_c))
+    return ref_pos
+
+
 @torch.no_grad
 def model_prediction(message, model, tokenizer, device):
     input_ids = tokenizer(message, return_tensors="pt").input_ids.to(device)
@@ -161,23 +252,44 @@ def model_prediction(message, model, tokenizer, device):
 
 
 def preprocess_item(item, model, tokenizer, device):
-    context = '\n\n'.join(item[0]['content'].split('\n\n')[1:-1]).strip()
-    question = item[0]['content'].split('\r\n\n')[1].strip()
-    answer = item[1]['content']
 
-    item[0]['content'] = f"{question}\n\nContext:\n\n{context}"
+    text_input, question, answer, reference, task = test_case['input'], test_case['question'], test_case['target'], test_case['reference'], test_case['task']
 
+    input_text = get_formatted_input(
+        text_input, question, "",  # no example, and we put the question in the textual header
+        DEFAULT_PROMPTS[task]['instruction'], DEFAULT_PROMPTS[task]['post_prompt'],
+        template=DEFAULT_TEMPLATE
+    )
+
+    model_inputs = tokenizer.apply_chat_template(
+        [{'role': 'user', 'content': input_text}], 
+        add_generation_prompt=True, tokenize=False
+    )
+    pred_str = model_prediction(model_inputs, model, tokenizer, device)
+
+    golden_input_text = tokenizer.apply_chat_template(
+        [{'role': 'user', 'content': input_text}, {'role': 'assistant', 'content': answer}],
+        add_generation_prompt=False, tokenize=False
+    )
+
+    model_pred_text = tokenizer.apply_chat_template(
+        [{'role': 'user', 'content': input_text}, {'role': 'assistant', 'content': pred_str}],
+        add_generation_prompt=False, tokenize=False
+    )
+    logger.info("--"*10)
     logger.info(f"question: {question}")
-    logger.info(f"answer: {answer}")
+    logger.info(f"golden: {answer}")
+    logger.info(f"model pred: {pred_str}")
+    logger.info("--"*10)
  
-    golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
-    input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
-    pred_str = model_prediction(input_query, model, tokenizer, device)
-    logger.info(f"model prediction: {pred_str}")
+    # golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
+    # input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
+    # pred_str = model_prediction(input_query, model, tokenizer, device)
+    # logger.info(f"model prediction: {pred_str}")
     
-    model_pred_message = copy.deepcopy(item[:2])
-    model_pred_message[1]['content'] = pred_str
-    model_pred_text = tokenizer.apply_chat_template(model_pred_message, add_generation_prompt=False, tokenize=False)
+    # model_pred_message = copy.deepcopy(item[:2])
+    # model_pred_message[1]['content'] = pred_str
+    # model_pred_text = tokenizer.apply_chat_template(model_pred_message, add_generation_prompt=False, tokenize=False)
 
     encoded_golden_input = tokenizer(golden_input_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
     encoded_pred_input = tokenizer(model_pred_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
@@ -189,13 +301,14 @@ def preprocess_item(item, model, tokenizer, device):
 
     golden_question_pos, golden_answer_pos = locate_question_answer_offset(golden_input_text, question, answer, golden_offset_mapping)
     pred_question_pos, pred_answer_pos = locate_question_answer_offset(model_pred_text, question, pred_str, pred_offset_mapping)
-   
+    reference_pos = locate_reference_offset(golden_input_text, reference, golden_offset_mapping)
     return (
         golden_input_text, model_pred_text,
         golden_input_ids, pred_input_ids,
         golden_question_pos, pred_question_pos,
         golden_answer_pos, pred_answer_pos,
-        golden_offset_mapping, pred_offset_mapping
+        golden_offset_mapping, pred_offset_mapping,
+        reference_pos
     )
 
 
@@ -259,16 +372,16 @@ def compute_longppl(
     """
     # text, input_ids, question_pos, answer_pos, offset_mapping = preprocess_item(item, model, tokenizer, model.device)
 
-    golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping = preprocess_item(item, model, tokenizer, model.device) 
+    golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping, reference_pos = preprocess_item(item, model, tokenizer, model.device) 
     
     torch.cuda.empty_cache()
     
     if model is not None:
         logger.info("search key tokens within the golden answer")
-        golden_key_text_slices, golden_ppl_full, golden_loss_overall = find_key_token(golden_input_ids, golden_offset_mapping, model, trunc_len, sliding_window, golden_question_pos, golden_answer_pos, 2.0, save_path)
+        golden_key_text_slices, golden_ppl_full, golden_loss_overall, golden_chunk_score = find_key_token(golden_input_ids, golden_offset_mapping, model, trunc_len, sliding_window, golden_question_pos, golden_answer_pos, reference_pos, 3.0, save_path, tag='golden_babilong_qa3')
         torch.cuda.empty_cache()
         logger.info("search key tokens within the model prediction")
-        pred_key_text_slices, pred_ppl_full, pred_loss_overall = find_key_token(pred_input_ids, pred_offset_mapping, model, trunc_len, sliding_window, pred_question_pos, pred_answer_pos, 2.0, save_path)
+        pred_key_text_slices, pred_ppl_full, pred_loss_overall, pred_chunk_score = find_key_token(pred_input_ids, pred_offset_mapping, model, trunc_len, sliding_window, pred_question_pos, pred_answer_pos, reference_pos, 3.0, save_path, tag='model_pred')
     else:
         key_text_slices = load_key_token(save_path)
     
@@ -281,7 +394,6 @@ def compute_longppl(
     pred_str_key_tokens = [tokenizer.decode(token_id) for token_id in pred_key_tokens]
     logger.info(pred_str_key_tokens)
     
-    
     if golden_key_tokens is None or len(golden_str_key_tokens) == 0:
         logger.info("No essential tokens within the context with golden prediction")
         return {"longppl": None, "n_key_token": None, "ppl": golden_ppl_full, "n_token": golden_input_ids.shape[-1]}
@@ -291,7 +403,7 @@ def compute_longppl(
         return {"longppl": None, "n_key_token": None, "ppl": pred_ppl_full, "n_token": pred_input_ids.shape[-1]}
 
     golden_loss_key, pred_loss_key = golden_loss_overall[golden_key_tokens], pred_loss_overall[pred_key_tokens]
-
+    import pdb; pdb.set_trace()
     return {
         "golden_longppl": np.exp(golden_loss_key.mean()), 
         "pred_longppl": np.exp(pred_loss_key.mean()), 
@@ -310,13 +422,15 @@ if __name__ == '__main__':
     # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
     model_name = '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct'
-    model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:7')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
     
     logger.info('begin to load datasets')
-    with open("test_sample.pkl", "rb") as f:
-        test_case = pickle.load(f)
+    # with open("test_sample.pkl", "rb") as f:
+    #     test_case = pickle.load(f)
     # test_case = content[0][0]['content']  # DEBUG
-    
+    data = auto_read_data("/data/zecheng/Long-form-reasoning-data/data/generated_tasks/qa3/64k.json")
+    test_case = data[0]
+    test_case['task'] = 'qa3'
     res = compute_longppl(test_case, model, tokenizer)
     print(res)
