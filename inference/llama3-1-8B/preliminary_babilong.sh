@@ -29,5 +29,5 @@ python preliminary_babilong.py \
 
 # bash preliminary_babilong.sh babilong reasoning meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/petrelfs/tangzecheng/Long-form-reasoning-data/data/generated_tasks /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct/preliminary babilong 8 1
 
-# bash preliminary_babilong.sh babilong reasoning /data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct /data/zecheng/Long-form-reasoning-data/data/generated_tasks /data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct babilong 4 1
+# bash preliminary_babilong.sh babilong reasoning /data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct /data/zecheng/Long-form-reasoning-data/data/generated_tasks /data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct babilong 6 1
 

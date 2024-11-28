@@ -93,7 +93,7 @@ def prepare_babilong_data(data_dir, tokenizer):
                         [{'role': 'user', 'content': input_text}], 
                         add_generation_prompt=True, tokenize=False
                     )
-                    all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name})
+                    all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question})
 
     random.shuffle(all_input_texts)
     return all_input_texts             
@@ -259,7 +259,6 @@ def main():
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-    import pdb; pdb.set_trace()
     # worker(gpu_ids, prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
     
     # 使用 tqdm 显示总进度
