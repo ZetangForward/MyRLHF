@@ -40,12 +40,14 @@ def preprocess_output(output):
     return output
 
 
-def compare_answers(target, output, task_labels):
+def compare_answers(target, output, task_labels, question):
     output = preprocess_output(output)
     target = target.lower()
     
     # extract labels that were mentioned in the model output
     labels_in_output = {label for label in task_labels if label in output}
+    labels_in_question = {label for label in task_labels if label in question}  # should exclude the labels in the question
+    labels_in_output = labels_in_output - labels_in_question
 
     # check if the target is the only prediction
     if ',' in target and len(target) > 3: 

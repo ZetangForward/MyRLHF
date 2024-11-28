@@ -10,8 +10,11 @@ from loguru import logger
 import sys
 sys.path.append("/data/zecheng/acl2025/MyRLHF/inference")
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+sys.path.append("/data/zecheng/acl2025/MyRLHF/evaluation/babilong")
+from eval import compare_answers, TASK_LABELS
 
 gt = transformers.AutoTokenizer.from_pretrained('/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct')
+
 
 def statistic_chunk_scores(chunk_scores, reference_chunks):
     sorted_chunk_score = sorted(chunk_scores.items(), key=lambda x: x[0][0])
@@ -178,6 +181,7 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
             f.write(slices_str)
     return key_text_intervals, ppl_full, loss_overall, chunk_score
 
+
 def load_key_token(save_path):
     with open(save_path, "r+", encoding="utf-8") as f:
         for line in f.readlines():
@@ -186,6 +190,7 @@ def load_key_token(save_path):
             for key_slice in key_slices_str:
                 key_text_slices.append(eval(key_slice))
             return key_text_slices
+
 
 def cal_overlap(offset_mapping, key_text_slices):
     if key_text_slices is None:
@@ -272,6 +277,7 @@ def model_prediction(message, model, tokenizer, device):
     model_pred = model.generate(input_ids, max_new_tokens=100, do_sample=True)[0]
     return tokenizer.decode(model_pred[input_ids.size(1):], skip_special_tokens=True)
 
+
 @torch.no_grad()
 def preprocess_item(item, model, tokenizer, device):
 
@@ -308,12 +314,13 @@ def preprocess_item(item, model, tokenizer, device):
     logger.info(f"golden: {answer}")
     logger.info(f"model pred: {pred_str}")
     logger.info("--"*10)
- 
+    
+    res = compare_answers(item['target'], pred_str, TASK_LABELS[task], question)
+
     # golden_input_text = tokenizer.apply_chat_template(item[:2], add_generation_prompt=False, tokenize=False)
     # input_query = tokenizer.apply_chat_template(item[:1], add_generation_prompt=True, tokenize=False)
     # pred_str = model_prediction(input_query, model, tokenizer, device)
     # logger.info(f"model prediction: {pred_str}")
-    
     # model_pred_message = copy.deepcopy(item[:2])
     # model_pred_message[1]['content'] = pred_str
     # model_pred_text = tokenizer.apply_chat_template(model_pred_message, add_generation_prompt=False, tokenize=False)
@@ -340,7 +347,8 @@ def preprocess_item(item, model, tokenizer, device):
         golden_question_pos, pred_question_pos,
         golden_answer_pos, pred_answer_pos,
         golden_offset_mapping, pred_offset_mapping,
-        reference_pos, natural_text_reference_pos
+        reference_pos, natural_text_reference_pos,
+        res,
     )
 
 
@@ -404,7 +412,7 @@ def compute_longppl(
     """
     # text, input_ids, question_pos, answer_pos, offset_mapping = preprocess_item(item, model, tokenizer, model.device)
 
-    golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping, reference_pos = preprocess_item(item, model, tokenizer, model.device) 
+    golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping, reference_pos, res = preprocess_item(item, model, tokenizer, model.device) 
     
     torch.cuda.empty_cache()
     gap_theta = 2.0
