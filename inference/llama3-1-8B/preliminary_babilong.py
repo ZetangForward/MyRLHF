@@ -93,7 +93,7 @@ def prepare_babilong_data(data_dir, tokenizer):
                         [{'role': 'user', 'content': input_text}], 
                         add_generation_prompt=True, tokenize=False
                     )
-                    all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name})
+                    all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question})
 
     random.shuffle(all_input_texts)
     return all_input_texts             

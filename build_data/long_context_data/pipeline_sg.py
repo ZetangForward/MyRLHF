@@ -11,6 +11,7 @@ import sys
 sys.path.append("/data/zecheng/acl2025/MyRLHF/inference")
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 
+gt = transformers.AutoTokenizer.from_pretrained('/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct')
 
 def statistic_chunk_scores(chunk_scores, reference_chunks):
     sorted_chunk_score = sorted(chunk_scores.items(), key=lambda x: x[0][0])
@@ -77,7 +78,7 @@ def merge_intervals(intervals):
     return merged_intervals 
 
 @torch.no_grad
-def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, question_pos=None, answer_pos=None, reference_pos=None, theta=2.0, save_path=None, tag="golden"):
+def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, question_pos=None, answer_pos=None, reference_pos=None, theta=2.0, save_path=None, tag="golden", tokenizer=None):
     loss_f = torch.nn.CrossEntropyLoss(reduction='none')
     output_full = model(input_ids)
     loss_overall = loss_f(output_full.logits[0, :-1, :], input_ids[0, 1:]).to(torch.float).cpu().numpy()
@@ -90,23 +91,44 @@ def find_key_token(input_ids, offset_mapping, model, trunc_len, sliding_window, 
     chunk_num = int(np.ceil((max_len - trunc_len)) / sliding_window)
     question_ipt_ids = input_ids[:, question_pos[0]: question_pos[1]]
     question_length = question_ipt_ids.size(1)
-    # testing reference chunks
+    
+    # testing inference with reference chunks
+    all_sub_chunks, referece_loss = [], []
+    for ref_pos in reference_pos:
+        all_sub_chunks.append(input_ids[:, ref_pos[0]: ref_pos[1]])
+        referece_loss.append(loss_overall[ref_pos[0]-10: ref_pos[1]+10])
+        
+    reference_input_ids = torch.cat(all_sub_chunks, dim=1)
+    loss_full = torch.tensor(np.concatenate(referece_loss, axis=0))[1:]
+
+    combined_ref_ipt_ids = torch.cat([question_ipt_ids, reference_input_ids], dim=1)
+    output_ref = model(combined_ref_ipt_ids)
+
+    loss_ref = loss_f(output_ref.logits[0, question_length:-1, :], reference_input_ids[0, 1:]).to(torch.float).cpu()
+    
+    loss_discrepancy = (torch.logical_and(torch.abs(loss_ref - loss_full) > theta, loss_full < theta)).squeeze()
+
+    import pdb; pdb.set_trace()
+
     for ref_pos in reference_pos:
         ref_ipt_ids = input_ids[:, ref_pos[0]: ref_pos[1]]
         combined_ref_ipt_ids = torch.cat([question_ipt_ids, ref_ipt_ids], dim=1)
         
         output_ref = model(combined_ref_ipt_ids)
+        output_ref_w_intervention = model(ref_ipt_ids)
+        loss_local = loss_f(
+            output_ref_w_intervention.logits[0, 1:]
+        )
+
         loss_ref = loss_f(
-            output_ref.logits[0, question_length-1:-1, :], 
-            combined_ref_ipt_ids[0, question_length:]
+            output_ref.logits[0, question_length:-1, :], 
+            combined_ref_ipt_ids[0, question_length+1:]
         )
 
         loss_full = loss_f(
-            output_full.logits[0, ref_pos[0]-1: ref_pos[1]-1, :], 
-            input_ids[0, ref_pos[0]: ref_pos[1]]
+            output_full.logits[0, ref_pos[0]: ref_pos[1]-1, :], 
+            input_ids[0, ref_pos[0]+1: ref_pos[1]]
         )
-     
-        loss_discrepancy = (torch.logical_and(torch.abs(loss_ref - loss_full) > theta, loss_full < theta)).squeeze()
 
         import pdb; pdb.set_trace()
 
@@ -250,30 +272,35 @@ def model_prediction(message, model, tokenizer, device):
     model_pred = model.generate(input_ids, max_new_tokens=100, do_sample=True)[0]
     return tokenizer.decode(model_pred[input_ids.size(1):], skip_special_tokens=True)
 
-
+@torch.no_grad()
 def preprocess_item(item, model, tokenizer, device):
 
-    text_input, question, answer, reference, task = test_case['input'], test_case['question'], test_case['target'], test_case['reference'], test_case['task']
+    text_input, question, answer, reference, task = item['input'], item['question'], item['target'], item['reference'], item['task']
 
-    input_text = get_formatted_input(
+    instruct_input_text = get_formatted_input(
         text_input, question, "",  # no example, and we put the question in the textual header
         DEFAULT_PROMPTS[task]['instruction'], DEFAULT_PROMPTS[task]['post_prompt'],
         template=DEFAULT_TEMPLATE
     )
 
     model_inputs = tokenizer.apply_chat_template(
-        [{'role': 'user', 'content': input_text}], 
+        [{'role': 'user', 'content': instruct_input_text}], 
         add_generation_prompt=True, tokenize=False
     )
     pred_str = model_prediction(model_inputs, model, tokenizer, device)
 
     golden_input_text = tokenizer.apply_chat_template(
-        [{'role': 'user', 'content': input_text}, {'role': 'assistant', 'content': answer}],
+        [{'role': 'user', 'content': instruct_input_text}, {'role': 'assistant', 'content': answer}],
         add_generation_prompt=False, tokenize=False
     )
 
     model_pred_text = tokenizer.apply_chat_template(
-        [{'role': 'user', 'content': input_text}, {'role': 'assistant', 'content': pred_str}],
+        [{'role': 'user', 'content': instruct_input_text}, {'role': 'assistant', 'content': pred_str}],
+        add_generation_prompt=False, tokenize=False
+    )
+
+    natural_text = tokenizer.apply_chat_template(
+        [{'role': 'user', 'content': text_input}, {'role': 'assistant', 'content': pred_str}],
         add_generation_prompt=False, tokenize=False
     )
     logger.info("--"*10)
@@ -293,22 +320,27 @@ def preprocess_item(item, model, tokenizer, device):
 
     encoded_golden_input = tokenizer(golden_input_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
     encoded_pred_input = tokenizer(model_pred_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
+    encoded_natural_text = tokenizer(natural_text, return_tensors="pt", add_special_tokens=False, return_offsets_mapping=True)
 
     golden_input_ids = encoded_golden_input['input_ids'].to(device)
     pred_input_ids = encoded_pred_input['input_ids'].to(device)
+    natural_input_ids = encoded_natural_text['input_ids'].to(device)
     golden_offset_mapping = encoded_golden_input['offset_mapping'][0]
     pred_offset_mapping = encoded_pred_input['offset_mapping'][0]
+    natural_offset_mapping = encoded_natural_text['offset_mapping'][0]
 
     golden_question_pos, golden_answer_pos = locate_question_answer_offset(golden_input_text, question, answer, golden_offset_mapping)
     pred_question_pos, pred_answer_pos = locate_question_answer_offset(model_pred_text, question, pred_str, pred_offset_mapping)
     reference_pos = locate_reference_offset(golden_input_text, reference, golden_offset_mapping)
+    natural_text_reference_pos = locate_reference_offset(natural_text, reference, natural_offset_mapping)
+    
     return (
         golden_input_text, model_pred_text,
-        golden_input_ids, pred_input_ids,
+        golden_input_ids, pred_input_ids, natural_input_ids,
         golden_question_pos, pred_question_pos,
         golden_answer_pos, pred_answer_pos,
         golden_offset_mapping, pred_offset_mapping,
-        reference_pos
+        reference_pos, natural_text_reference_pos
     )
 
 
@@ -375,13 +407,13 @@ def compute_longppl(
     golden_input_text, model_pred_text, golden_input_ids, pred_input_ids, golden_question_pos, pred_question_pos, golden_answer_pos, pred_answer_pos, golden_offset_mapping, pred_offset_mapping, reference_pos = preprocess_item(item, model, tokenizer, model.device) 
     
     torch.cuda.empty_cache()
-    
+    gap_theta = 2.0
     if model is not None:
         logger.info("search key tokens within the golden answer")
-        golden_key_text_slices, golden_ppl_full, golden_loss_overall, golden_chunk_score = find_key_token(golden_input_ids, golden_offset_mapping, model, trunc_len, sliding_window, golden_question_pos, golden_answer_pos, reference_pos, 3.0, save_path, tag='golden_babilong_qa3')
+        golden_key_text_slices, golden_ppl_full, golden_loss_overall, golden_chunk_score = find_key_token(golden_input_ids, golden_offset_mapping, model, trunc_len, sliding_window, golden_question_pos, golden_answer_pos, reference_pos, gap_theta, save_path, tag='golden_babilong_qa3')
         torch.cuda.empty_cache()
         logger.info("search key tokens within the model prediction")
-        pred_key_text_slices, pred_ppl_full, pred_loss_overall, pred_chunk_score = find_key_token(pred_input_ids, pred_offset_mapping, model, trunc_len, sliding_window, pred_question_pos, pred_answer_pos, reference_pos, 3.0, save_path, tag='model_pred')
+        pred_key_text_slices, pred_ppl_full, pred_loss_overall, pred_chunk_score = find_key_token(pred_input_ids, pred_offset_mapping, model, trunc_len, sliding_window, pred_question_pos, pred_answer_pos, reference_pos, gap_theta, save_path, tag='model_pred')
     else:
         key_text_slices = load_key_token(save_path)
     
