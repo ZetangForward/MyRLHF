@@ -12,6 +12,7 @@ from transformers.modeling_flash_attention_utils import _flash_attention_forward
 from flash_attn import flash_attn_func
 sys.path.append('/data/zecheng/acl2025/MyRLHF/differential_transformer')
 from rotary import apply_rotary_emb
+# from flashdiff import FlashDiffAttention
 
 
 class RMSNorm(nn.Module):
@@ -46,12 +47,16 @@ class LlamaDiffAttention(LlamaAttention):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.n_rep = self.num_heads // self.num_key_value_heads
+        self.head_dim = getattr(config, "head_dim", self.hidden_size // self.num_heads // 2)
+        self.scaling = self.head_dim ** -0.5
+        
         self.lambda_init = lambda_init_fn(self.layer_idx)
         self.lambda_q1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
         self.lambda_k1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
         self.lambda_q2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
         self.lambda_k2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
-
+        
         self.subln = RMSNorm(2 * self.head_dim, eps=1e-5, elementwise_affine=True)
     
     def forward(self,
@@ -88,9 +93,13 @@ class LlamaDiffAttention(LlamaAttention):
         else:
             cos, sin = position_embeddings
 
+        if cos.dim() == 3 and sin.dim() == 3:
+            cos = cos.squeeze(0)
+            sin = sin.squeeze(0)
+
         rel_pos = (cos, sin)
-        query_states = apply_rotary_emb(query_states, *rel_pos, interleave=True)
-        key_states = apply_rotary_emb(key_states, *rel_pos, interleave=True)
+        query_states = apply_rotary_emb(query_states, *rel_pos, interleaved=True)
+        key_states = apply_rotary_emb(key_states, *rel_pos, interleaved=True)
 
         if past_key_value is not None:
             # sin and cos are specific to RoPE models; cache_position needed for the static cache
@@ -138,8 +147,8 @@ modeling_llama = importlib.import_module("transformers.models.llama.modeling_lla
 modeling_llama.LLAMA_ATTENTION_CLASSES["diff_attn"] = LlamaDiffAttention
 
 config = LlamaConfig.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
-config.attention_type = "diff_attn"
-
+config._attn_implementation = "diff_attn"
+config._attn_implementation_autoset = True
 model = LlamaForCausalLM.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct", config=config, torch_dtype=torch.bfloat16).to('cuda:7')
 tokenizer = AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
 
