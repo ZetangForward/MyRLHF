@@ -23,4 +23,4 @@ conda activate zecheng_new
 
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference
 
-bash llama3-1-8B/gen_offline.sh babilong reasoning meta-llama/Meta-Llama-3.1-8B-Instruct "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct babilong
+bash gen_offline.sh babilong reasoning meta-llama/Meta-Llama-3.1-8B-Instruct "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct babilong

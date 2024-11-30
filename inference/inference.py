@@ -31,6 +31,7 @@ def get_free_gpu():
     os.system('nvidia-smi -q -d Memory |grep -A4 GPU|grep Free >tmp')
     memory_available = [int(x.split()[2]) for x in open('tmp', 'r').readlines()]
     os.remove('tmp')
+    # import pdb; pdb.set_trace()
     return np.argmax(memory_available)
 
 def prepare_babilong_data(data_dir, tokenizer):
@@ -64,7 +65,7 @@ def prepare_babilong_data(data_dir, tokenizer):
                     [{'role': 'user', 'content': input_text}], 
                     add_generation_prompt=True, tokenize=False
                 )
-                all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name})
+                all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name, 'question': question})
     return all_input_texts             
 
 
@@ -212,8 +213,6 @@ def main():
     return_list = manager.list()
     processes = []
 
-    avail_gpu_ids = get_free_gpu()
-    import pdb; pdb.set_trace()
     # construct gpu_ids list
     if args.tp_size == 1:
         gpu_id_lst = [str(i) for i in range(args.num_gpus)]
