@@ -14,6 +14,8 @@ from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_format
 from loguru import logger
 import subprocess
 
+SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning step by step, incorporating dynamic Chain of Thought (CoT). Follow these instructions:\n\n1. Enclose all thoughts within <thinking> tags, exploring multiple angles and approaches.\n2. Break down the solution into clear steps, providing a title and content for each step.\n3. After each step, decide if you need another step or if you're ready to give the final answer.\n4. Explore multiple solutions individually if possible, comparing approaches in your reflections.\n5. Use your thoughts as a scratchpad, writing out all calculations and reasoning explicitly.\n\nYour goal is to demonstrate a thorough, adaptive, and self-reflective problem-solving process, emphasizing dynamic thinking and learning from your own reasoning."""
+
 inference_args = dict(
     top_p = dict(
         n = 1, 
@@ -42,6 +44,7 @@ def get_gpu_memory():
     except:
         return []
 
+
 def get_free_gpu(threshold=300):  # threshold单位为MB
     """
     获取空闲的GPU ID
@@ -51,7 +54,6 @@ def get_free_gpu(threshold=300):  # threshold单位为MB
     if not gpu_memory:
         print("No GPUs available.")
         return []
-    
     empty_gpus = []
     for gpu_id, memory_used, memory_total in gpu_memory:
         if memory_used < threshold:
@@ -59,8 +61,8 @@ def get_free_gpu(threshold=300):  # threshold单位为MB
             print(f"GPU {gpu_id} is available: {memory_used}MB/{memory_total}MB used")
         else:
             print(f"GPU {gpu_id} is busy: {memory_used}MB/{memory_total}MB used")
-    
     return empty_gpus
+
 
 def prepare_babilong_data(data_dir, tokenizer):
     tasks = ['qa2', 'qa3']
@@ -90,6 +92,7 @@ def prepare_babilong_data(data_dir, tokenizer):
                         template=prompt_cfg['template']
                     )
                     model_inputs = tokenizer.apply_chat_template(
+                        [{'role': 'system', 'content': SYSTEM_PROMPT}]
                         [{'role': 'user', 'content': input_text}], 
                         add_generation_prompt=True, tokenize=False
                     )
@@ -118,7 +121,6 @@ def prepare_second_turn_api_data(data_dir, dataset_name, task_name, tokenizer):
             for id_, q in enumerate(user_first_queries):
                 if isinstance(system_prompt, list):
                     message = copy.deepcopy(system_prompt)
-                    
                 else:
                     message=[{'role': 'system', 'content': system_prompt}]
                 if len(message) > 1:
@@ -128,7 +130,6 @@ def prepare_second_turn_api_data(data_dir, dataset_name, task_name, tokenizer):
                     {'role': 'assistant', 'content': f'<TOOL_DOC>{retrieval_results[id_]}</TOOL_DOC>'},
                     {'role': 'user', 'content': user_second_queries[id_]},
                 ])
-
                 tokenized_message = tokenizer.apply_chat_template(message, add_generation_prompt=True, tokenize=False)
                 input_queries.append({'bucket_id': bucket_id, 'query': q, "message": tokenized_message, 'testing_setting': testing_setting, 'dataset_name': dataset_name, 'call_parameters': call_parameters[id_], 'source_docs': source_docs[id_], 'retrieval_res': retrieval_results[id_], 'second_query': user_second_queries[id_]})
 
