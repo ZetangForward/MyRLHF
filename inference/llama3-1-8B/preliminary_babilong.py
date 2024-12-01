@@ -16,16 +16,16 @@ import subprocess
 
 inference_args = dict(
     top_p = dict(
-        n = 1, 
+        n = 6, 
         temperature = 0.7, 
-        max_tokens = 512, 
+        max_tokens = 100, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
          n = 1,
         temperature = 0.0,
-        max_tokens = 512,
+        max_tokens = 100,
         seed = 42,
     )
 )
@@ -173,11 +173,10 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
     chunk_message = [item['message'] for item in prompts_chunk]
 
     logger.info(f"Start to generate {len(chunk_message)} samples")
-
+    # chunk_message = chunk_message[:5]  # FIXME: Debug
     outputs = llm.generate(chunk_message, sampling_params=sampling_params, use_tqdm=True)
 
     results = []
-
     for i, output in enumerate(outputs):
         generations = [o.text for o in output.outputs]
         original_prompt_data = prompts_chunk[i]  # 获取原始数据
@@ -259,7 +258,7 @@ def main():
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-    # worker(gpu_ids, prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
+    # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)  # FIXME: Debug
     
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
