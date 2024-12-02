@@ -20,14 +20,14 @@ inference_args = dict(
     top_p = dict(
         n = 1, 
         temperature = 0.7, 
-        max_tokens = 512, 
+        max_tokens = 100, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
-         n = 1,
+        n = 1,
         temperature = 0.0,
-        max_tokens = 512,
+        max_tokens = 100,
         seed = 42,
     )
 )
@@ -71,10 +71,11 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
 
     for task in tqdm(tasks, desc='tasks'):
         # configure the prompt
+        cur_task = task if "IF" not in task else task[3:]
         prompt_cfg = {
-            'instruction': DEFAULT_PROMPTS[task]['instruction'],
-            'examples': DEFAULT_PROMPTS[task]['examples'],
-            'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'],
+            'instruction': DEFAULT_PROMPTS[cur_task]['instruction'],
+            'examples': DEFAULT_PROMPTS[cur_task]['examples'],
+            'post_prompt': DEFAULT_PROMPTS[cur_task]['post_prompt'],
             'template': DEFAULT_TEMPLATE,
             'chat_template': True,
         }
@@ -82,30 +83,30 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
         prompt_name = '_'.join(prompt_name)
 
         for split_name in tqdm(split_names, desc='lengths'):
-            for task in tasks:
-                file_path = os.path.join(data_dir, task, f"{split_name}.json")
-                data = auto_read_data(file_path)
-                for sample in data['dataset']:
-                    target, context, question, reference_list, all_facts = sample['target'], sample['input'], sample['question'], sample['reference'], sample["all_facts"]
-                    input_text = get_formatted_input(
-                        context, question, prompt_cfg['examples'],
-                        prompt_cfg['instruction'], prompt_cfg['post_prompt'],
-                        template=prompt_cfg['template']
+            # for task in tasks:
+            file_path = os.path.join(data_dir, task, f"{split_name}.json")
+            data = auto_read_data(file_path)
+            for id, sample in enumerate(data['dataset']):
+                target, context, question, reference_list, all_facts = sample['target'], sample['input'], sample['question'], sample['reference'], sample["all_facts"]
+                input_text = get_formatted_input(
+                    context, question, prompt_cfg['examples'],
+                    prompt_cfg['instruction'], prompt_cfg['post_prompt'],
+                    template=prompt_cfg['template']
+                )
+                if with_system_prompt:
+                    model_inputs = tokenizer.apply_chat_template(
+                        [{'role': 'system', 'content': SYSTEM_PROMPT},
+                        {'role': 'user', 'content': input_text}],
+                        add_generation_prompt=True, tokenize=False
                     )
-                    if with_system_prompt:
-                        model_inputs = tokenizer.apply_chat_template(
-                            [{'role': 'system', 'content': SYSTEM_PROMPT},
-                            {'role': 'user', 'content': input_text}], 
-                            add_generation_prompt=True, tokenize=False
-                        )
-                    else:
-                        model_inputs = tokenizer.apply_chat_template(
-                            [{'role': 'user', 'content': input_text}], 
-                            add_generation_prompt=True, tokenize=False
-                        )
-                    all_input_texts.append(
-                        {"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
+                else:
+                    model_inputs = tokenizer.apply_chat_template(
+                        [{'role': 'user', 'content': input_text}], 
+                        add_generation_prompt=True, tokenize=False
                     )
+                all_input_texts.append(
+                    {"index": id, "message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
+                )
 
     random.shuffle(all_input_texts)
     return all_input_texts             
@@ -153,13 +154,15 @@ def main():
     parser.add_argument('--tp_size', type=int, default=1, help='Tensor parallel size')
     args = parser.parse_args()
     
-    args.save_path = "/mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct/preliminary"
-    args.model_path = "/data/zecheng/hf_models/Qwen/Qwen2.5-7B-Instruct"
+    args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/Qwen-2-5-7b-instruct/preliminary"
+    args.model_path = "/data/zecheng/hf_models/Qwen2.5-7B-Instruct"
     args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/"
-    args.save_name = "Qwen2.5-7B-Instruct.jsonl"
+    args.save_name = "pred.jsonl"
     args.tp_size = 1
-    args.max_model_len = 128000
-
+    args.num_gpus = 6
+    args.max_model_len = 68000
+    args.max_workers = 64
+    
     assert args.save_path is not None, "save_path is not set"
     
     auto_mkdir(args.save_path)
@@ -192,10 +195,15 @@ def main():
     if len(avail_gpu_ids) == 0:
         logger.error("No available GPUs.")
         exit(1)
+
+    avail_gpu_ids = avail_gpu_ids[:args.num_gpus]
     
     # construct gpu_ids list
     if args.tp_size == 1:
-        gpu_id_lst = [str(i) for i in range(args.num_gpus)]
+        gpu_id_lst = []
+        for j in range(0, len(avail_gpu_ids), args.tp_size):
+            gpu_id_lst.append(str(j))
+        # gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []
 
@@ -203,8 +211,8 @@ def main():
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-    worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
-    
+    # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
+
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
         p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))
