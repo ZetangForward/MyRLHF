@@ -92,8 +92,8 @@ def prepare_babilong_data(data_dir, tokenizer):
                         template=prompt_cfg['template']
                     )
                     model_inputs = tokenizer.apply_chat_template(
-                        [{'role': 'system', 'content': SYSTEM_PROMPT}]
-                        [{'role': 'user', 'content': input_text}], 
+                        [{'role': 'system', 'content': SYSTEM_PROMPT}, 
+                         {'role': 'user', 'content': input_text}], 
                         add_generation_prompt=True, tokenize=False
                     )
                     all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question})

@@ -11,18 +11,27 @@ from modelzipper.tutils import *
 from datasets import load_dataset
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 
+BABILONG_SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning step by step, incorporating dynamic Chain of Thought (CoT). Follow these instructions:\n\n1. Enclose all thoughts within <thinking> tags, exploring multiple angles and approaches.\n2. Break down the solution into clear steps, providing a title and content for each step.\n3. After each step, decide if you need another step or if you're ready to give the final answer.\n4. Explore multiple solutions individually if possible, comparing approaches in your reflections.\n5. Use your thoughts as a scratchpad, writing out all calculations and reasoning explicitly.\n\nYour goal is to demonstrate a thorough, adaptive, and self-reflective problem-solving process, emphasizing dynamic thinking and learning from your own reasoning."""
+
 inference_args = dict(
     top_p = dict(
         n = 1, 
         temperature = 0.7, 
-        max_tokens = 512, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
+    top_n = dict(
+        n = 6, 
+        temperature = 0.7, 
+        max_tokens = 100, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
          n = 1,
         temperature = 0.0,
-        max_tokens = 512,
+        max_tokens = 100,
         seed = 42,
     )
 )
@@ -62,7 +71,8 @@ def prepare_babilong_data(data_dir, tokenizer):
                     template=prompt_cfg['template']
                 )
                 model_inputs = tokenizer.apply_chat_template(
-                    [{'role': 'user', 'content': input_text}], 
+                    [{'role': 'system', 'content': BABILONG_SYSTEM_PROMPT},
+                     {'role': 'user', 'content': input_text}], 
                     add_generation_prompt=True, tokenize=False
                 )
                 all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name, 'question': question})
