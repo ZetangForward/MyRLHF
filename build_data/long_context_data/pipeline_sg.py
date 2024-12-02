@@ -8,14 +8,17 @@ import transformers
 import matplotlib.pyplot as plt
 from loguru import logger
 import sys
-sys.path.append("/data/zecheng/acl2025/MyRLHF/inference")
+current_file_path = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file_path)
+myrlhf_path = os.path.join(current_dir, "../../inference")
+myrlhf_eval_path = os.path.join(current_dir, "../../evaluation/babilong")
+sys.path.insert(0, os.path.abspath(myrlhf_path))
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
-sys.path.append("/data/zecheng/acl2025/MyRLHF/evaluation/babilong")
+sys.path.insert(0, os.path.abspath(myrlhf_eval_path))
 from eval import compare_answers, TASK_LABELS
 
-gt = transformers.AutoTokenizer.from_pretrained('/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct')
-
-
+# gt = transformers.AutoTokenizer.from_pretrained('/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct')
+gt = transformers.AutoTokenizer.from_pretrained('meta-llama/Meta-Llama-3-8B-Instruct')
 def statistic_chunk_scores(chunk_scores, reference_chunks):
     sorted_chunk_score = sorted(chunk_scores.items(), key=lambda x: x[0][0])
 
@@ -295,6 +298,7 @@ def preprocess_item(item, model, tokenizer, device):
     )
     pred_str = model_prediction(model_inputs, model, tokenizer, device)
 
+    import pdb; pdb.set_trace()
     golden_input_text = tokenizer.apply_chat_template(
         [{'role': 'user', 'content': instruct_input_text}, {'role': 'assistant', 'content': answer}],
         add_generation_prompt=False, tokenize=False
@@ -461,16 +465,18 @@ if __name__ == '__main__':
     # all_files = auto_read_dir(dir_path, file_suffix='json')
     # content = datasets.load_dataset('json', data_files=os.path.join(dir_path, all_files[0]), split='train')['conversations']
     
-    model_name = '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct'
-    model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:7')
+    # model_name = '/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct'
+    model_name = 'meta-llama/Meta-Llama-3-8B-Instruct'
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16).to('cuda:0')
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
     
     logger.info('begin to load datasets')
     # with open("test_sample.pkl", "rb") as f:
     #     test_case = pickle.load(f)
     # test_case = content[0][0]['content']  # DEBUG
-    data = auto_read_data("/data/zecheng/Long-form-reasoning-data/data/generated_tasks/qa3/64k.json")
-    test_case = data[0]
-    test_case['task'] = 'qa3'
-    res = compute_longppl(test_case, model, tokenizer)
-    print(res)
+    data = auto_read_data("/mnt/petrelfs/tangzecheng/Long-form-reasoning-data/data/generated_tasks/qa3/64k.json")
+
+    for sample in data:
+        sample['task'] = 'qa3'
+        res = compute_longppl(sample, model, tokenizer)
+        print(res)

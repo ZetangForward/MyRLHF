@@ -23,4 +23,6 @@ conda activate zecheng_new
 
 cd /mnt/petrelfs/tangzecheng/MyRLHF/inference
 
-bash llama3-1-8B/gen_offline.sh babilong reasoning allenai/Llama-3.1-Tulu-3-8B-DPO "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/tulu-3_1-8B-dpo babilong 8
+bash gen_offline.sh babilong top_n_o1 allenai/Llama-3.1-Tulu-3-8B-DPO "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/tulu-3_1-8B-dpo babilong 8 2
+
+# bash llama3-1-8B/gen_offline.sh babilong reasoning allenai/Llama-3.1-Tulu-3-8B-DPO "RMT-team/babilong" /mnt/petrelfs/tangzecheng/local_data/inference_results/tulu-3_1-8B-dpo babilong 8
