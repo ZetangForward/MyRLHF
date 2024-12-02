@@ -21,7 +21,7 @@ python inference.py \
     --dataset_name $data_name \
     --benchmark_name $benchmark_name \
     --max_workers 24 \
-    --max_model_len 128000 \
+    --max_model_len 130000 \
     --tp_size 2 \
     --dialogue_turn $dialogue_turn \
     --num_gpus $num_gpus;

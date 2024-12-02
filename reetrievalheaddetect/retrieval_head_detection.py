@@ -39,7 +39,8 @@ import glob
 import json
 from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM, AutoConfig
 import sys
-sys.path.append("/data/zecheng/acl2025/MyRLHF/RetrievalHead/reetrievalheaddetect/faiss_attn")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'faiss_attn'))
+# sys.path.append("/data/zecheng/acl2025/MyRLHF/RetrievalHead/reetrievalheaddetect/faiss_attn")
 from source.modeling_llama import LlamaForCausalLM
 from source.modeling_qwen2 import Qwen2ForCausalLM
 from source.modeling_mixtral import MixtralForCausalLM
@@ -139,7 +140,7 @@ class LLMNeedleHaystackTester:
     """
     def __init__(self,
                 needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
-                haystack_dir="/data/zecheng/acl2025/MyRLHF/RetrievalHead/reetrievalheaddetect/haystack_for_detect",
+                haystack_dir="./haystack_for_detect",
                 retrieval_question="What is the best thing to do in San Francisco?",
                 results_version = 1,
                 context_lengths_min = 1000,
@@ -486,10 +487,11 @@ class LLMNeedleHaystackTester:
             print (f"Score: {score}")
             print(f"detected_evidences {detected_evidences}")
             print (f"Response: {response}\n")
-        if isinstance(depth_percent, float) or isinstance(depth_percent, int):
+        if isinstance(depth_percent, float) or isinstance(depth_percent, int) or isinstance(depth_percent, np.int64):
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
         else:
             combination = depth_percent * self.document_depth_percent_intervals
+            import pdb; pdb.set_trace()
             combination = [int(i) for i in combination]
             tmp = "_".join(list(map(str, combination)))
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_combination_{tmp}'
@@ -749,13 +751,13 @@ if __name__ == "__main__":
     
     # zecheng note: debug code
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    # args.model_path = "/data/zecheng/hf_models/Qwen2.5-7B-Instruct"
+    args.model_path = "Qwen/Qwen2.5-7B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
 
     model_name = args.model_path
     multi_hop_reasoning = args.multi_hop_reasoning
-    multi_hop_reasoning = True # FIXME: Debug
+    multi_hop_reasoning = False # FIXME: Debug
     context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
 
     if multi_hop_reasoning:
