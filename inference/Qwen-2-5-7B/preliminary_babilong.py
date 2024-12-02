@@ -160,7 +160,7 @@ def main():
     args.save_name = "pred.jsonl"
     args.tp_size = 1
     args.num_gpus = 6
-    args.max_model_len = 68000
+    args.max_model_len = 128000
     args.max_workers = 64
     
     assert args.save_path is not None, "save_path is not set"
@@ -202,7 +202,7 @@ def main():
     if args.tp_size == 1:
         gpu_id_lst = []
         for j in range(0, len(avail_gpu_ids), args.tp_size):
-            gpu_id_lst.append(str(j))
+            gpu_id_lst.append(str(avail_gpu_ids[j]))
         # gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []

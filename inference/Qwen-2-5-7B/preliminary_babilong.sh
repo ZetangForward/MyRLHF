@@ -1,0 +1,5 @@
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export TRANSFORMERS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
+python preliminary_babilong.py
