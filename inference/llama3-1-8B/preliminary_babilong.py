@@ -92,11 +92,10 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
                         prompt_cfg['instruction'], prompt_cfg['post_prompt'],
                         template=prompt_cfg['template']
                     )
-<<<<<<< HEAD
                     if with_system_prompt:
                         model_inputs = tokenizer.apply_chat_template(
                             [{'role': 'system', 'content': SYSTEM_PROMPT},
-                            {'role': 'user', 'content': input_text}], 
+                            {'role': 'user', 'content': input_text}],
                             add_generation_prompt=True, tokenize=False
                         )
                     else:
@@ -105,13 +104,7 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
                             add_generation_prompt=True, tokenize=False
                         )
                     all_input_texts.append(
-                        {"message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
-=======
-                    model_inputs = tokenizer.apply_chat_template(
-                        [{'role': 'system', 'content': SYSTEM_PROMPT}, 
-                         {'role': 'user', 'content': input_text}], 
-                        add_generation_prompt=True, tokenize=False
->>>>>>> 6962d651ca9e2cd8f907c1d0f963991177bab2ed
+                        {"index": id, "message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
                     )
 
     random.shuffle(all_input_texts)

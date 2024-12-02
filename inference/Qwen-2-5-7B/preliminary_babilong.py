@@ -32,6 +32,7 @@ inference_args = dict(
     )
 )
 
+
 def get_gpu_memory():
     """
     获取所有GPU的显存使用情况
