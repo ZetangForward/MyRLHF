@@ -209,11 +209,7 @@ def main():
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-<<<<<<< HEAD
-    worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
-=======
     # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)  # FIXME: Debug
->>>>>>> 6962d651ca9e2cd8f907c1d0f963991177bab2ed
     
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
