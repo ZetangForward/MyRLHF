@@ -777,7 +777,7 @@ if __name__ == "__main__":
         final_context_length_buffer=200,
         document_depth_percents=np.array([0, 20, 40, 60, 80]),
         multi_hop_reasoning=multi_hop_reasoning,
-        tag="q3_inf_diff_pos"
+        # tag="q3_inf_diff_pos"
     )
 
     ht.start_test(args)
