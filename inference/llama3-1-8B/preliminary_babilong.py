@@ -151,14 +151,14 @@ def main():
     parser.add_argument('--tp_size', type=int, default=1, help='Tensor parallel size')
     args = parser.parse_args()
     
-    args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
-    args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
-    args.save_name = "o1-llama-3_1-8B-Instruct.jsonl"
-    args.tp_size = 1
-    args.num_gpus = 4
-    args.max_model_len = 96000
-    args.with_system_prompt = True
+    # args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
+    # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    # args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
+    # args.save_name = "o1-llama-3_1-8B-Instruct.jsonl"
+    # args.tp_size = 1
+    # args.num_gpus = 4
+    # args.max_model_len = 96000
+    # args.with_system_prompt = True
 
     assert args.save_path is not None, "save_path is not set"
     

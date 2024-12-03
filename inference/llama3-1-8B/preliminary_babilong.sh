@@ -17,12 +17,14 @@ python preliminary_babilong.py \
     --model_path $model_path \
     --data_dir $benchmark_dir \
     --save_path ${out_dir}/${data_name}/${task_name} \
+    --save_name "o1-llama-3_1-8B-Instruct.jsonl" \
     --task_name $task_name \
     --save_name $save_name \
     --benchmark_name $benchmark_name \
     --max_workers 24 \
-    --max_model_len 128000 \
-    --tp_size 2 \
+    --max_model_len 90000 \
+    --tp_size 1 \
+    --with_system_prompt \
     --dialogue_turn $dialogue_turn \
     --num_gpus $num_gpus;
 
