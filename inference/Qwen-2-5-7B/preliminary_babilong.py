@@ -18,20 +18,19 @@ SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning step by 
 
 inference_args = dict(
     top_p = dict(
-        n = 1, 
+        n = 6, 
         temperature = 0.7, 
         max_tokens = 100, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
-        n = 1,
+         n = 1,
         temperature = 0.0,
         max_tokens = 100,
         seed = 42,
     )
 )
-
 
 def get_gpu_memory():
     """
@@ -72,11 +71,11 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
 
     for task in tqdm(tasks, desc='tasks'):
         # configure the prompt
-        cur_task = task if "IF" not in task else task[3:]
+        cur_task_name = task if '-' not in task else task.split('-')[1]
         prompt_cfg = {
-            'instruction': DEFAULT_PROMPTS[cur_task]['instruction'],
-            'examples': DEFAULT_PROMPTS[cur_task]['examples'],
-            'post_prompt': DEFAULT_PROMPTS[cur_task]['post_prompt'],
+            'instruction': DEFAULT_PROMPTS[cur_task_name]['instruction'],
+            'examples': DEFAULT_PROMPTS[cur_task_name]['examples'],
+            'post_prompt': DEFAULT_PROMPTS[cur_task_name]['post_prompt'],
             'template': DEFAULT_TEMPLATE,
             'chat_template': True,
         }
@@ -84,10 +83,9 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
         prompt_name = '_'.join(prompt_name)
 
         for split_name in tqdm(split_names, desc='lengths'):
-            # for task in tasks:
             file_path = os.path.join(data_dir, task, f"{split_name}.json")
             data = auto_read_data(file_path)
-            for id, sample in enumerate(data['dataset']):
+            for sample in data['dataset']:
                 target, context, question, reference_list, all_facts = sample['target'], sample['input'], sample['question'], sample['reference'], sample["all_facts"]
                 input_text = get_formatted_input(
                     context, question, prompt_cfg['examples'],
@@ -106,7 +104,7 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
                         add_generation_prompt=True, tokenize=False
                     )
                 all_input_texts.append(
-                    {"index": id, "message": model_inputs, "golden": target, "task": task, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
+                    {"index": id, "message": model_inputs, "golden": target, "task": cur_task_name, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
                 )
 
     random.shuffle(all_input_texts)
@@ -121,11 +119,10 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
     chunk_message = [item['message'] for item in prompts_chunk]
 
     logger.info(f"Start to generate {len(chunk_message)} samples")
-
+    # chunk_message = chunk_message[:5]  # FIXME: Debug
     outputs = llm.generate(chunk_message, sampling_params=sampling_params, use_tqdm=True)
 
     results = []
-
     for i, output in enumerate(outputs):
         generations = [o.text for o in output.outputs]
         original_prompt_data = prompts_chunk[i]  # 获取原始数据
@@ -148,7 +145,7 @@ def main():
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
     parser.add_argument('--max_model_len', type=int, default=64000, help='model max context length')
     parser.add_argument('--max_workers', type=int, default=2, help='Maximum number of worker threads')
-    parser.add_argument('--use_logn', action='store_true', help='Flag to use log-normal distribution')
+    parser.add_argument('--with_system_prompt', action='store_true', help='whether with system prompt')
     parser.add_argument('--temperature', type=float, default=1.0, help='Temperature parameter for generation')
     parser.add_argument('--k', type=int, default=1, help='Number of generations per prompt')
     parser.add_argument('--num_gpus', type=int, default=8, help='Number of GPUs to use')
@@ -157,12 +154,12 @@ def main():
     
     args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/Qwen-2-5-7b-instruct/preliminary"
     args.model_path = "/data/zecheng/hf_models/Qwen2.5-7B-Instruct"
-    args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/"
-    args.save_name = "pred.jsonl"
+    args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
+    args.save_name = "o1-Qwen2.5-7B-Instruct.jsonl"
     args.tp_size = 1
-    args.num_gpus = 6
-    args.max_model_len = 128000
-    args.max_workers = 64
+    args.num_gpus = 4
+    args.max_model_len = 96000
+    args.with_system_prompt = True
     
     assert args.save_path is not None, "save_path is not set"
     
@@ -171,7 +168,7 @@ def main():
     torch.cuda.manual_seed_all(args.seed)
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
-    input_queries = prepare_babilong_data(args.data_dir, tokenizer)
+    input_queries = prepare_babilong_data(args.data_dir, tokenizer, args.with_system_prompt)
   
     out_file_path = os.path.join(args.save_path, f"preds_{args.save_name}.jsonl")
 
@@ -197,22 +194,19 @@ def main():
         logger.error("No available GPUs.")
         exit(1)
 
-    avail_gpu_ids = avail_gpu_ids[:args.num_gpus]
-    
     # construct gpu_ids list
     if args.tp_size == 1:
         gpu_id_lst = []
-        for j in range(0, len(avail_gpu_ids), args.tp_size):
-            gpu_id_lst.append(str(avail_gpu_ids[j]))
-        # gpu_id_lst = [str(i) for i in range(args.num_gpus)]
+        for j in avail_gpu_ids:
+            gpu_id_lst.append(str(j))
     else:
         gpu_id_lst = []
-
         for j in range(0, len(avail_gpu_ids), args.tp_size):
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-    # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)
+    # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)  # FIXME: Debug
+    print(gpu_id_lst)
 
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
