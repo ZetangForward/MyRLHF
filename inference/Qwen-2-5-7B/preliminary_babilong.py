@@ -24,6 +24,13 @@ inference_args = dict(
         seed = 42, 
         top_p = 0.95,
     ),
+    top_n = dict(
+        n = 5, 
+        temperature = 0.7, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
     greedy = dict(
         n = 1,
         temperature = 0.0,
@@ -140,6 +147,7 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
     parser.add_argument('--peft_path', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
+    parser.add_argument('--sampling_type', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_name', type=str, default=None, help='Output file name')
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
     parser.add_argument('--max_model_len', type=int, default=64000, help='model max context length')
@@ -210,7 +218,7 @@ def main():
     
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
-        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))
+        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args[args.sampling_type], return_list))
         p.start()
         processes.append(p)
 

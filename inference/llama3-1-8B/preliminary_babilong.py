@@ -24,6 +24,13 @@ inference_args = dict(
         seed = 42, 
         top_p = 0.95,
     ),
+    top_n = dict(
+        n = 5, 
+        temperature = 0.7, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
     greedy = dict(
         n = 1,
         temperature = 0.0,
@@ -139,6 +146,7 @@ def main():
     parser.add_argument('--task_name', type=str, default=None, help='Name of the task')
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
     parser.add_argument('--peft_path', type=str, default=None, help='Path to the PEFT model')
+    parser.add_argument('--sampling_type', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
     parser.add_argument('--save_name', type=str, default=None, help='Output file name')
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
@@ -150,7 +158,7 @@ def main():
     parser.add_argument('--num_gpus', type=int, default=8, help='Number of GPUs to use')
     parser.add_argument('--tp_size', type=int, default=1, help='Tensor parallel size')
     args = parser.parse_args()
-    
+
     # args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     # args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
@@ -210,7 +218,7 @@ def main():
     
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
-        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))
+        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args[args.sampling_type], return_list))
         p.start()
         processes.append(p)
 
