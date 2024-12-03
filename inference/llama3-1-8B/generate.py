@@ -55,8 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_training_length', type=int, default=8192, help='Maximum training length')
     parser.add_argument('--seed', type=int, default=27, help='default seed')
     parser.add_argument('--max_workers', type=int, default=2, help='max number of workers')
-    parser.add_argument('--use_logn', action='store_true', help='use logn')
-
+    
     args = parser.parse_args()
     if args.max_position_embeddings == -1:
         args.max_position_embeddings = None

@@ -99,7 +99,6 @@ def prepare_second_turn_api_data(data_dir, dataset_name, task_name, tokenizer):
             for id_, q in enumerate(user_first_queries):
                 if isinstance(system_prompt, list):
                     message = copy.deepcopy(system_prompt)
-                    
                 else:
                     message=[{'role': 'system', 'content': system_prompt}]
                 if len(message) > 1:

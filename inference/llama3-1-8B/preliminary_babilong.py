@@ -154,9 +154,12 @@ def main():
     # args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     # args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
+    # args.save_path = "/mnt/petrelfs/tangzecheng/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
+    # args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    # args.data_dir = "/mnt/petrelfs/tangzecheng/local_data/BabiLong_FactsPermutation_Benchmark"
     # args.save_name = "o1-llama-3_1-8B-Instruct.jsonl"
     # args.tp_size = 1
-    # args.num_gpus = 4
+    # args.num_gpus = 8
     # args.max_model_len = 96000
     # args.with_system_prompt = True
 
