@@ -180,7 +180,7 @@ def main():
     
     input_queries = prepare_babilong_data(args.data_dir, tokenizer, args.with_system_prompt)
   
-    out_file_path = os.path.join(args.save_path, f"preds_{args.save_name}.jsonl")
+    out_file_path = os.path.join(args.save_path, f"preds_{args.save_name}.pkl")
 
     model_args = {
         "tensor_parallel_size": args.tp_size, 
