@@ -495,7 +495,6 @@ class LLMNeedleHaystackTester:
             tmp = "_".join(list(map(str, combination)))
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_combination_{tmp}'
             
-
         if self.save_contexts:
             results['file_name'] = context_file_location
 
@@ -708,6 +707,13 @@ class LLMNeedleHaystackTester:
         print ("\n\n")
 
     def start_test(self, args):
+
+        if not self.tag:    
+            if self.implicit_reasoning:
+                self.tag = 'long_form_reasoning'
+            else:
+                self.tag = 'niah_retrieval'
+
         for ni in range(len(self.needle_list)):
             self.needle = self.needle_list[ni]
             self.haystack_dir = self.haystack_dir_list[ni] if not self.implicit_reasoning else None
@@ -718,12 +724,6 @@ class LLMNeedleHaystackTester:
                 self.print_start_test_summary()
             self.run_test(args)
         
-        if not self.tag:    
-            if self.implicit_reasoning:
-                self.tag = 'long_form_reasoning'
-            else:
-                self.tag = 'niah_retrieval'
-
         if not os.path.exists(f"head_score/{self.tag}"):
             os.makedirs(f"head_score/{self.tag}")
 
