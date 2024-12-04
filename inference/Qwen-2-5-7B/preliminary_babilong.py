@@ -18,14 +18,21 @@ SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning step by 
 
 inference_args = dict(
     top_p = dict(
-        n = 6, 
+        n = 1, 
+        temperature = 0.7, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
+    top_n = dict(
+        n = 5, 
         temperature = 0.7, 
         max_tokens = 100, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
-         n = 1,
+        n = 1,
         temperature = 0.0,
         max_tokens = 100,
         seed = 42,
@@ -119,7 +126,6 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
     chunk_message = [item['message'] for item in prompts_chunk]
 
     logger.info(f"Start to generate {len(chunk_message)} samples")
-    # chunk_message = chunk_message[:5]  # FIXME: Debug
     outputs = llm.generate(chunk_message, sampling_params=sampling_params, use_tqdm=True)
 
     results = []
@@ -141,6 +147,7 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
     parser.add_argument('--peft_path', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
+    parser.add_argument('--sampling_type', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_name', type=str, default=None, help='Output file name')
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
     parser.add_argument('--max_model_len', type=int, default=64000, help='model max context length')
@@ -152,15 +159,18 @@ def main():
     parser.add_argument('--tp_size', type=int, default=1, help='Tensor parallel size')
     args = parser.parse_args()
     
-    args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/Qwen-2-5-7b-instruct/preliminary"
-    args.model_path = "/data/zecheng/hf_models/Qwen2.5-7B-Instruct"
-    args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
-    args.save_name = "o1-Qwen2.5-7B-Instruct.jsonl"
-    args.tp_size = 1
-    args.num_gpus = 4
-    args.max_model_len = 96000
-    args.with_system_prompt = True
-    
+    # args.save_path = "/data/zecheng/acl2025/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary"
+    # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    # args.data_dir = "/data/zecheng/Long-form-reasoning-data/data/generated_tasks_permutation/BabiLong_FactsPermutation_Benchmark"
+    # args.save_path = "/mnt/petrelfs/tangzecheng/MyRLHF/evaluation/babilong/Qwen-2-5-7b-instruct/preliminary"
+    # args.model_path = "Qwen/Qwen2.5-7B-Instruct"
+    # args.data_dir = "/mnt/petrelfs/tangzecheng/local_data/BabiLong_FactsPermutation_Benchmark"
+    # args.save_name = "o1-Qwen2.5-7B-Instruct-Instruct.jsonl"
+    # args.tp_size = 1
+    # args.num_gpus = 8
+    # args.max_model_len = 96000
+    # args.with_system_prompt = True
+
     assert args.save_path is not None, "save_path is not set"
     
     auto_mkdir(args.save_path)
@@ -170,7 +180,7 @@ def main():
     
     input_queries = prepare_babilong_data(args.data_dir, tokenizer, args.with_system_prompt)
   
-    out_file_path = os.path.join(args.save_path, f"preds_{args.save_name}.jsonl")
+    out_file_path = os.path.join(args.save_path, f"preds_{args.save_name}.pkl")
 
     model_args = {
         "tensor_parallel_size": args.tp_size, 
@@ -193,24 +203,22 @@ def main():
     if len(avail_gpu_ids) == 0:
         logger.error("No available GPUs.")
         exit(1)
-
+    
     # construct gpu_ids list
     if args.tp_size == 1:
-        gpu_id_lst = []
-        for j in avail_gpu_ids:
-            gpu_id_lst.append(str(j))
+        gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []
+
         for j in range(0, len(avail_gpu_ids), args.tp_size):
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
     # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, model_args, inference_args['top_p'], return_list)  # FIXME: Debug
-    print(gpu_id_lst)
-
+    
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
-        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args['top_p'], return_list))
+        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args[args.sampling_type], return_list))
         p.start()
         processes.append(p)
 

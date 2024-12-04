@@ -67,7 +67,7 @@ def eval_fn(pred_path, save_path, model_name=""):
     tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
     lengths = ['4k', '8k', '16k', '32k', '64k', '128k']
     content = auto_read_data(pred_path)
-
+    import pdb; pdb.set_trace()
     all_results = dict([(task, dict([(length, []) for length in lengths])) for task in tasks])
 
     # 填充 DataFrame
@@ -117,7 +117,8 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default="llama-3_1-8B-Instruct", help='inference directory path')
     args = parser.parse_args()
 
-    pred_path = os.path.join(args.perd_dir, args.model_name, "babilong/reasoning/preds_babilong.jsonl")
+    # pred_path = os.path.join(args.perd_dir, args.model_name, "babilong/reasoning/preds_babilong.jsonl")
+    pred_path = "/mnt/petrelfs/tangzecheng/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary/preds_o1-llama-3_1-8B-Instruct.jsonl.jsonl"
     save_path = os.path.join(args.save_dir, args.model_name, "heatmap_result.png")
     auto_mkdir(os.path.join(args.save_dir, args.model_name))
     res = eval_fn(pred_path, save_path, args.model_name)

@@ -1,15 +1,15 @@
 #!/bin/bash
 
-#SBATCH --job-name=llama3.1-8B-Instruct-babilong
+#SBATCH --job-name=(o1)Qwen-2-5-7B-babilong
 #SBATCH --nodes=1                         
-#SBATCH --ntasks-per-node=32 
-#SBATCH --cpus-per-task=2        # 添加CPU配置
-#SBATCH --mem=400G                # 添加内存配置
+#SBATCH --ntasks-per-node=1 
+#SBATCH --cpus-per-task=48        # 添加CPU配置
+#SBATCH --mem=300G                # 添加内存配置
 #SBATCH --gres=gpu:8                       
 #SBATCH --time=14-00:00:00       # 设置具体的时间限制，比如14天     
-#SBATCH --output=/mnt/petrelfs/tangzecheng/sbatch_logs/zc_job_id-%J.out       
-#SBATCH --error=/mnt/petrelfs/tangzecheng/sbatch_logs/zc_job_id-%J.err         
-#SBATCH --partition=s2_bigdata    
+#SBATCH --output=/mnt/petrelfs/tangzecheng/sbatch_logs/%J.out       
+#SBATCH --error=/mnt/petrelfs/tangzecheng/sbatch_logs/%J.err         
+#SBATCH --partition=belt_road    
 #SBATCH --exclusive              
 
 export http_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/ 
@@ -21,6 +21,6 @@ source /mnt/petrelfs/tangzecheng/anaconda3/etc/profile.d/conda.sh
 
 conda activate zecheng_new
 
-cd /mnt/petrelfs/tangzecheng/MyRLHF/inference/llama3-1-8B
+cd /mnt/petrelfs/tangzecheng/MyRLHF/inference/Qwen-2-5-7B
 
-bash preliminary_babilong.sh babilong reasoning meta-llama/Meta-Llama-3.1-8B-Instruct /mnt/petrelfs/tangzecheng/Long-form-reasoning-data/data/generated_tasks /mnt/petrelfs/tangzecheng/local_data/inference_results/llama-3_1-8B-Instruct/preliminary/top_6 babilong 8 1
+bash preliminary_babilong_top_p_o1.sh
