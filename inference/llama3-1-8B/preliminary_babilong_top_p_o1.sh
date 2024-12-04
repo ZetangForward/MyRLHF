@@ -7,7 +7,7 @@ python preliminary_babilong.py \
     --model_path "meta-llama/Meta-Llama-3.1-8B-Instruct" \
     --data_dir "/mnt/petrelfs/tangzecheng/local_data/BabiLong_FactsPermutation_Benchmark" \
     --save_path "/mnt/petrelfs/tangzecheng/MyRLHF/evaluation/babilong/llama-3_1-8B-Instruct/preliminary" \
-    --save_name "o1-llama-3_1-8B-Instruct_top_p.jsonl" \
+    --save_name "o1-llama-3_1-8B-Instruct_top_p" \
     --tp_size 1 \
     --num_gpus 8 \
     --max_model_len 96000 \

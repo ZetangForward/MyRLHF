@@ -111,7 +111,7 @@ def prepare_babilong_data(data_dir, tokenizer, with_system_prompt=False):
                         add_generation_prompt=True, tokenize=False
                     )
                 all_input_texts.append(
-                    {"index": id, "message": model_inputs, "golden": target, "task": cur_task_name, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
+                    {"message": model_inputs, "golden": target, "task": cur_task_name, "reference_list": reference_list, "ctx_length": split_name, "question": question, "all_facts": all_facts}
                 )
 
     random.shuffle(all_input_texts)
@@ -227,7 +227,8 @@ def main():
     
     # 保存生成结果
     logger.info('Have collected ', len(return_list), 'samples, begin to save ...')
-    auto_save_data(return_list, out_file_path)
+    normal_list = list(return_list)
+    auto_save_data(normal_list, out_file_path)
 
 if __name__ == '__main__':
     main()
