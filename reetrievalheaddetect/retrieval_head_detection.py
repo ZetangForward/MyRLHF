@@ -491,12 +491,10 @@ class LLMNeedleHaystackTester:
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
         else:
             combination = depth_percent * self.document_depth_percent_intervals
-            import pdb; pdb.set_trace()
             combination = [int(i) for i in combination]
             tmp = "_".join(list(map(str, combination)))
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_combination_{tmp}'
             
-
         if self.save_contexts:
             results['file_name'] = context_file_location
 
@@ -709,6 +707,13 @@ class LLMNeedleHaystackTester:
         print ("\n\n")
 
     def start_test(self, args):
+
+        if not self.tag:    
+            if self.implicit_reasoning:
+                self.tag = 'long_form_reasoning'
+            else:
+                self.tag = 'niah_retrieval'
+
         for ni in range(len(self.needle_list)):
             self.needle = self.needle_list[ni]
             self.haystack_dir = self.haystack_dir_list[ni] if not self.implicit_reasoning else None
@@ -719,12 +724,6 @@ class LLMNeedleHaystackTester:
                 self.print_start_test_summary()
             self.run_test(args)
         
-        if self.tag is None:    
-            if self.implicit_reasoning:
-                self.tag = 'long_form_reasoning'
-            else:
-                self.tag = 'niah_retrieval'
-
         if not os.path.exists(f"head_score/{self.tag}"):
             os.makedirs(f"head_score/{self.tag}")
 
@@ -751,13 +750,13 @@ if __name__ == "__main__":
     
     # zecheng note: debug code
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.model_path = "Qwen/Qwen2.5-7B-Instruct"
+    # args.model_path = "Qwen/Qwen2.5-7B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
 
     model_name = args.model_path
     multi_hop_reasoning = args.multi_hop_reasoning
-    multi_hop_reasoning = False # FIXME: Debug
+    # multi_hop_reasoning = True # FIXME: Debug
     context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
 
     if multi_hop_reasoning:
