@@ -437,7 +437,7 @@ class LLMNeedleHaystackTester:
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=input_ids[:,:-1], use_cache=True, return_dict=True)
             output, retrieval_score = self.decode(q_outputs, input_ids[:,-1], 50)
-            response = self.enc.decode(output[:-1], skip_special_tokens=True).split('\n')[0].strip()
+            response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
 
         test_end_time = time.time()
         test_elapsed_time = test_end_time - test_start_time
