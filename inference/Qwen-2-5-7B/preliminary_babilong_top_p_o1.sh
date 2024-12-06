@@ -10,7 +10,7 @@ python preliminary_babilong.py \
     --save_name "o1-Qwen2.5-7B-Instruct-Instruct_top_n" \
     --tp_size 1 \
     --num_gpus 8 \
-    --max_model_len 96000 \
+    --max_model_len 100000 \
     --max_workers 24 \
     --sampling_type "top_p" \
     --with_system_prompt;

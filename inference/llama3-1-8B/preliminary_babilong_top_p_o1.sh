@@ -10,7 +10,7 @@ python preliminary_babilong.py \
     --save_name "o1-llama-3_1-8B-Instruct_top_p" \
     --tp_size 1 \
     --num_gpus 8 \
-    --max_model_len 96000 \
+    --max_model_len 100000 \
     --max_workers 24 \
     --sampling_type "top_p" \
     --with_system_prompt;

@@ -44,7 +44,7 @@ def get_free_gpu():
     return np.argmax(memory_available)
 
 
-def prepare_babilong_data(data_dir, tokenizer):
+def prepare_babilong_data(data_dir, tokenizer, with_system):
     tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
     split_names = ['4k', '8k', '16k', '32k', '64k', '128k']
     all_input_texts = []

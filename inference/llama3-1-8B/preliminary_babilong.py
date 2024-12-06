@@ -20,21 +20,21 @@ inference_args = dict(
     top_p = dict(
         n = 1, 
         temperature = 0.7, 
-        max_tokens = 100, 
+        max_tokens = 512, 
         seed = 42, 
         top_p = 0.95,
     ),
     top_n = dict(
         n = 5, 
         temperature = 0.7, 
-        max_tokens = 100, 
+        max_tokens = 512, 
         seed = 42, 
         top_p = 0.95,
     ),
     greedy = dict(
         n = 1,
         temperature = 0.0,
-        max_tokens = 100,
+        max_tokens = 512,
         seed = 42,
     )
 )
