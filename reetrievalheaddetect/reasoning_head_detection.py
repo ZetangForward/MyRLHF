@@ -155,13 +155,13 @@ class LLMNeedleHaystackTester:
         """
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
-        # needles_and_stacks = [json.loads(l) for l in open(f"{haystack_dir}/reasoning_needle.jsonl")]  # FIXME: reopen me, for debug
-        needles_and_stacks = [json.loads(l) for l in open("/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl")]
+        needles_and_stacks = [json.loads(l) for l in open(f"{haystack_dir}/reasoning_needle.jsonl")]  # FIXME: reopen me, for debug
+        # needles_and_stacks = [json.loads(l) for l in open("/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl")]
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         self.needle_ids = needle_ids
         needles_and_stacks = [l for l in needles_and_stacks]
         self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
-        haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文
+        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
         self.needle_list = [l["needle"] for l in needles_and_stacks]
         self.retrieval_question_list = [l["question"] for l in needles_and_stacks]
