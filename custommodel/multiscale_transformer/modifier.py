@@ -87,7 +87,7 @@ def apply(loaded_model, group_size, window_size, enable_flash_attention=False, s
     arch_name = loaded_model.__class__.__name__
     if 'Llama' in arch_name:
         if enable_flash_attention:
-            if flash_attention_impl == "flash_attn":
+            if flash_attention_impl == "flash_attention_2":
                 self_extend_attention_forward = partial(flash_self_extend_forward,
                                             group_size_1=group_size, 
                                             group_size_2=window_size,

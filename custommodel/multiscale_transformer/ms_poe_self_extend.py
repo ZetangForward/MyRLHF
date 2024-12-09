@@ -138,7 +138,6 @@ def self_extend_forward(
 
     bsz, q_len, _ = hidden_states.size()
 
-
     if self.config.pretraining_tp > 1:
         key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp
         query_slices = self.q_proj.weight.split(
@@ -280,11 +279,6 @@ def flash_self_extend_forward(
     **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     """
-    zecheng_note: 已经把下面的参数写入到模型的self中了
-    ========================= model config =========================
-    group_size_1: Optional[float] = 8,
-    group_size_2: Optional[float] = 1024,
-    scale_base: Optional[int] = -1,
     ========================= forward logic =========================
         Require updating tansformers to >= 4.38.2, flash_attn >= 2.5.6
         a. Only support causal mask.
@@ -304,8 +298,8 @@ def flash_self_extend_forward(
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    if self.scale_base > 0:
-        scaled_query = query_states * ((position_ids + 1)[:, None, :, None].log() / np.log(self.scale_base)).clip(1).to(query_states.dtype) # log scale 
+    if scale_base > 0:
+        scaled_query = query_states * ((position_ids + 1)[:, None, :, None].log() / np.log(scale_base)).clip(1).to(query_states.dtype) # log scale 
         #scaled_query = query_states * (((0.1*(((position_ids+1)[:, None, :, None]/scale_base).log())+1)**2).clip(1)).to(query_states.dtype) # Yarn scale 
     else:
         scaled_query = query_states
@@ -327,14 +321,14 @@ def flash_self_extend_forward(
         # for our flash implementation doesnot work for  decoding stage at the releasing time.
 
         neighbor_key_position = position_ids[:, -1] - key_position
-        _re_group_size_2 = 0 if position_ids.max() < self.group_size_2 else self.group_size_2
-        group_key_position = position_ids[:, -1]//self.group_size_1 - key_position//self.group_size_1 + (_re_group_size_2 - _re_group_size_2//self.group_size_1)
-        decode_key_position = torch.cat([group_key_position[:, :-self.group_size_2], neighbor_key_position[:,-self.group_size_2:]], dim=1)
+        _re_group_size_2 = 0 if position_ids.max() < group_size_2 else group_size_2
+        group_key_position = position_ids[:, -1]//group_size_1 - key_position//group_size_1 + (_re_group_size_2 - _re_group_size_2//group_size_1)
+        decode_key_position = torch.cat([group_key_position[:, :-group_size_2], neighbor_key_position[:,-group_size_2:]], dim=1)
         
         decode_k_cos, decode_k_sin = self.rotary_emb(value_states, decode_key_position)
         # neighbor_query_states, _ = apply_rotary_pos_emb(scaled_query, None, cos, sin, query_position_ids) 
         decode_query_states = scaled_query.transpose(1,2).contiguous() # position 0: cos 0 = 1, sin 0 = 0
-        _, decode_key_states = apply_rotary_pos_emb(None, key_states, decode_k_cos, -decode_k_sin, decode_key_position) 
+        _, decode_key_states = apply_rotary_pos_emb(scaled_query, key_states, decode_k_cos, -decode_k_sin, decode_key_position) 
 
         decode_key_states = repeat_kv(decode_key_states, self.num_key_value_groups).transpose(1, 2).contiguous()
         decode_value_states = repeat_kv(value_states, self.num_key_value_groups).transpose(1, 2).contiguous()
@@ -351,19 +345,19 @@ def flash_self_extend_forward(
     elif q_len == kv_seq_len:
         # set correct position_ids & apply RoPE.
         neighbor_q_cos, neighbor_q_sin = self.rotary_emb(value_states, query_position)
-        neighbor_k_cos, neighbor_k_sin = self.rotary_emb(value_states, key_position)
+        # neighbor_k_cos, neighbor_k_sin = self.rotary_emb(value_states, key_position)
 
-        _re_group_size_2 = 0 if query_position.max() < self.group_size_2 else self.group_size_2 # in case that, the smallest q position, g2-g2//g1 exceed the max position
-        group_query_position = query_position // self.group_size_1 + _re_group_size_2 - _re_group_size_2 / self.group_size_1
-        group_key_position = key_position // self.group_size_1
+        _re_group_size_2 = 0 if query_position.max() < group_size_2 else group_size_2 # in case that, the smallest q position, g2-g2//g1 exceed the max position
+        group_query_position = query_position // group_size_1 + _re_group_size_2 - _re_group_size_2 / group_size_1
+        group_key_position = key_position // group_size_1
 
-        group_q_cos, group_q_sin = self.rotary_emb(value_states, group_query_position, seq_len=None)
-        group_k_cos, group_k_sin = self.rotary_emb(value_states, group_key_position, seq_len=None)
+        group_q_cos, group_q_sin = self.rotary_emb(value_states, group_query_position)
+        # group_k_cos, group_k_sin = self.rotary_emb(value_states, group_key_position)
 
-        neighbor_query_states, _ = apply_rotary_pos_emb(scaled_query, None, neighbor_q_cos, neighbor_q_sin, None)
-        _, neighbor_key_states = apply_rotary_pos_emb(None, key_states, neighbor_k_cos, neighbor_k_sin, None)
-        group_query_states, _ = apply_rotary_pos_emb(scaled_query, None, group_q_cos, group_q_sin, None)
-        _, group_key_states = apply_rotary_pos_emb(None, key_states, group_k_cos, group_k_sin, None)
+        # _, neighbor_key_states = apply_rotary_pos_emb(None, key_states, neighbor_k_cos, neighbor_k_sin, None)
+        # _, group_key_states = apply_rotary_pos_emb(None, key_states, group_k_cos, group_k_sin, None)
+        neighbor_query_states, neighbor_key_states = apply_rotary_pos_emb(scaled_query, key_states, neighbor_q_cos, neighbor_q_sin)
+        group_query_states, group_key_states = apply_rotary_pos_emb(scaled_query, key_states, group_q_cos, group_q_sin)
         
         neighbor_query_states = neighbor_query_states.transpose(1, 2).contiguous()
         neighbor_key_states = repeat_kv(neighbor_key_states, self.num_key_value_groups).transpose(1, 2).contiguous()
@@ -373,7 +367,7 @@ def flash_self_extend_forward(
         
         attn_output = self_extend_flash_forward(self,
                                                 query_position,
-                                                self.group_size_2,
+                                                group_size_2,
                                                 neighbor_query_states,
                                                 neighbor_key_states,
                                                 group_query_states,
