@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class ProducerConsumerManager:
+    _estimate_avg_tasks=0
     def __init__(self,
                  task_info_list : list=[],
                  max_producers: int = 1,
@@ -20,6 +21,7 @@ class ProducerConsumerManager:
                  ):
         self.task_info_list=[_ for _ in task_info_list]
         random.shuffle(self.task_info_list)
+        ProducerConsumerManager._estimate_avg_tasks=len(self.task_info_list)//max_consumers
         self.max_producers=max_producers
         self.max_consumers=max_consumers
         self.produce_config=produce_config
@@ -38,16 +40,17 @@ class ProducerConsumerManager:
 
     
     def __exit__(self,exc_type, exc_value, traceback):
-        self.manager.shutdown()
         for process in self.producers+self.consumers:
             process.terminate()
+        self.manager.shutdown()
         return False
     def __enter__(self):
         for i in range(self.max_consumers):
             self.set_consumer_environment(i,self.consume_env_config)
             process=mp.Process(
                 target=self._consumer,
-                args=(self._task_queue,self.consume_config, self._result_list)
+                args=(self.set_consumer_global_variables,
+                      self._task_queue,self.consume_config, self._result_list)
             )
             self.consumers.append(process)
             process.start()
@@ -57,7 +60,8 @@ class ProducerConsumerManager:
             self.set_procuder_environment(i,self.produce_env_config)
             process=mp.Process(
                 target=self._producer,
-                args=(task_info_list, self._task_queue, self.produce_config)
+                args=(self.set_producer_global_variables,
+                      task_info_list, self._task_queue, self.produce_config)
             )
             
             self.producers.append(process)
@@ -69,8 +73,6 @@ class ProducerConsumerManager:
 
         for process in self.producers:
             process.join()
-        
-        print("Process Over!")
 
         for _ in range(self.max_consumers):
             self._task_queue.put(None)
@@ -110,47 +112,55 @@ class ProducerConsumerManager:
         if consume_env_config is not None:raise NotImplementedError
 
     @classmethod
-    def _producer(cls, task_info_list: list, task_queue: mp.Queue, produce_config: Namespace):
-        cls.set_producer_global_variable(produce_config)
+    def _producer(cls, set_producer_global_variables,
+                  task_info_list: list, task_queue: mp.Queue, produce_config: Namespace):
+        global_variables=set_producer_global_variables(produce_config)
         for task_info in tqdm(task_info_list,desc=f"Producer: {os.getpid()}"):
-            for task_sample in tqdm(cls.produce(task_info, produce_config),desc=f"P single: {os.getpid()}"):
+            for task_sample in tqdm(cls.produce(task_info, produce_config, global_variables),
+                                    desc=f"P single: {os.getpid()}"):
                 task_queue.put(task_sample)
     @classmethod
-    def _consumer(cls, task_queue: mp.Queue, consume_config: Namespace, result_list: List):
-        progress_bar = tqdm(desc=f"Consumer: {os.getpid()}", total=0)  
-        delta=2
+    def _consumer(cls, set_consumer_global_variables,
+                  task_queue: mp.Queue, consume_config: Namespace, result_list: List):
+        progress_bar = tqdm(desc=f"Consumer: {os.getpid()}", total=cls._estimate_avg_tasks)  
+        delta=10
         number_tasks=0
-        progress_bar.total=delta
         
-        cls.set_consumer_global_variable(consume_config)
+        global_variables=set_consumer_global_variables(consume_config)
         while True:
             task_sample=task_queue.get()
             if task_sample is None:break
-            for task_result in tqdm(cls.consume(task_sample, consume_config),desc=f"C single: {os.getpid()}", total=0):
+            for task_result in tqdm(cls.consume(task_sample, consume_config, global_variables),
+                                    desc=f"C single: {os.getpid()}", total=0):
                 result_list.append(task_result)
             
-            number_tasks+=1
-            if number_tasks==progress_bar.total:
-                progress_bar.total*=delta
-            progress_bar.update(1)
+                number_tasks+=1
+                if number_tasks==progress_bar.total:
+                    progress_bar.total+=delta
+                progress_bar.update(1)
         progress_bar.total=number_tasks
         progress_bar.close()
 
     @classmethod
-    def set_producer_global_variable(cls, produce_config: Namespace):
+    def set_producer_global_variables(cls, produce_config: Namespace) -> Namespace:
         '''
         set the public global in every producer process, which will be used during loop
+
+        Sentence like `cls.func` is not permitted, since it may cause error!
+        Please Use any functions or variables in produce_config
         '''
-        pass
+        return Namespace()
     @classmethod
-    def set_consumer_global_variable(cls, consume_config: Namespace):
+    def set_consumer_global_variables(cls, consume_config: Namespace) -> Namespace:
         '''
         set the public global in every consumer process, which will be used during loop
+        Sentence like `cls.func` is not permitted, since it may cause error!
+        Please Use any functions or variables in consume_config
         '''
-        pass
+        return Namespace()
 
     @classmethod
-    def produce(cls, task_info , produce_config: Namespace) -> object:
+    def produce(cls, task_info , produce_config: Namespace, glb: Namespace) -> object:
         '''
         task_info is the sample in task_info_list you passed when initiating the manager
         produce_config is also the object you passed when initiating.
@@ -161,7 +171,7 @@ class ProducerConsumerManager:
         raise NotImplementedError
 
     @classmethod
-    def consume(cls, task_sample, consume_config: Namespace) -> object:
+    def consume(cls, task_sample, consume_config: Namespace, glb: Namespace) -> object:
         '''
         task_sample is the return value of the   `produce` you implement
         consume_config is the object you passed when initating
@@ -169,7 +179,6 @@ class ProducerConsumerManager:
         After gaining a result, do : yield result
         '''
         raise NotImplementedError
-
 
 if __name__=="__main__":
     with ProducerConsumerManager(

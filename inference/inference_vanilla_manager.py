@@ -1,6 +1,5 @@
 import os ,sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../custommodel/multiscale_transformer')))
-from ms_poe_jbb import MsPoELlamaForCausalLM, setup_model,setup_tokenizer
 
 import json,argparse,warnings
 import numpy as np,pandas as pd
@@ -14,77 +13,87 @@ import datasets
 from argparse import Namespace
 
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
-# from utils.mspoe.gpumanager import MultiGPUManager
-from utils.mspoe.manager.gpumanager import LLMEvalGPUManager
+from utils.mspoe.gpumanager import MultiGPUManager
 
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
-TASKS=[
-    # 'qa1',
-    'qa2', 'qa3',
-    # 'qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
-    ]
-SPLIT_NAMES=[
-    '0k',
-    #   '1k','2k','4k','8k', '16k', '32k', '64k', '128k'
-      ]
+TASKS=['qa1','qa2','qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10']
+SPLIT_NAMES=['0k','1k','2k','4k','8k', '16k', '32k', '64k','128k']
 use_chat_template = True
 use_instruction = True
 use_examples = True
 use_post_prompt = True
 
-# nohup python inference_ms-poe_mg.py >ms_poe_draft.log
-import time
+# nohup python inference_vanilla_manager.py > vanilla.log
+from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
-class BabilongManager(LLMEvalGPUManager):
+def setup_model(args):
+    model_name = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    config = AutoConfig.from_pretrained(model_name)
+    return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
+
+def setup_tokenizer():
+    return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
+
+
+class BabilongManager(MultiGPUManager):
     @classmethod
     def setup_model(cls, model_config: Namespace):
-        model=setup_model(model_config)
-        return model
-    @classmethod
-    def preprocess(cls, task_info, data_config: Namespace, glb: Namespace):
-        tokenizer = data_config.tokenizer
-        data_dir=BABILONG_DATA_PATH
+        return setup_model(model_config)
         
-        task=task_info.task
-        split_name=task_info.split_name
+    @classmethod
+    def preprocess(cls, task_queue, data_config: Namespace):
+        tokenizer=data_config.tokenizer
+        data_dir=BABILONG_DATA_PATH
+        tasks=TASKS
+        split_names=SPLIT_NAMES
 
-        prompt_cfg=task_info.prompt_cfg
-        prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
-        prompt_name = '_'.join(prompt_name)
-
-        data = datasets.load_dataset(data_dir, split_name)
-        task_data = data[task]
-
-        for index,sample in enumerate(task_data):
-            target = sample['target']
-            context = sample['input']
-            question = sample['question']
-
-            # format input text
-            input_text = get_formatted_input(context, question, prompt_cfg['examples'],
-                                            prompt_cfg['instruction'], prompt_cfg['post_prompt'],
-                                            template=prompt_cfg['template'])
-
-            if use_chat_template:
-                input_text = [{'role': 'user', 'content': input_text}]
-                model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
-                                                            return_tensors='pt').cpu()
-                model_inputs = {'input_ids': model_inputs}
-            else:
-                raise ValueError("not_use_chat_template")
-            
-            yield {
-                "model_inputs": model_inputs,
-                "target"      : target,
-                "question"    : question,
-                "task"        : task,
-                "split_name"  : split_name,
-                "index"       : index
+        for task in tqdm(tasks, desc='all'):
+            # configure the prompt
+            prompt_cfg = {
+                'instruction': DEFAULT_PROMPTS[task]['instruction'] if use_instruction else '',
+                'examples': DEFAULT_PROMPTS[task]['examples'] if use_examples else '',
+                'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'] if use_post_prompt else '',
+                'template': DEFAULT_TEMPLATE,
+                'chat_template': use_chat_template,
             }
+            prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
+            prompt_name = '_'.join(prompt_name)
+
+            for split_name in tqdm(split_names, desc=f'tasks: {task}'):
+                # load dataset
+                data = datasets.load_dataset(data_dir, split_name)
+                task_data = data[task]
+
+                for index,sample in enumerate(task_data):
+                    target = sample['target']
+                    context = sample['input']
+                    question = sample['question']
+
+                    # format input text
+                    input_text = get_formatted_input(context, question, prompt_cfg['examples'],
+                                                    prompt_cfg['instruction'], prompt_cfg['post_prompt'],
+                                                    template=prompt_cfg['template'])
+
+                    if use_chat_template:
+                        input_text = [{'role': 'user', 'content': input_text}]
+                        model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
+                                                                    return_tensors='pt').cpu()
+                        model_inputs = {'input_ids': model_inputs}
+                    else:
+                        raise ValueError("not_use_chat_template")
+                    
+                    task_queue.put({
+                        "model_inputs": model_inputs,
+                        "target"      : target,
+                        "question"    : question,
+                        "task"        : task,
+                        "split_name"  : split_name,
+                        "index"       : index
+                    })
 
     @classmethod
-    def proess(cls, model, sample, generate_config: Namespace):
+    def process(cls, model, generate_config: Namespace, sample, result_list:list):
         tokenizer=generate_config.tokenizer
         model_inputs=sample['model_inputs']
         model_inputs['input_ids']=model_inputs['input_ids'].to(model.device)
@@ -96,9 +105,7 @@ class BabilongManager(LLMEvalGPUManager):
         output = tokenizer.decode(output, skip_special_tokens=True).strip()
         sample['output']=output
         sample.pop('model_inputs')
-        # sample.pop('input_text')
-
-        yield sample
+        result_list+=[sample]
 
 
 def set_seed(args):
@@ -127,21 +134,19 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_name", type=str, default="/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct/")
-    parser.add_argument("--saved_model_name", type=str, default="Llama3.1-8B-Instruct_head_metric_draft")
+    parser.add_argument("--saved_model_name", type=str, default="Llama3.1-8B-Instruct_vanilla")
     
     parser.add_argument("--results_folder",type=str,default=RESULTS_DIR)
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-    parser.add_argument("--apply_layers", type=str,
-                         default="2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31")
-    parser.add_argument("--head_type", type=str, default="normal")
-    parser.add_argument("--enable_head_metrics", type=bool, default=False)
-    parser.add_argument("--compress_ratio_min", type=float, default=1.2)
-    parser.add_argument("--compress_ratio_max", type=float, default=1.8)
     parser.add_argument("--task_id",type=int, default=0)
     parser.add_argument("--n_gpu",type=int, default=torch.cuda.device_count())
-    parser.add_argument("--max_workers",type=int,default=2)
-    
+    parser.add_argument("--group_size",type=int,default=16)
+
     args = parser.parse_args()
+
+
+
+    args.saved_model_name+="_group"+str(args.group_size)
 
     set_seed(args)
 
@@ -160,29 +165,16 @@ if __name__=="__main__":
     data_config=Namespace(tokenizer=tokenizer,**vars(args))
     generate_config=Namespace(tokenizer=tokenizer,**generate_kwargs)
 
-    task_info_list=[]
-    for task in TASKS:
-        prompt_cfg = {
-            'instruction': DEFAULT_PROMPTS[task]['instruction'] if use_instruction else '',
-            'examples': DEFAULT_PROMPTS[task]['examples'] if use_examples else '',
-            'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'] if use_post_prompt else '',
-            'template': DEFAULT_TEMPLATE,
-            'chat_template': use_chat_template,
-        }
-        for split_name in SPLIT_NAMES:
-            task_info_list+=[Namespace(task=task,prompt_cfg=prompt_cfg,split_name=split_name)]
-
 
     with BabilongManager(
-        tp_size=2,
-        gpu_list=[4,5,6,7],
-        task_info_list=task_info_list,
+        tp_size=1,
+        gpu_list=[0,1,2,3,4,5,6,7],
         data_config=data_config,
         model_config=args,
         generate_config=generate_config
     ) as manager:
         all_results=manager.result_list
-    
+
 
     # save  results
     results_dict=defaultdict(lambda : defaultdict(list))

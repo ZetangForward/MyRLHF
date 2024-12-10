@@ -83,7 +83,7 @@ class MultiGPUManager:
             
             if sample is None:break
             cls.process(model, generate_config, sample, result_list)
-        progress_bar=i
+        progress_bar.total=i
         progress_bar.close()
         # with ThreadPoolExecutor(max_workers=max_workers) as excutor:
         #     while True:
@@ -96,14 +96,18 @@ class MultiGPUManager:
     def __exit__(self, exc_type, exc_value, traceback):
         for process in self.processes:
             process.terminate()
-        for visable_gpu in enumerate(self.allocate_gpus):
-            os.environ['CUDA_VISIBLE_DEVICES'] = visable_gpu
-            torch.cuda.empty_cache()
+        # for visable_gpu in enumerate(self.allocated_gpus):
+        #     os.environ['CUDA_VISIBLE_DEVICES'] = visable_gpu
+        #     torch.cuda.empty_cache()
         return False    
+    @classmethod
+    def set_gpu(cls,i,visable_gpus):
+        os.environ['CUDA_VISIBLE_DEVICES'] = visable_gpus[i]
     def __enter__(self):
         for i,visable_gpu in enumerate(self.allocated_gpus):
             
-            os.environ['CUDA_VISIBLE_DEVICES'] = visable_gpu
+            # os.environ['CUDA_VISIBLE_DEVICES'] = visable_gpu
+            self.set_gpu(i,self.allocated_gpus)
             process=mp.Process(target=self.worker,
                                args=(self.setup_model, 
                                      self.model_config, 
