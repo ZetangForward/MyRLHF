@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.png
 
+evaluation/babilong/babilong_evals_ms_poe
 reetrievalheaddetect/results/
 
 # C extensions
