@@ -127,6 +127,7 @@ class LLMNeedleHaystackTester:
                 seconds_to_sleep_between_completions = None,
                 print_ongoing_status = True,
                 needle_ids=None,
+                mask_topk=0,
                 tag = None):
         """        
         :param needle: The needle to be found in the haystack. Default is None.
@@ -176,6 +177,8 @@ class LLMNeedleHaystackTester:
         self.print_ongoing_status = print_ongoing_status
         self.model_provider = model_provider
         self.tag = tag
+        # zecheng_note: conduct attention mask
+        self.mask_topk = mask_topk
         self.document_depth_percent_intervals = document_depth_percent_intervals
         self.testing_results = []
         self.head_counter = defaultdict(list)
@@ -247,6 +250,21 @@ class LLMNeedleHaystackTester:
         self.evaluation_model = None
         self.debug='debug'
         model_name = model_name.split('/')[-1]
+
+        if self.mask_topk!=0:
+            if model_name=='Mistral-7B-Instruct-v0.2':
+                model_name = "Mistral-7B-v0.2-hf"
+            with open(f"head_score/{model_name}.json", "r") as file:
+                stable_block_list = json.loads(file.readline())
+            stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
+            stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
+            self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
+            if self.mask_topk > 0:
+                print(f"masking out top {self.mask_topk} retrieval heads")
+            else:
+                print(f"masking out random {-self.mask_topk}  heads")
+        else:
+            self.block_list = []
 
     def logistic(self, x, L=100, x0=50, k=.1):
         if x == 0:
@@ -651,6 +669,10 @@ class LLMNeedleHaystackTester:
             json.dump(self.fail_head_counter, f)
 
 if __name__ == "__main__":
+    """
+    python -m debugpy --listen 5678 --wait-for-client reasoning_head_detection.py
+    """
+
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--s_len', metavar='N', type=int, help='a number')
@@ -664,14 +686,17 @@ if __name__ == "__main__":
     
     # zecheng note: debug code
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
+    args.mask_topk = 10
     # args.needle_ids = [0]
     model_name = args.model_path
     context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
-
+    
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
+        haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
         model_name_suffix=args.model_name_suffix,
         model_provider=args.model_provider,
         save_contexts=False,

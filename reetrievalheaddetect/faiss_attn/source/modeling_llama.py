@@ -590,7 +590,6 @@ class LlamaFlashAttention2(LlamaAttention):
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-      
         inspect["query"] = query_states
         inspect["key"] = key_states
         attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
