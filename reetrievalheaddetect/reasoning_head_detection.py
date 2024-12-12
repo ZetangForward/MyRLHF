@@ -260,6 +260,7 @@ class LLMNeedleHaystackTester:
             stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
             stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
             self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
+            self.tags = [l + '_mask' for l in self.tags]
             if self.mask_topk > 0:
                 print(f"masking out top {self.mask_topk} retrieval heads")
             else:
