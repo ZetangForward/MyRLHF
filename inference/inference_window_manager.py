@@ -14,7 +14,7 @@ import datasets
 from argparse import Namespace
 
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
-from utils.mspoe.gpumanager import MultiGPUManager
+from utils.mspoe.manager.gpumanager import LLMEvalGPUManager
 
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
@@ -27,65 +27,55 @@ use_post_prompt = True
 
 # nohup python inference_window_manager.py --group_size 16 > extend_group16.log
 
-
-class BabilongManager(MultiGPUManager):
+class BabilongManager(LLMEvalGPUManager):
     @classmethod
     def setup_model(cls, model_config: Namespace):
-        return setup_model(model_config)
-        
+        model=setup_model(model_config)
+        return model
     @classmethod
-    def preprocess(cls, task_queue, data_config: Namespace):
-        tokenizer=data_config.tokenizer
+    def preprocess(cls, task_info, data_config: Namespace, glb: Namespace):
+        tokenizer = data_config.tokenizer
         data_dir=BABILONG_DATA_PATH
-        tasks=TASKS
-        split_names=SPLIT_NAMES
+        
+        task=task_info.task
+        split_name=task_info.split_name
 
-        for task in tqdm(tasks, desc='all'):
-            # configure the prompt
-            prompt_cfg = {
-                'instruction': DEFAULT_PROMPTS[task]['instruction'] if use_instruction else '',
-                'examples': DEFAULT_PROMPTS[task]['examples'] if use_examples else '',
-                'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'] if use_post_prompt else '',
-                'template': DEFAULT_TEMPLATE,
-                'chat_template': use_chat_template,
+        prompt_cfg=task_info.prompt_cfg
+        prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
+        prompt_name = '_'.join(prompt_name)
+
+        data = datasets.load_dataset(data_dir, split_name)
+        task_data = data[task]
+
+        for index,sample in enumerate(task_data):
+            target = sample['target']
+            context = sample['input']
+            question = sample['question']
+
+            # format input text
+            input_text = get_formatted_input(context, question, prompt_cfg['examples'],
+                                            prompt_cfg['instruction'], prompt_cfg['post_prompt'],
+                                            template=prompt_cfg['template'])
+
+            if use_chat_template:
+                input_text = [{'role': 'user', 'content': input_text}]
+                model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
+                                                            return_tensors='pt').cpu()
+                model_inputs = {'input_ids': model_inputs}
+            else:
+                raise ValueError("not_use_chat_template")
+            
+            yield {
+                "model_inputs": model_inputs,
+                "target"      : target,
+                "question"    : question,
+                "task"        : task,
+                "split_name"  : split_name,
+                "index"       : index
             }
-            prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
-            prompt_name = '_'.join(prompt_name)
-
-            for split_name in tqdm(split_names, desc=f'tasks: {task}'):
-                # load dataset
-                data = datasets.load_dataset(data_dir, split_name)
-                task_data = data[task]
-
-                for index,sample in enumerate(task_data):
-                    target = sample['target']
-                    context = sample['input']
-                    question = sample['question']
-
-                    # format input text
-                    input_text = get_formatted_input(context, question, prompt_cfg['examples'],
-                                                    prompt_cfg['instruction'], prompt_cfg['post_prompt'],
-                                                    template=prompt_cfg['template'])
-
-                    if use_chat_template:
-                        input_text = [{'role': 'user', 'content': input_text}]
-                        model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
-                                                                    return_tensors='pt').cpu()
-                        model_inputs = {'input_ids': model_inputs}
-                    else:
-                        raise ValueError("not_use_chat_template")
-                    
-                    task_queue.put({
-                        "model_inputs": model_inputs,
-                        "target"      : target,
-                        "question"    : question,
-                        "task"        : task,
-                        "split_name"  : split_name,
-                        "index"       : index
-                    })
 
     @classmethod
-    def process(cls, model, generate_config: Namespace, sample, result_list:list):
+    def process(cls, model, sample, generate_config: Namespace):
         tokenizer=generate_config.tokenizer
         model_inputs=sample['model_inputs']
         model_inputs['input_ids']=model_inputs['input_ids'].to(model.device)
@@ -97,7 +87,9 @@ class BabilongManager(MultiGPUManager):
         output = tokenizer.decode(output, skip_special_tokens=True).strip()
         sample['output']=output
         sample.pop('model_inputs')
-        result_list+=[sample]
+        # sample.pop('input_text')
+
+        yield sample
 
 
 def set_seed(args):
@@ -157,10 +149,24 @@ if __name__=="__main__":
     data_config=Namespace(tokenizer=tokenizer,**vars(args))
     generate_config=Namespace(tokenizer=tokenizer,**generate_kwargs)
 
+    task_info_list=[]
+    for task in TASKS:
+        prompt_cfg = {
+            'instruction': DEFAULT_PROMPTS[task]['instruction'] if use_instruction else '',
+            'examples': DEFAULT_PROMPTS[task]['examples'] if use_examples else '',
+            'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'] if use_post_prompt else '',
+            'template': DEFAULT_TEMPLATE,
+            'chat_template': use_chat_template,
+        }
+        for split_name in SPLIT_NAMES:
+            task_info_list+=[Namespace(task=task,prompt_cfg=prompt_cfg,split_name=split_name)]
+
 
     with BabilongManager(
         tp_size=1,
         gpu_list=[0,1,2,3] if args.group_size==16 else [4,5,6,7],
+        task_info_list=task_info_list,
+        basic_datas_number=len(task_info_list)*900,
         data_config=data_config,
         model_config=args,
         generate_config=generate_config

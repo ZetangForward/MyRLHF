@@ -22,6 +22,7 @@ from typing import List, Tuple, Optional, Dict
 import time
 import nltk
 import torch
+import random
 from tqdm import tqdm, trange
 
 
@@ -128,6 +129,7 @@ class LLMNeedleHaystackTester:
                 print_ongoing_status = True,
                 needle_ids=None,
                 mask_topk=0,
+                head_file="",
                 tag = None):
         """        
         :param needle: The needle to be found in the haystack. Default is None.
@@ -162,7 +164,7 @@ class LLMNeedleHaystackTester:
         self.needle_ids = needle_ids
         needles_and_stacks = [l for l in needles_and_stacks]
         self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
-        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文
+        haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
         self.needle_list = [l["needle"] for l in needles_and_stacks]
         self.retrieval_question_list = [l["question"] for l in needles_and_stacks]
@@ -181,6 +183,7 @@ class LLMNeedleHaystackTester:
         self.mask_topk = mask_topk
         self.document_depth_percent_intervals = document_depth_percent_intervals
         self.testing_results = []
+        self.head_file = head_file
         self.head_counter = defaultdict(list)
         self.fail_head_counter = defaultdict(list)
         self.detected_tokens = list()
@@ -252,9 +255,7 @@ class LLMNeedleHaystackTester:
         model_name = model_name.split('/')[-1]
 
         if self.mask_topk!=0:
-            if model_name=='Mistral-7B-Instruct-v0.2':
-                model_name = "Mistral-7B-v0.2-hf"
-            with open(f"head_score/{model_name}.json", "r") as file:
+            with open(self.head_file, "r") as file:
                 stable_block_list = json.loads(file.readline())
             stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
             stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
@@ -284,6 +285,18 @@ class LLMNeedleHaystackTester:
                 depth_percent = np.array(depth_percent) / self.document_depth_percent_intervals
                 self.evaluate_and_log(context_length, depth_percent)
 
+
+    def construct_random_head(self, n):
+        results = []
+        seed_list = [i  for i in range(32)]
+        random.shuffle(seed_list)
+        while len(results) < n:
+            l, h = random.choices(seed_list, k=2)
+            if (l, h) in results or (l, h) in self.block_list:
+                continue
+            else:
+                results.append((l, h))
+        return results
 
     def retrieval_calculate(self, attention_maxtrix,retrieval_score, inp, step_token, topk=1):
         for layer_idx in range(self.layer_num):
@@ -371,6 +384,16 @@ class LLMNeedleHaystackTester:
         # Checks to see if you've already checked a length/percent/version.
         # This helps if the program stop running and you want to restart later
         # Go generate the required length context and place your needle statement in
+        if self.mask_topk > 0:
+            block_list = self.block_list[:self.mask_topk]
+            save_name = f"{self.model_version}_block_top{self.mask_topk}"
+        elif self.mask_topk == 0:
+            block_list = None
+            save_name = self.model_version
+        else:
+            block_list = self.construct_random_head(-self.mask_topk)
+            save_name = f"{self.model_version}_block_random{-self.mask_topk}"
+
         context = self.generate_context(context_length, depth_percent)
         input_context = context + f"\nQuestion: {self.retrieval_question}\nAnswer:"
         input_ids = self.enc.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, return_tensors='pt')
@@ -383,7 +406,7 @@ class LLMNeedleHaystackTester:
         self.needle_pos = self.find_needle_idx(self.real_needle)
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=input_ids[:,:-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, input_ids[:,-1], 50)
+            output, retrieval_score = self.decode(q_outputs, input_ids[:,-1], 50, block_list=block_list)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
 
         test_end_time = time.time()
@@ -686,17 +709,17 @@ if __name__ == "__main__":
     
     # zecheng note: debug code
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
+    args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
     args.mask_topk = 10
-    # args.needle_ids = [0]
+    args.needle_ids = [0]
     model_name = args.model_path
     context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
     
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
-        haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
+        haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
         model_name_suffix=args.model_name_suffix,
         model_provider=args.model_provider,
         save_contexts=False,
@@ -707,6 +730,8 @@ if __name__ == "__main__":
         final_context_length_buffer=200,
         document_depth_percents=np.array([0, 20, 40, 60, 80]),
         needle_ids=args.needle_ids,
+        mask_topk=args.mask_topk,
+        head_file="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/head_score/7-hop/success_Meta-Llama-3-8B-Instruct.json",
         # tag="q3_inf_diff_pos"
     )
 
