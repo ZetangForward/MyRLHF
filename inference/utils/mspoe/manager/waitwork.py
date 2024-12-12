@@ -14,9 +14,10 @@ class ProducerConsumerManager:
     override the `__init__` method and put all newly defined functions into a namespace
     at initialization space, and call them in that namespace instead of directly
     '''
-    _estimate_avg_tasks=0
+
     def __init__(self,
                  task_info_list : list=[],
+                 basic_datas_number: int=None,
                  max_producers: int = 1,
                  max_consumers: int = 1,
                  produce_config: Namespace=Namespace(),
@@ -26,7 +27,8 @@ class ProducerConsumerManager:
                  ):
         self.task_info_list=[_ for _ in task_info_list]
         random.shuffle(self.task_info_list)
-        ProducerConsumerManager._estimate_avg_tasks=len(self.task_info_list)//max_consumers
+        self._estimate_avg_tasks=max(1,len(self.task_info_list)//max_consumers) \
+            if basic_datas_number is None else basic_datas_number//max_consumers
         self.max_producers=max_producers
         self.max_consumers=max_consumers
         self.produce_config=produce_config
@@ -55,6 +57,7 @@ class ProducerConsumerManager:
             process=mp.Process(
                 target=self._consumer,
                 args=(self.set_consumer_global_variables, self.consume,
+                      self._estimate_avg_tasks,
                       self._task_queue,self.consume_config, self._result_list)
             )
             self.consumers.append(process)
@@ -125,9 +128,9 @@ class ProducerConsumerManager:
                                     desc=f"P single: {os.getpid()}"):
                 task_queue.put(task_sample)
     @classmethod
-    def _consumer(cls, set_consumer_global_variables, consume,
+    def _consumer(cls, set_consumer_global_variables, consume, _estimate_avg_tasks,
                   task_queue: mp.Queue, consume_config: Namespace, result_list: List):
-        progress_bar = tqdm(desc=f"Consumer: {os.getpid()}", total=cls._estimate_avg_tasks)  
+        progress_bar = tqdm(desc=f"Consumer: {os.getpid()}", total=_estimate_avg_tasks)  
         delta=10
         number_tasks=0
         
@@ -135,10 +138,9 @@ class ProducerConsumerManager:
         while True:
             task_sample=task_queue.get()
             if task_sample is None:break
-            for task_result in tqdm(consume(task_sample, consume_config, global_variables),
-                                    desc=f"C single: {os.getpid()}", total=0):
+            for task_result in consume(task_sample, consume_config, global_variables):
                 result_list.append(task_result)
-            
+
                 number_tasks+=1
                 if number_tasks==progress_bar.total:
                     progress_bar.total+=delta

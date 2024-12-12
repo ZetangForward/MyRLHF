@@ -11,6 +11,7 @@ class LLMEvalGPUManager(ProducerConsumerManager):
                  tp_size: int=1,
                  gpu_list: List[int]=list(range(torch.cuda.device_count())),
                  task_info_list: list=[],
+                 basic_datas_number: int=None,
                  data_config: Namespace = Namespace(),
                  model_config: Namespace = Namespace(),
                  generate_config: Namespace= Namespace()):
@@ -19,6 +20,7 @@ class LLMEvalGPUManager(ProducerConsumerManager):
         self.allocated_gpus=self.allocate_gpu(tp_size,gpu_list)
 
         super().__init__(task_info_list=task_info_list,
+                         basic_datas_number=basic_datas_number,
                          max_producers=1,
                          max_consumers=len(self.allocated_gpus),
                          produce_config=Namespace(preprocess=self.preprocess,
