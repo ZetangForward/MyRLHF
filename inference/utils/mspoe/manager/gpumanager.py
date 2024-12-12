@@ -21,8 +21,10 @@ class LLMEvalGPUManager(ProducerConsumerManager):
         super().__init__(task_info_list=task_info_list,
                          max_producers=1,
                          max_consumers=len(self.allocated_gpus),
-                         produce_config=data_config,
+                         produce_config=Namespace(preprocess=self.preprocess,
+                                                  data_config=data_config),
                          consume_config=Namespace(setup_model=self.setup_model,
+                                                  process=self.process,
                                                   model_config=model_config,
                                                   generate_config=generate_config),
                          consume_env_config=Namespace(allocated_gpus=self.allocated_gpus))
@@ -46,11 +48,11 @@ class LLMEvalGPUManager(ProducerConsumerManager):
     
     @classmethod
     def produce(cls, task_info, produce_config: Namespace, glb: Namespace):
-        return cls.preprocess(task_info, produce_config, glb)
+        return produce_config.preprocess(task_info, produce_config.data_config, glb)
 
     @classmethod
     def consume(cls, task_sample, consume_config: Namespace, glb: Namespace):
-        return cls.process(glb.model, task_sample, consume_config.generate_config)
+        return consume_config.process(glb.model, task_sample, consume_config.generate_config)
 
     @classmethod
     def setup_model(cls, model_config: Namespace) -> object:

@@ -84,7 +84,7 @@ class BabilongManager(LLMEvalGPUManager):
             }
 
     @classmethod
-    def proess(cls, model, sample, generate_config: Namespace):
+    def process(cls, model, sample, generate_config: Namespace):
         tokenizer=generate_config.tokenizer
         model_inputs=sample['model_inputs']
         model_inputs['input_ids']=model_inputs['input_ids'].to(model.device)

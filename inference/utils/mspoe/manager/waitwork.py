@@ -9,6 +9,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class ProducerConsumerManager:
+    '''
+    If the class inheriting from this class is not the end-use class,
+    override the `__init__` method and put all newly defined functions into a namespace
+    at initialization space, and call them in that namespace instead of directly
+    '''
     _estimate_avg_tasks=0
     def __init__(self,
                  task_info_list : list=[],
@@ -34,8 +39,8 @@ class ProducerConsumerManager:
 
         mp.get_start_method("spawn")
 
-        self._task_queue=mp.Queue()
         self.manager=mp.Manager()
+        self._task_queue=self.manager.Queue()
         self._result_list=self.manager.list()
 
     
@@ -49,7 +54,7 @@ class ProducerConsumerManager:
             self.set_consumer_environment(i,self.consume_env_config)
             process=mp.Process(
                 target=self._consumer,
-                args=(self.set_consumer_global_variables,
+                args=(self.set_consumer_global_variables, self.consume,
                       self._task_queue,self.consume_config, self._result_list)
             )
             self.consumers.append(process)
@@ -57,10 +62,10 @@ class ProducerConsumerManager:
             
 
         for i,task_info_list in enumerate(self.chunks(self.task_info_list,self.max_producers)):
-            self.set_procuder_environment(i,self.produce_env_config)
+            self.set_producer_environment(i,self.produce_env_config)
             process=mp.Process(
                 target=self._producer,
-                args=(self.set_producer_global_variables,
+                args=(self.set_producer_global_variables, self.produce,
                       task_info_list, self._task_queue, self.produce_config)
             )
             
@@ -92,7 +97,7 @@ class ProducerConsumerManager:
             yield lst[i : i + chunk_size]
 
     @classmethod
-    def set_procuder_environment(cls, producer_id: int, produce_env_config: Namespace):
+    def set_producer_environment(cls, producer_id: int, produce_env_config: Namespace):
         '''
         set the environment variable for producers before created
 
@@ -112,15 +117,15 @@ class ProducerConsumerManager:
         if consume_env_config is not None:raise NotImplementedError
 
     @classmethod
-    def _producer(cls, set_producer_global_variables,
+    def _producer(cls, set_producer_global_variables, produce,
                   task_info_list: list, task_queue: mp.Queue, produce_config: Namespace):
         global_variables=set_producer_global_variables(produce_config)
         for task_info in tqdm(task_info_list,desc=f"Producer: {os.getpid()}"):
-            for task_sample in tqdm(cls.produce(task_info, produce_config, global_variables),
+            for task_sample in tqdm(produce(task_info, produce_config, global_variables),
                                     desc=f"P single: {os.getpid()}"):
                 task_queue.put(task_sample)
     @classmethod
-    def _consumer(cls, set_consumer_global_variables,
+    def _consumer(cls, set_consumer_global_variables, consume,
                   task_queue: mp.Queue, consume_config: Namespace, result_list: List):
         progress_bar = tqdm(desc=f"Consumer: {os.getpid()}", total=cls._estimate_avg_tasks)  
         delta=10
@@ -130,7 +135,7 @@ class ProducerConsumerManager:
         while True:
             task_sample=task_queue.get()
             if task_sample is None:break
-            for task_result in tqdm(cls.consume(task_sample, consume_config, global_variables),
+            for task_result in tqdm(consume(task_sample, consume_config, global_variables),
                                     desc=f"C single: {os.getpid()}", total=0):
                 result_list.append(task_result)
             
