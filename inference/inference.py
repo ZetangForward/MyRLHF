@@ -51,6 +51,19 @@ def prepare_babilong_data(data_dir, tokenizer, with_system):
 
     for task in tqdm(tasks, desc='tasks'):
         # configure the prompt
+        """ zecheng_note
+        meta_data = {
+            "ids": 0, 
+            "task: xxx, 
+            "subtask": 
+        }
+        prefix_prompt / system_prompt
+        context
+        question
+        template
+        ** postprocessing.py ->  
+        golden
+        """
         prompt_cfg = {
             'instruction': DEFAULT_PROMPTS[task]['instruction'],
             'examples': DEFAULT_PROMPTS[task]['examples'],
