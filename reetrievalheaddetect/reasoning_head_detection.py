@@ -5,7 +5,6 @@ import json
 from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM, AutoConfig
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'faiss_attn'))
-# sys.path.append("/data/zecheng/acl2025/MyRLHF/RetrievalHead/reetrievalheaddetect/faiss_attn")
 from source.modeling_llama import LlamaForCausalLM
 from source.modeling_qwen2 import Qwen2ForCausalLM
 from source.modeling_mixtral import MixtralForCausalLM
@@ -164,7 +163,7 @@ class LLMNeedleHaystackTester:
         self.needle_ids = needle_ids
         needles_and_stacks = [l for l in needles_and_stacks]
         self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
-        haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
+        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
         self.needle_list = [l["needle"] for l in needles_and_stacks]
         self.retrieval_question_list = [l["question"] for l in needles_and_stacks]
@@ -260,7 +259,7 @@ class LLMNeedleHaystackTester:
             stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
             stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
             self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
-            self.tags = [l + '_mask' for l in self.tags]
+            self.tags = [l + f'_{self.mask_topk}' for l in self.tags]
             if self.mask_topk > 0:
                 print(f"masking out top {self.mask_topk} retrieval heads")
             else:
@@ -702,6 +701,8 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--s_len', metavar='N', type=int, help='a number')
     parser.add_argument('-e', '--e_len', metavar='N', type=int, help='a number')
     parser.add_argument('--needle_ids', metavar='N', type=int, nargs='+', help='a list of numbers')
+    parser.add_argument('--mask_topk', metavar='N', type=int, default=0, help='masking top K heads')
+    parser.add_argument('--head_file', type=str, default=None, help='path to head file')
     parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--model_name_suffix', type=str, default=None, help='name of model')
@@ -710,17 +711,20 @@ if __name__ == "__main__":
     
     # zecheng note: debug code
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
-    args.mask_topk = 10
-    args.needle_ids = [0]
+    # args.mask_topk = 10
+    # args.needle_ids = [0]
     model_name = args.model_path
-    context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
+    # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
+    context_lengths = np.linspace(4000, 64000, 15)
+    import pdb; pdb.set_trace()
     
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
-        haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
+        # haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
+        haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
         model_name_suffix=args.model_name_suffix,
         model_provider=args.model_provider,
         save_contexts=False,
@@ -732,7 +736,7 @@ if __name__ == "__main__":
         document_depth_percents=np.array([0, 20, 40, 60, 80]),
         needle_ids=args.needle_ids,
         mask_topk=args.mask_topk,
-        head_file="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/head_score/7-hop/success_Meta-Llama-3-8B-Instruct.json",
+        head_file=args.head_file,
         # tag="q3_inf_diff_pos"
     )
 
