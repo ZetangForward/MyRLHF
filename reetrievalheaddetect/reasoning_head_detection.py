@@ -23,7 +23,7 @@ import nltk
 import torch
 import random
 from tqdm import tqdm, trange
-
+from loguru import logger
 
 class SentenceSampler:
     def __init__(self, dataset, tokenizer, min_sentence_len=10, max_sentence_len=None, shuffle=False, random_seed=42):
@@ -91,77 +91,52 @@ class SentenceSampler:
         return True
 
 
-
 def reset_rope(model, model_max_train_len, scaling_factor):
     for l in model.model.layers:
         l.self_attn.rotary_emb.scaling_factor = scaling_factor
         l.self_attn.rotary_emb._set_cos_sin_cache(seq_len=model_max_train_len, device=l.self_attn.rotary_emb.inv_freq.device, dtype=torch.float32)
     return
+
+
 scorer = rouge_scorer.RougeScorer(['rouge1', 'rougeL'], use_stemmer=True)
 
 class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
     """
-    def __init__(self,
-                needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
-                haystack_dir="./haystack_for_detect",
-                retrieval_question="What is the best thing to do in San Francisco?",
-                results_version = 1,
-                context_lengths_min = 1000,
-                context_lengths_max = 50000,
-                context_lengths_num_intervals = 20,
-                context_lengths = None,
-                document_depth_percent_min = 0,
-                document_depth_percent_max = 100,
-                document_depth_percent_intervals = 10,
-                document_depth_percents = None,
-                document_depth_percent_interval_type = "linear",
-                model_provider = "OpenAI",
-                model_name='',
-                model_name_suffix=None,
-                num_concurrent_requests = 1,
-                save_results = True,
-                save_contexts = True,
-                final_context_length_buffer = 200,
-                seconds_to_sleep_between_completions = None,
-                print_ongoing_status = True,
-                needle_ids=None,
-                mask_topk=0,
-                head_file="",
-                tag = None):
-        """        
-        :param needle: The needle to be found in the haystack. Default is None.
-        :param haystack_dir: The directory of text files to use as background context (or a haystack) in which the needle is to be found. Default is Paul Graham Essays.
-        :param retrieval_question: The question which with to prompt the model to do the retrieval.
-        :param results_version: In case you would like to try the same combination of model, context length, and depth % multiple times, change the results version other than 1
-        :param num_concurrent_requests: Due to volume, this object is set up to run concurrent requests, default = 1. Be careful of rate limits.
-        :param save_results: Whether or not you would like to save your contexts to file. Warning: These will get long! Default = True
-        :param save_contexts: Whether or not you would like to save your contexts to file. Warning: These will get long! Default is True.
-        :param final_context_length_buffer: The amount of cushion you'd like to leave off the input context to allow for the output context. Default 200 tokens
-        :param context_lengths_min: The minimum length of the context. Default is 1000.
-        :param context_lengths_max: The maximum length of the context. Default is 200000.
-        :param context_lengths_num_intervals: The number of intervals for the context length. Default is 35.
-        :param context_lengths: The lengths of the context. Default is None.
-        :param document_depth_percent_min: The minimum depth percent of the document. Default is 0.
-        :param document_depth_percent_max: The maximum depth percent of the document. Default is 100.
-        :param document_depth_percent_intervals: The number of intervals for the document depth percent. Default is 35.
-        :param document_depth_percents: The depth percentages of the document. Default is None.
-        :param document_depth_percent_interval_type: The type of interval for the document depth percent. Must be either 'linear' or 'sigmoid'. Default is 'linear'.
-        :param model_provider: The provider of the model. Must be either 'OpenAI' or 'Anthropic'. Default is 'OpenAI'.
-        :param openai_api_key: The API key for OpenAI. Default is None.
-        :param anthropic_api_key: The API key for Anthropic. Default is None.
-        :param model_name: The name of the model. Default is 'gpt-4-1106-preview'.
-        :param seconds_to_sleep_between_completions: The number of seconds to sleep between completions. Default is None.
-        :param print_ongoing_status: Whether or not to print the ongoing status. Default is True.
-        """
+    def __init__(
+        self,
+        needle="\nThe best thing to do in San Francisco is eat a sandwich and sit in Dolores Park on a sunny day.\n",
+        haystack_dir="./haystack_for_detect",
+        retrieval_question="What is the best thing to do in San Francisco?",
+        results_version = 1,
+        context_lengths = None,
+        document_depth_percent_min = 0,
+        document_depth_percent_max = 100,
+        document_depth_percent_intervals = 10,
+        document_depth_percents = None,
+        document_depth_percent_interval_type = "linear",
+        model_provider = "OpenAI",
+        model_name='',
+        model_name_suffix=None,
+        num_concurrent_requests = 1,
+        save_results = True,
+        save_contexts = True,
+        final_context_length_buffer = 200,
+        seconds_to_sleep_between_completions = None,
+        print_ongoing_status = True,
+        needle_ids=None,
+        mask_topk=0,
+        head_file="",
+        tag = None
+    ):
+        
         if not needle or not haystack_dir or not retrieval_question:
             raise ValueError("Needle, haystack, and retrieval_question must be provided.")
-        needles_and_stacks = [json.loads(l) for l in open(f"{haystack_dir}/reasoning_needle.jsonl")]  # FIXME: reopen me, for debug
+        needles_and_stacks = [json.loads(l) for l in open(f"{haystack_dir}/reasoning_needle.jsonl")]
         # needles_and_stacks = [json.loads(l) for l in open("/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl")]
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         self.needle_ids = needle_ids
-        needles_and_stacks = [l for l in needles_and_stacks]
         self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
         haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
@@ -191,12 +166,6 @@ class LLMNeedleHaystackTester:
         else: self.model_version = model_name
         if(model_name_suffix is not None): self.model_version += "_" + model_name_suffix
 
-        # if context_lengths is None:
-        #     if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
-        #         raise ValueError("Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
-        #     else:
-        #         self.context_lengths = np.round(np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals, endpoint=True)).astype(int)
-        # else:
         self.context_lengths = context_lengths
 
         if document_depth_percents is None:
@@ -218,8 +187,9 @@ class LLMNeedleHaystackTester:
         print("loading from %s" % model_name)
         config = AutoConfig.from_pretrained(model_name)
         self.layer_num, self.head_num = config.num_hidden_layers, config.num_attention_heads
+
         print(f"layer number: {self.layer_num}, head number {self.head_num}")
-        if "Qwen" in self.model_version:  # balanced_low_0
+        if "qwen" in self.model_version.lower():  # balanced_low_0
             self.model_to_test = Qwen2ForCausalLM.from_pretrained(
                     model_name,torch_dtype="auto",device_map = "auto",use_flash_attention_2="flash_attention_2"
                 ).eval()
@@ -233,24 +203,24 @@ class LLMNeedleHaystackTester:
                 ).eval()
         elif "Phi3" in self.model_version:
             self.model_to_test = Phi3ForCausalLM.from_pretrained(
-                    model_name,torch_dtype="auto",device_map = "auto",use_flash_attention_2="flash_attention_2",trust_remote_code=True,
+                    model_name,torch_dtype="auto", device_map = "auto",use_flash_attention_2="flash_attention_2",trust_remote_code=True,
                 ).eval()
         else:
-            self.model_to_test = LlamaForCausalLM.from_pretrained(model_name,
-                use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16,device_map = "auto").eval()
+            self.model_to_test = LlamaForCausalLM.from_pretrained(
+                model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
             
         if 'llama-2-7b-80k' in self.model_version:
             scaling_factor = 10
             reset_rope(self.model_to_test, model_max_train_len=81920, scaling_factor=scaling_factor)
             
         if "CUDA_VISIBLE_DEVICES" in os.environ:
-            self.multi_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"])>1
+            self.multi_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"]) > 1
         else:
             self.multi_gpus = True
             
         self.model_to_test_description = model_name
         self.evaluation_model = None
-        self.debug='debug'
+      
         model_name = model_name.split('/')[-1]
 
         if self.mask_topk!=0:
@@ -281,6 +251,7 @@ class LLMNeedleHaystackTester:
             if context_length < args.s_len or context_length > args.e_len: 
                 continue
             all_combinations = list(itertools.combinations(list(range(0, self.document_depth_percent_intervals)), len(self.real_needle)))
+            import ipdb; ipdb.set_trace()
             for depth_percent in all_combinations:  # zecheng_note: 这里是fact插入的位置，不同的排列组合
                 depth_percent = np.array(depth_percent) / self.document_depth_percent_intervals
                 self.evaluate_and_log(context_length, depth_percent)
@@ -718,8 +689,8 @@ if __name__ == "__main__":
     # args.needle_ids = [0]
     model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
-    context_lengths = np.linspace(args.s_len, args.e_len, 15)
-    
+    context_lengths = np.round(np.linspace(args.s_len, args.e_len, 15, endpoint=True)).astype(int)
+
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
         # haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
