@@ -445,7 +445,6 @@ class LlamaFlashAttention2(LlamaAttention):
             cos, sin = position_embeddings
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
-
         # kv_seq_len = key_states.shape[-2]
         # if past_key_value is not None:
         #     kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
@@ -460,11 +459,24 @@ class LlamaFlashAttention2(LlamaAttention):
         # TODO: These transpose are quite inefficient but Flash Attention requires the layout [batch_size, sequence_length, num_heads, head_dim]. We would need to refactor the KV cache
         # to be able to avoid many of these transpose/reshape/view.
         #### mask head in flash attention 
+        if 'perturbation_type' in kwargs:
+            perturbation_type = kwargs['perturbation_type']
+        else:
+            perturbation_type = 'zero'
         if 'block_list' in kwargs:
+            import ipdb; ipdb.set_trace()
             for h in kwargs['block_list']:
                 if self.layer_idx==h[0]:
-                    query_states[:,h[1], :, :] = 0
-                    #attn_weights[:, h[1], :, :] = 0 
+                    if perturbation_type == 'zero':
+                        query_states[:,h[1], :, :] = 0  # 直接将query_states置为0
+                    elif perturbation_type == 'noise':
+                        
+                        noise_std = 0.01  # 高斯噪声的标准差
+                        noise = torch.randn_like(query_states[:, h[1], :, :]) * noise_std  # 生成噪声
+                        query_states[:, h[1], :, :] += noise  # 在query_states上添加噪声
+                    else:
+                        raise NotImplementedError("only support noise and zero...")
+                    # attn_weights[:, h[1], :, :] = 0 
 
         query_states = query_states.transpose(1, 2)
         key_states = key_states.transpose(1, 2)
@@ -609,11 +621,24 @@ class LlamaFlashAttention2(LlamaAttention):
                 )
             attn_weights = attn_weights + attention_mask
         
+        if 'perturbation_type' in kwargs:
+            perturbation_type = kwargs['perturbation_type']
+        else:
+            perturbation_type = 'zero'
+
         ## masking head in normal attention
         if 'block_list' in kwargs:
             for h in kwargs['block_list']:
-                if self.layer_idx==h[0]:                   
-                    attn_weights[:, h[1], :, :] = 0 
+                if self.layer_idx==h[0]:
+                    if perturbation_type == 'zero':
+                        query_states[:,h[1], :, :] = 0  # 直接将query_states置为0
+                    elif perturbation_type == 'noise':
+                        noise_std = 0.01  # 高斯噪声的标准差
+                        noise = torch.randn_like(query_states[:, h[1], :, :]) * noise_std  # 生成噪声
+                        query_states[:, h[1], :, :] += noise  # 在query_states上添加噪声
+                    else:
+                        raise NotImplementedError("only support noise and zero...")
+                    
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
@@ -871,8 +896,6 @@ class LlamaDecoderLayer(nn.Module):
 
         hidden_states = self.input_layernorm(hidden_states)
 
-        # Self Attention
-        #print("#2", kwargs)
         
         if(attn_mode == "flash"): 
             hidden_states, inspect, self_attn_weights, present_key_value = self.self_attn(
@@ -1077,7 +1100,8 @@ class LlamaModel(LlamaPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        block_list: list = None
+        block_list: list = None,
+        perturbation_type:str = None
     ) -> Union[Tuple, HeterogeneousMemoryOutput]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -1154,6 +1178,8 @@ class LlamaModel(LlamaPreTrainedModel):
             kwargs={"block_list":block_list}
         else:
             kwargs={}
+        if perturbation_type:
+            kwargs["perturbation_type"]=perturbation_type
         
         for decoder_layer in self.layers:
             if output_hidden_states:
@@ -1256,7 +1282,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        block_list:list = None
+        block_list:list = None,
+        perturbation_type:str = None
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
         Args:
@@ -1302,7 +1329,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
-            block_list=block_list
+            block_list=block_list,
+            perturbation_type=perturbation_type,
         )
 
         hidden_states = outputs[0]

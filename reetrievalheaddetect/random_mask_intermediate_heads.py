@@ -136,7 +136,8 @@ class LLMNeedleHaystackTester:
         mask_topk=0,
         head_file="",
         tag = None,
-        custom_block_list = False
+        custom_block_list = False,
+        perturbation_type = "zero",
     ):
         
         if not needle or not haystack_dir or not retrieval_question:
@@ -173,8 +174,9 @@ class LLMNeedleHaystackTester:
             self.model_version = model_name.split("/")[-1]
         else: self.model_version = model_name
         if(model_name_suffix is not None): self.model_version += "_" + model_name_suffix
-
+        self.custom_block_list = custom_block_list
         self.context_lengths = context_lengths
+        self.perturbation_type = perturbation_type
 
         if document_depth_percents is None:
             if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
@@ -231,8 +233,8 @@ class LLMNeedleHaystackTester:
       
         model_name = model_name.split('/')[-1]
 
-        if self.construct_random_head:
-            self.block_list = self.custom_block_list(self.layer_num, self.head_num)
+        if self.custom_block_list:
+            self.block_list = self.create_custom_block_list(self.layer_num, self.head_num)
         else:
             if self.mask_topk!=0:
                 with open(self.head_file, "r") as file:
@@ -240,7 +242,7 @@ class LLMNeedleHaystackTester:
                 stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
                 stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
                 self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
-                self.tags = [l + f'_{self.mask_topk}' for l in self.tags]
+                self.tags = [l + f'_random_mask_middle_layers' for l in self.tags]
                 if self.mask_topk > 0:
                     print(f"masking out top {self.mask_topk} retrieval heads")
                 else:
@@ -248,8 +250,7 @@ class LLMNeedleHaystackTester:
             else:
                 self.block_list = []
         
-        
-    def custom_block_list(self, num_layers, num_heads):
+    def create_custom_block_list(self, num_layers, num_heads):
         block_list = []
         for i in range(7, 15):
             random_heads = random.sample(range(num_heads), num_heads // 8)  # 从当前layer里面随机mask一半的heads
@@ -315,7 +316,7 @@ class LLMNeedleHaystackTester:
         past_kv = q_outputs.past_key_values
         for step_i in trange(decode_len):
             inp = inp.view(1, 1)
-            outputs = self.model_to_test(input_ids=inp, past_key_values=past_kv, use_cache=True, output_attentions=True, attn_mode="torch" )
+            outputs = self.model_to_test(input_ids=inp, past_key_values=past_kv, use_cache=True, output_attentions=True, attn_mode="torch", block_list=block_list, perturbation_type=self.perturbation_type)
             past_kv = outputs.past_key_values
             inp = outputs.logits[0, -1].argmax()
             step_token = self.enc.decode(inp.item())
@@ -698,7 +699,7 @@ if __name__ == "__main__":
     args.mask_topk = 10
     args.custom_block_list = True
     args.needle_ids = [4]
-    args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3-8B-Instruct.json"
+    args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3.1-8B-Instruct.json"
     model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
     context_lengths = np.round(np.linspace(args.s_len, args.e_len, 15, endpoint=True)).astype(int)
@@ -718,6 +719,7 @@ if __name__ == "__main__":
         mask_topk=args.mask_topk,
         head_file=args.head_file,
         custom_block_list=args.custom_block_list,
+        perturbation_type='noise'
         # tag="q3_inf_diff_pos"
     )
 
