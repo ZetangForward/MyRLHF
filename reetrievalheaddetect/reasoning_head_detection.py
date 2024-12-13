@@ -191,13 +191,13 @@ class LLMNeedleHaystackTester:
         else: self.model_version = model_name
         if(model_name_suffix is not None): self.model_version += "_" + model_name_suffix
 
-        if context_lengths is None:
-            if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
-                raise ValueError("Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
-            else:
-                self.context_lengths = np.round(np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals, endpoint=True)).astype(int)
-        else:
-            self.context_lengths = context_lengths
+        # if context_lengths is None:
+        #     if context_lengths_min is None or context_lengths_max is None or context_lengths_num_intervals is None:
+        #         raise ValueError("Either context_lengths_min, context_lengths_max, context_lengths_intervals need to be filled out OR the context_lengths_list needs to be supplied.")
+        #     else:
+        #         self.context_lengths = np.round(np.linspace(context_lengths_min, context_lengths_max, num=context_lengths_num_intervals, endpoint=True)).astype(int)
+        # else:
+        self.context_lengths = context_lengths
 
         if document_depth_percents is None:
             if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
@@ -709,7 +709,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_provider', type=str, default="LLaMA", help='which model to use')
     args = parser.parse_args()
     
-    # zecheng note: debug code
+    # zecheng note: 修改完的代码必须事先输入context lengths 区间，是
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.e_len = 64000
@@ -718,7 +718,7 @@ if __name__ == "__main__":
     # args.needle_ids = [0]
     model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
-    context_lengths = np.linspace(4000, 64000, 15)
+    context_lengths = np.linspace(args.s_len, args.e_len, 15)
     
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
