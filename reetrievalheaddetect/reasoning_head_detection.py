@@ -719,7 +719,6 @@ if __name__ == "__main__":
     model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
     context_lengths = np.linspace(4000, 64000, 15)
-    import pdb; pdb.set_trace()
     
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
