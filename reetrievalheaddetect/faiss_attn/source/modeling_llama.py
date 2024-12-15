@@ -464,7 +464,6 @@ class LlamaFlashAttention2(LlamaAttention):
         else:
             perturbation_type = 'zero'
         if 'block_list' in kwargs:
-            import ipdb; ipdb.set_trace()
             for h in kwargs['block_list']:
                 if self.layer_idx==h[0]:
                     if perturbation_type == 'zero':
@@ -633,7 +632,7 @@ class LlamaFlashAttention2(LlamaAttention):
                     if perturbation_type == 'zero':
                         query_states[:,h[1], :, :] = 0  # 直接将query_states置为0
                     elif perturbation_type == 'noise':
-                        noise_std = 0.01  # 高斯噪声的标准差
+                        noise_std = 0.1  # 高斯噪声的标准差
                         noise = torch.randn_like(query_states[:, h[1], :, :]) * noise_std  # 生成噪声
                         query_states[:, h[1], :, :] += noise  # 在query_states上添加噪声
                     else:

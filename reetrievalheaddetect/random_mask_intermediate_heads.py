@@ -194,11 +194,11 @@ class LLMNeedleHaystackTester:
         
         self.model_name = model_name
 
-        print("loading from %s" % model_name)
+        logger.info("loading from %s" % model_name)
         config = AutoConfig.from_pretrained(model_name)
         self.layer_num, self.head_num = config.num_hidden_layers, config.num_attention_heads
 
-        print(f"layer number: {self.layer_num}, head number {self.head_num}")
+        logger.info(f"layer number: {self.layer_num}, head number {self.head_num}")
         if "qwen" in self.model_version.lower():  # balanced_low_0
             self.model_to_test = Qwen2ForCausalLM.from_pretrained(
                     model_name,torch_dtype="auto",device_map = "auto",use_flash_attention_2="flash_attention_2"
@@ -244,9 +244,9 @@ class LLMNeedleHaystackTester:
                 self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
                 self.tags = [l + f'_random_mask_middle_layers' for l in self.tags]
                 if self.mask_topk > 0:
-                    print(f"masking out top {self.mask_topk} retrieval heads")
+                    logger.info(f"masking out top {self.mask_topk} retrieval heads")
                 else:
-                    print(f"masking out random {-self.mask_topk}  heads")
+                    logger.info(f"masking out random {-self.mask_topk}  heads")
             else:
                 self.block_list = []
         
@@ -328,7 +328,7 @@ class LLMNeedleHaystackTester:
 
     def find_niah_needle_idx(self, needle):
         needle_ids = self.enc(needle, add_special_tokens=False)["input_ids"]
-        print( self.enc.decode(needle_ids, skip_special_tokens=False))
+        logger.info( self.enc.decode(needle_ids, skip_special_tokens=False))
         span_len = len(needle_ids)
         for i in range(len(self.prompt_ids)):            
             token_span = self.prompt_ids[i : i + span_len]
@@ -343,7 +343,7 @@ class LLMNeedleHaystackTester:
         all_evi_pos = []
         for i, evi in enumerate(needle):
             needle_ids = self.enc(evi, add_special_tokens=False)["input_ids"]
-            print(f"evidence {i} --> {self.enc.decode(needle_ids, skip_special_tokens=False)}")
+            logger.info(f"evidence {i} --> {self.enc.decode(needle_ids, skip_special_tokens=False)}")
             span_len = len(needle_ids)
             for j in range(len(self.prompt_ids)):
                 token_span = self.prompt_ids[j : j + span_len]
@@ -351,7 +351,7 @@ class LLMNeedleHaystackTester:
                 overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
                 if(overlap > 0.8):
                     all_evi_pos.append((j + 1, j + span_len))
-                    print(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(self.prompt_ids[j + 1: j + span_len], skip_special_tokens=False)}")
+                    logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(self.prompt_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
         return all_evi_pos
 
@@ -399,15 +399,18 @@ class LLMNeedleHaystackTester:
 
         # zecheng_note: 对于niah testing，如果分数大于50，则算retrieval head；如果是implicit reasoning且分数等于100分，则算Reasoning Head
         if score == 100:  
+            logger.info(f"respond correct answer")
+            logger.info([[i[0]] for i in head_score][:20])
             self.retrieval_head_accumulate(retrieval_score)
             head_score = [(i[0], np.mean(i[1])) for i in self.head_counter.items()]
             head_score = sorted(head_score, key=lambda x:x[1], reverse=True)
-            print([[i[0]] for i in head_score][:20])
+            
         else:
+            logger.info(f"respond wrong answer")
+            logger.info([[i[0]] for i in head_score][:20])
             self.retrieval_head_accumulate(retrieval_score, fail=True)
             head_score = [(i[0], np.mean(i[1])) for i in self.fail_head_counter.items()]
             head_score = sorted(head_score, key=lambda x:x[1], reverse=True)
-            print([[i[0]] for i in head_score][:20])
         
         all_detected_tokens = list()
         for item in retrieval_score:
@@ -415,7 +418,7 @@ class LLMNeedleHaystackTester:
                 all_detected_tokens.extend(head[1])
         all_detected_token_id = sorted(list(set(all_detected_tokens)))
         detected_evidences = self.enc.decode([input_ids[0][i] for i in all_detected_token_id])
-            
+        
         results = {
             'model' : self.model_to_test_description,
             'context_length' : int(context_length),
@@ -434,13 +437,13 @@ class LLMNeedleHaystackTester:
         self.testing_results.append(results)
 
         if self.print_ongoing_status:
-            print (f"-- Test Summary -- ")
-            print (f"Duration: {test_elapsed_time:.1f} seconds")
-            print (f"Context: {context_length} tokens")
-            print (f"Depth: {depth_percent}%")
-            print (f"Score: {score}")
-            print(f"detected_evidences {detected_evidences}")
-            print (f"Response: {response}\n")
+            logger.info(f"-- Test Summary -- ")
+            logger.info(f"Duration: {test_elapsed_time:.1f} seconds")
+            logger.info(f"Context: {context_length} tokens")
+            logger.info(f"Depth: {depth_percent}%")
+            logger.info(f"Score: {score}")
+            logger.info(f"detected_evidences {detected_evidences}")
+            logger.info(f"Response: {response}\n")
         if isinstance(depth_percent, float) or isinstance(depth_percent, int) or isinstance(depth_percent, np.int64):
             context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
         else:
@@ -469,7 +472,7 @@ class LLMNeedleHaystackTester:
             
             # Save the result to file for retesting
             p = f'results/{self.tag}/{self.model_version}/{context_file_location}_results.json'
-            print("Writing at %s" % p)
+            logger.info("Writing at %s" % p)
             with open(p, 'w') as f:
                 json.dump(results, f)
 
@@ -479,7 +482,7 @@ class LLMNeedleHaystackTester:
         Checks to see if a result has already been evaluated or not
         """
         results_dir = 'results/' + self.model_version
-        print("Searching existing results at %s" % results_dir)
+        logger.info("Searching existing results at %s" % results_dir)
         if not os.path.exists(results_dir):
             return False
         for filename in os.listdir(results_dir):
@@ -583,7 +586,7 @@ class LLMNeedleHaystackTester:
                 insertion_point -= 1
                 tokens_new_context = tokens_context[:insertion_point]
 
-            print("insertion at %d" % insertion_point)
+            logger.info("insertion at %d" % insertion_point)
             # Once we get there, then add in your needle, and stick the rest of your context in on the other end.
             # Now we have a needle in a haystack
             tokens_new_context += tokens_needle + tokens_context[insertion_point:]
@@ -640,13 +643,13 @@ class LLMNeedleHaystackTester:
 
 
     def print_start_test_summary(self):
-        print ("\n")
-        print ("Starting Needle In A Haystack Testing...")
-        print (f"- Model: {self.model_name}")
-        print (f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
-        print (f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
-        print (f"- Needle: {self.needle}")
-        print ("\n\n")
+        logger.info("\n")
+        logger.info("Starting Needle In A Haystack Testing...")
+        logger.info(f"- Model: {self.model_name}")
+        logger.info(f"- Context Lengths: {len(self.context_lengths)}, Min: {min(self.context_lengths)}, Max: {max(self.context_lengths)}")
+        logger.info(f"- Document Depths: {len(self.document_depth_percents)}, Min: {min(self.document_depth_percents)}%, Max: {max(self.document_depth_percents)}%")
+        logger.info(f"- Needle: {self.needle}")
+        logger.info("\n\n")
 
     def start_test(self, args):
         for ni in self.needle_ids:
@@ -693,16 +696,16 @@ if __name__ == "__main__":
     
     # zecheng note: 修改完的代码必须事先输入context lengths 区间，是
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
+    # args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
     args.e_len = 64000
     args.s_len = 4000
     args.mask_topk = 10
     args.custom_block_list = True
-    args.needle_ids = [4]
-    args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3.1-8B-Instruct.json"
+    # args.needle_ids = [4]
+    # args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3.1-8B-Instruct.json"
     model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
-    context_lengths = np.round(np.linspace(args.s_len, args.e_len, 15, endpoint=True)).astype(int)
+    context_lengths = np.round(np.linspace(args.s_len, args.e_len, 10, endpoint=True)).astype(int)
 
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
