@@ -235,18 +235,23 @@ class LLMNeedleHaystackTester:
 
         if self.custom_block_list:
             self.block_list = self.create_custom_block_list(self.layer_num, self.head_num)
+            self.tags = [l + f'_random_mask_middle_layers' for l in self.tags]
+            if self.mask_topk > 0:
+                logger.info(f"masking out top {self.mask_topk} retrieval heads")
         else:
             if self.mask_topk!=0:
+                if not self.head_file and not self.custom_block_list:
+                    assert NotImplementedError("you must provide the block list file to identify the heads")
                 with open(self.head_file, "r") as file:
                     stable_block_list = json.loads(file.readline())
                 stable_block_list = [(l[0], np.mean(l[1])) for l in stable_block_list.items()]
                 stable_block_list = sorted(stable_block_list, key=lambda x: x[1], reverse=True) 
                 self.block_list = [[int(ll) for ll in l[0].split("-")] for l in stable_block_list][:100]
-                self.tags = [l + f'_random_mask_middle_layers' for l in self.tags]
+                self.tags = [l + f'_mask_heads' for l in self.tags]
                 if self.mask_topk > 0:
                     logger.info(f"masking out top {self.mask_topk} retrieval heads")
                 else:
-                    logger.info(f"masking out random {-self.mask_topk}  heads")
+                    logger.info(f"masking out random {-self.mask_topk} heads")
             else:
                 self.block_list = []
         
