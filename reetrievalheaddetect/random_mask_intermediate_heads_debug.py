@@ -257,7 +257,7 @@ class LLMNeedleHaystackTester:
         
     def create_custom_block_list(self, num_layers, num_heads):
         block_list = []
-        for i in range(7, 15):
+        for i in range(7, 12):
             random_heads = random.sample(range(num_heads), num_heads // 8)  # 从当前layer里面随机mask一半的heads
             for j in random_heads:
                 block_list.append([i, j])
@@ -469,7 +469,6 @@ class LLMNeedleHaystackTester:
                 f.write(context)
             
         if self.save_results:
-            import ipdb; ipdb.set_trace()
             if not os.path.exists(f'results/{self.tag}/{self.model_version}'):
                 os.makedirs(f'results/{self.tag}/{self.model_version}')
             
@@ -724,8 +723,7 @@ if __name__ == "__main__":
     # args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3.1-8B-Instruct.json"
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
 
-    args = CUSArgs()  ## FIXME: Debug mode
-
+    # args = CUSArgs()  ## FIXME: Debug mode
     context_lengths = np.round(np.linspace(args.s_len, args.e_len, 10, endpoint=True)).astype(int)
 
     ht = LLMNeedleHaystackTester(

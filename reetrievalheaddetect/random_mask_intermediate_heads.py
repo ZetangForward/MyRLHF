@@ -399,18 +399,18 @@ class LLMNeedleHaystackTester:
 
         # zecheng_note: 对于niah testing，如果分数大于50，则算retrieval head；如果是implicit reasoning且分数等于100分，则算Reasoning Head
         if score == 100:  
-            logger.info(f"respond correct answer")
-            logger.info([[i[0]] for i in head_score][:20])
             self.retrieval_head_accumulate(retrieval_score)
             head_score = [(i[0], np.mean(i[1])) for i in self.head_counter.items()]
             head_score = sorted(head_score, key=lambda x:x[1], reverse=True)
+            logger.info(f"respond correct answer")
+            logger.info([[i[0]] for i in head_score][:20])
             
         else:
-            logger.info(f"respond wrong answer")
-            logger.info([[i[0]] for i in head_score][:20])
             self.retrieval_head_accumulate(retrieval_score, fail=True)
             head_score = [(i[0], np.mean(i[1])) for i in self.fail_head_counter.items()]
             head_score = sorted(head_score, key=lambda x:x[1], reverse=True)
+            logger.info(f"respond wrong answer")
+            logger.info([[i[0]] for i in head_score][:20])
         
         all_detected_tokens = list()
         for item in retrieval_score:
