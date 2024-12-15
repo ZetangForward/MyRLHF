@@ -3,7 +3,23 @@ from torch import nn
 
 from normalize import *
 
+def get_mask(l, valid_len, zero_triu, true_is_keep=False):
+    '''
+    l        : int or tuple  (q len,k len)
+    valid_len: (b, ) (k len)
+    '''
+    ql,kl=(1, l) if isinstance(l, int) else l
 
+    if valid_len is None:
+        return None
+    if valid_len.ndim>2:# means valid_len is actually a mask not len 
+        return valid_len
+    mask=(torch.arange(kl).to(valid_len.device)[None,:]<valid_len[:,None]) # (b, kl)
+    mask=mask[:,None,:].repeat(1,ql,1) # (b, ql, kl)
+    if zero_triu: # decoder self attention
+        mask=torch.tril(mask)
+    mask=mask[:,None,:,:] # (b, 1(h), ql, kl)
+    return mask if true_is_keep else ~mask
 
 class ContextualPositionEmbedding(nn.Module):
     def __init__(self, npos_max, head_dim):
@@ -12,13 +28,13 @@ class ContextualPositionEmbedding(nn.Module):
         self.pos_emb=nn.Parameter(torch.zeros(1, 1, head_dim, npos_max))
 
     def forward(self, query, attn_logits, mask):
-        #query: (batch_size, num_heads, q_len / 1, ndims)
-        #attn_logits : (batch_size, num_heads, q_len / 1, k_len)
+        #query: (batch_size, num_heads, q_len or 1, ndims)
+        #attn_logits : (batch_size, num_heads, q_len or 1, k_len)
         #mask:  (b, 1, q_len, k_len) , None means evaluating and using kv cache
         if mask is not None:
-            attn_logits += mask.log()
+            attn_logits += (~mask).log()
         gates=torch.sigmoid(attn_logits)
-        pos=gates.flip(dim=-1).cumsum(dim=-1).flip(dim=-1)
+        pos=gates.flip(-1).cumsum(dim=-1).flip(-1)
         pos=pos.clamp(max=self.npos_max-1)  # (b, h, q_len, k_len)
 
         #interpolate from integar positions
@@ -76,7 +92,7 @@ class CopeMultiHeadAttention(nn.Module):
         
         self.score = self.dropout(score)
         out = torch.matmul(self.score, V)
-        out = self.Wo(out.transpose(1,2).reshape(V.size(0), -1, self.num_dims))
+        out = self.Wo(out.transpose(1,2).reshape(V.size(0), -1, self.ndims))
         
         return out
 
@@ -86,3 +102,14 @@ class CopeMultiHeadAttention(nn.Module):
         logits = self.cope_enc(Q, logits, mask)
         
         return self.forward_attention(logits, V, mask)
+
+if __name__=="__main__":
+    attn=CopeMultiHeadAttention(ndims=64,nheads=4,npos_max=64)
+
+    x=torch.randn(2,6,64)
+    mask=get_mask((x.size(1),x.size(1)),
+                                    x.size(1)*torch.ones(1,dtype=torch.int64,device = x.device),
+                                     zero_triu=True)
+    print(mask)
+    print(attn(x, x, x, mask=mask).shape)
+    print(attn.score[0,0])
