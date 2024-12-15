@@ -1,28 +1,10 @@
 from typing import Union
 import torch
 from torch import nn
-from attention import CopeMultiHeadAttention
+from attention import get_mask, CopeMultiHeadAttention
 from feedforward import *
 
 # from template.e2e.utils import State, EvalModule
-
-def get_mask(l, valid_len, zero_triu, true_is_keep=False):
-    '''
-    l        : int or tuple  (q len,k len)
-    valid_len: (b, ) (k len)
-    '''
-    ql,kl=(1, l) if isinstance(l, int) else l
-
-    if valid_len is None:
-        return None
-    if valid_len.ndim>2:# means valid_len is actually a mask not len 
-        return valid_len
-    mask=(torch.arange(kl).to(valid_len.device)[None,:]<valid_len[:,None]) # (b, kt)
-    mask=mask[:,None,:].repeat(1,ql,1) # (b, qt, kt)
-    if zero_triu: # decoder self attention
-        mask=torch.tril(mask)
-    mask=mask[:,None,:,:] # (b, 1(h), qt, kt)
-    return mask if true_is_keep else ~mask
 
 
 class CopeFormerLayer(nn.Module):
@@ -77,11 +59,12 @@ class CopeFormer(nn.Module,
         
         self.fc = nn.Linear(idims, vocab_size)
     def forward(self, x, x_valid_len = None):
+        bs, seq_len, _ = x.shape
         x = self.tok_enc(x)
         if self.norm is AddNorm:
             x = self.norm(x)
-        mask = get_mask((x.size(1), x.size(1)), 
-                        (torch.ones(x.size(0),dtype=torch.int64,device = x.device)) \
+        mask = get_mask((seq_len, seq_len), 
+                        (seq_len* torch.ones(bs, dtype=torch.int64,device = x.device)) \
                             if x_valid_len is None else x_valid_len,
                         zero_triu = True)
         
