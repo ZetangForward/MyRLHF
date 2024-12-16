@@ -147,7 +147,8 @@ class LLMNeedleHaystackTester:
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         self.needle_ids = needle_ids
         self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
-        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
+        # haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
+        haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
         self.needle_list = [l["needle"] for l in needles_and_stacks]
         self.retrieval_question_list = [l["question"] for l in needles_and_stacks]
@@ -235,7 +236,10 @@ class LLMNeedleHaystackTester:
 
         if self.custom_block_list:
             self.block_list = self.create_custom_block_list(self.layer_num, self.head_num)
-            self.tags = [l + f'_random_mask_middle_layers' for l in self.tags]
+            if self.perturbation_type == "noise":
+                self.tags = [l + f'_random_noise_middle_layers' for l in self.tags]
+            else:
+                self.tags = [l + f'_random_zero_middle_layers' for l in self.tags]
             if self.mask_topk > 0:
                 logger.info(f"masking out top {self.mask_topk} retrieval heads")
         else:
@@ -697,6 +701,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--model_name_suffix', type=str, default=None, help='name of model')
     parser.add_argument('--model_provider', type=str, default="LLaMA", help='which model to use')
+    parser.add_argument('--perturbation_type', type=str, default="noise", help='type of perturbation')
     args = parser.parse_args()
     
     # zecheng note: 修改完的代码必须事先输入context lengths 区间，是
@@ -708,14 +713,14 @@ if __name__ == "__main__":
     args.custom_block_list = True
     # args.needle_ids = [4]
     # args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3.1-8B-Instruct.json"
-    model_name = args.model_path
     # context_lengths = np.array([4000, 8000, 16000, 32000, 64000])
+    model_name = args.model_path
     context_lengths = np.round(np.linspace(args.s_len, args.e_len, 10, endpoint=True)).astype(int)
 
     ht = LLMNeedleHaystackTester(
         model_name=model_name, 
-        # haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
-        haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
+        haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
+        # haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
         model_name_suffix=args.model_name_suffix,
         model_provider=args.model_provider,
         save_contexts=False,
@@ -727,8 +732,7 @@ if __name__ == "__main__":
         mask_topk=args.mask_topk,
         head_file=args.head_file,
         custom_block_list=args.custom_block_list,
-        perturbation_type='noise'
-        # tag="q3_inf_diff_pos"
+        perturbation_type=args.perturbation_type
     )
 
     ht.start_test(args)

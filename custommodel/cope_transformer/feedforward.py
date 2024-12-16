@@ -3,7 +3,7 @@ from torch import nn
 from typing import Union
 from normalize import *
     
-class PosWiseFFN(nn.Sequential):
+class CoPEMLP(nn.Sequential):
     def __init__(self, idims, hdims, dropout, Norm:Union[PreNorm,AddNorm], scale=1.):
         super().__init__(
             Norm(
