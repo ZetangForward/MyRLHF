@@ -224,8 +224,8 @@ class AttentionerManager(AttentionerManagerBase):
         attention_adapters = []
         for i, layer in enumerate(self.model.model.layers):
             attention_adapter = AttentionAdapter()
-            layer.config = self.model.config
-            layer.self_attn.forward = partial(hack_attn, layer, attention_adapter=attention_adapter)
+            # layer.config = self.model.config
+            layer.self_attn.forward = partial(hack_attn, layer.self_attn, attention_adapter=attention_adapter)
             attention_adapters.append(attention_adapter)
         return attention_adapters
 
