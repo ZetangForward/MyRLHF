@@ -13,7 +13,8 @@ from transformers.cache_utils import Cache
 from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv
 from baukit import Trace
 import numpy as np
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
+import ipdb
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 
 class AttentionAdapterBase(nn.Module):
@@ -130,7 +131,6 @@ def hack_attn(
     **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     bsz, q_len, _ = hidden_states.size()
-
     if self.config.pretraining_tp > 1:
         key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp
         query_slices = self.q_proj.weight.split(
@@ -199,6 +199,7 @@ def hack_attn(
         )
 
     attn_output = attn_output.transpose(1, 2).contiguous()
+
     attn_output = attn_output.reshape(bsz, q_len, -1)
 
     if self.config.pretraining_tp > 1:
@@ -221,10 +222,10 @@ class AttentionerManager(AttentionerManagerBase):
 
     def register_attentioner_to_model(self):
         attention_adapters = []
-        for i, layer in enumerate(self.model.transformer.h):
+        for i, layer in enumerate(self.model.model.layers):
             attention_adapter = AttentionAdapter()
-            layer.attn._attn = partial(hack_attn, layer.self_attn,
-                                       attention_adapter=attention_adapter)
+            layer.config = self.model.config
+            layer.self_attn.forward = partial(hack_attn, layer, attention_adapter=attention_adapter)
             attention_adapters.append(attention_adapter)
         return attention_adapters
 
@@ -254,8 +255,8 @@ def get_proportion(saliency, class_poss, final_poss):
 def test_model_with_attention_adapter(model, input, golden):
     attentionermanger = AttentionerManager(model)
     attentionermanger.zero_grad()
+    output = model(input)
     import ipdb; ipdb.set_trace()
-    output = attentionermanger.forward(input)
     loss = F.cross_entropy(output['logits'], golden)
     loss.backward()
 
@@ -272,12 +273,12 @@ def test_model_with_attention_adapter(model, input, golden):
 
 if __name__ == "__main__":
 
-    model = LlamaForCausalLM.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct", device_map='balanced_low_0', torch_dtype=torch.bfloat16, attn_implementation="eager")
-    tokenizer = AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
-    data = auto_read_data("/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl")
+    model = LlamaForCausalLM.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct", device_map='balanced_low_0', torch_dtype=torch.bfloat16, attn_implementation="eager")
+    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
+    data = auto_read_data("../haystack_for_detect/reasoning_needle.jsonl")
 
     # needle
-    needles_and_stacks = [json.loads(l) for l in open(f"/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl")]
+    needles_and_stacks = [json.loads(l) for l in open(f"../haystack_for_detect/reasoning_needle.jsonl")]
     needle_list = [l["needle"] for l in needles_and_stacks]
     retrieval_question_list = [l["question"] for l in needles_and_stacks]
     evidence_list = [l["real_needle"] for l in needles_and_stacks]
@@ -292,7 +293,7 @@ if __name__ == "__main__":
     tag = tags[selected_idx]
 
     # 初始化采样器
-    haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")
+    haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")
     noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
     background_text = noise_sampler_test.get_sample(15500)
     disturb_tok_needles = [i for i in needle if i not in evidence]
