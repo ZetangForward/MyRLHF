@@ -318,16 +318,30 @@ class AttentionerManagerBase:
         return grads
 
 
+# class AttentionerManager(AttentionerManagerBase):
+#     def __init__(self, model: PreTrainedModel, attention_adapters: List[AttentionAdapterBase]):
+#         super().__init__(model, attention_adapters)
+
+#     def register_attentioner_to_model(self):
+#         for i, layer in enumerate(self.model.model.layers):
+#             # layer.config = self.model.config
+#             layer.self_attn.forward = partial(hack_attn, layer.self_attn, attention_adapter=self.attention_adapters[i])
+
+
 class AttentionerManager(AttentionerManagerBase):
-    def __init__(self, model: PreTrainedModel, attention_adapters: List[AttentionAdapterBase]):
-        super().__init__(model, attention_adapters)
+    def __init__(self, model: PreTrainedModel):
+        super().__init__(model)
 
     def register_attentioner_to_model(self):
+        attention_adapters = []
         for i, layer in enumerate(self.model.model.layers):
+            attention_adapter = AttentionAdapter()
             # layer.config = self.model.config
-            layer.self_attn.forward = partial(hack_attn, layer.self_attn, attention_adapter=self.attention_adapters[i])
-
-
+            layer.self_attn.forward = partial(hack_attn, layer.self_attn, attention_adapter=attention_adapter)
+            attention_adapters.append(attention_adapter)
+        return attention_adapters
+    
+    
 def get_proportion(saliency, class_poss, final_poss):
     saliency = saliency.detach().clone().cpu()
     class_poss = torch.hstack(class_poss).detach().clone().cpu()
