@@ -385,11 +385,11 @@ def get_proportion_wla(saliency, class_poss, final_poss):
     return proportions
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, take_last_loss = True):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, take_last_loss = True):
     """
     zecheng_note: 这里计算的是language modeling loss
     """
-    attentionermanger = AttentionerManager(model)
+    attentionermanger = AttentionerManager(model, model_name)
     attentionermanger.zero_grad()
     output = model(input)
     logits = output['logits'][:, -1, :]
@@ -430,7 +430,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name):
+def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name):
 
     depth_percent = [i / 10 for i in depth_percent]
     updated_sample = [[] for _ in range(len(background_text) + 1)]
@@ -462,7 +462,7 @@ def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_p
     # input_ids = torch.cat([inp, last_golden_ids], dim=1)
     target_pos = inp.shape[-1] - 1
     # 构造完测试数据集
-    flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos)
+    flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos, model_name)
     flow_res["pred_res"] = pred_res
     flow_res["score"] = 100 if answer in pred_res else 0
 
@@ -520,5 +520,5 @@ if __name__ == "__main__":
             depth_tag = "-".join([str(i) for i in depth_percent])
             model_name = args.model_path.split("/")[-1]
             save_file_name = f"{model_name}/{tag}_{depth_tag}"
-            begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name)
+            begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
             pbar.update(1)
