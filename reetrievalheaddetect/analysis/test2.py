@@ -4,7 +4,7 @@ import os
 from transformers import LlamaForCausalLM
 from transformers.models.llama.modeling_llama import LlamaAttention
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-print(sys.path)
+logger.info(sys.path)
 from retrieval_head_detection import SentenceSampler
 import torch.nn.functional as F
 import datasets
@@ -16,11 +16,6 @@ import numpy as np
 from transformers import PreTrainedModel
 import ipdb
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
-
-
-
-
-
 
 def hack_attn_v2(
         self,
@@ -274,11 +269,10 @@ def manager_decoractor(manager):
 
 
 class AttentionerManagerBase:
-    def __init__(self, model, attention_adapters: List[AttentionAdapterBase]):
+    def __init__(self, model: PreTrainedModel):
         self.model = model
-        self.attention_adapters = attention_adapters
+        self.attention_adapters = self.register_attentioner_to_model()
         self.model.forward = manager_decoractor(self)(self.model.forward)
-        self.register_attentioner_to_model()
 
     @property
     def input_ids(self):
@@ -341,8 +335,30 @@ class AttentionerManager(AttentionerManagerBase):
             attention_adapters.append(attention_adapter)
         return attention_adapters
     
-    
-def get_proportion(saliency, class_poss, final_poss):
+
+
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], target_poss: int):
+    """
+    saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
+    """
+    saliency = saliency.detach().clone().cpu()
+    assert len(saliency.shape) == 2 or (len(saliency.shape) == 3 and saliency.shape[0] == 1)
+    if len(saliency.shape) == 3:
+        saliency = saliency.squeeze(0)
+    saliency = saliency.numpy()
+    np.fill_diagonal(saliency, 0)
+    import ipdb; ipdb.set_trace()
+    # proportion1: evidence -> target token
+    proportion1 = 0
+    for span_idx in evi_poss:
+        import ipdb; ipdb.set_trace()
+        proportion1 += saliency[np.array(span_idx), :].sum()
+
+
+
+
+
+def get_proportion_wla(saliency, class_poss, final_poss):
     saliency = saliency.detach().clone().cpu()
     class_poss = torch.hstack(class_poss).detach().clone().cpu()
     final_poss = final_poss.detach().clone().cpu()
@@ -364,19 +380,26 @@ def get_proportion(saliency, class_poss, final_poss):
     return proportions
 
 
-def test_model_with_attention_adapter(model, input, golden):
+def test_model_with_attention_adapter(model, input, golden, search_pos, target_poss, take_last_loss = True):
+    """
+    zecheng_note: 这里计算的是language modeling loss
+    """
     attentionermanger = AttentionerManager(model)
     attentionermanger.zero_grad()
     output = model(input)
-    logits = output['logits'][:, 1:, :]
-    labels = golden[:, :-1]
+    logits = output['logits'][:, -1, :]
+    labels = golden[:, -1]
+
     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
     loss.backward()
 
     pros = []
     for i in range(len(attentionermanger.attention_adapters)):
         saliency = attentionermanger.grad(use_abs=True)[i]
+        saliency = saliency[:, :-1, :-1]  # remove the last token (which is golden token) saliency
         import ipdb; ipdb.set_trace()
+        calculate_portions(saliency, search_pos, target_poss)
+        
     #     pro = get_proportion(saliency, class_poss, final_poss)
     #     pros.append(pro)
     # pros = np.array(pros)
@@ -384,19 +407,19 @@ def test_model_with_attention_adapter(model, input, golden):
     # pros_list.append(pros)
 
 
-def find_multi_needle_idx(evidences, tokenizer, needle):
+def find_multi_needle_idx(input_ids, tokenizer, needles):
     all_evi_pos = []
-    for i, evi in enumerate(needle):
+    for i, evi in enumerate(needles):
         needle_ids = tokenizer(evi, add_special_tokens=False)["input_ids"]
-        print(f"evidence {i} --> {tokenizer.decode(needle_ids, skip_special_tokens=False)}")
+        logger.info(f"evidence {i} --> {evi}")
         span_len = len(needle_ids)
-        for j in range(len(evidences)):
-            token_span = evidences[j : j + span_len]
+        for j in range(len(input_ids)):
+            token_span = input_ids[j : j + span_len]
             span_ids = set(token_span.tolist())
             overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
             if(overlap > 0.8):
                 all_evi_pos.append((j + 1, j + span_len))
-                print(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {tokenizer.decode(evidences[j + 1: j + span_len], skip_special_tokens=False)}")
+                logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {tokenizer.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                 break
     return all_evi_pos
 
@@ -443,12 +466,17 @@ if __name__ == "__main__":
 
     new_context = tokenizer.decode(tokens)
     input_context = new_context + f"\nQuestion: {question}\nAnswer:"
-    inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, return_tensors='pt').to(model.device)
+    inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
 
-    print(inp.shape)
+    search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
+    inp = inp.to(model.device)
 
+    logger.info(inp.shape)
+    last_golden_ids = tokenizer(answer, return_tensors='pt')["input_ids"].to(model.device)
+    # input_ids = torch.cat([inp, last_golden_ids], dim=1)
+    target_pos = inp.shape[-1]
     # 构造完测试数据集
-    test_model_with_attention_adapter(model, inp, inp)
+    test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, target_pos)
     # with torch.no_grad(), Trace(model.model.layers[8], "self_attn") as ret:
     #     _ = model(inp, output_attentions=True)
     #     representation = ret.output
