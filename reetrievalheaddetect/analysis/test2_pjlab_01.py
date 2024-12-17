@@ -484,7 +484,7 @@ if __name__ == "__main__":
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
     args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-    args.selected_idx = 0
+    args.selected_idx = [0,1,2,3]
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 
@@ -495,31 +495,40 @@ if __name__ == "__main__":
     golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
     tags = [l["tag"] for l in needles_and_stacks]
 
-    needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[args.selected_idx]]
-    evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[args.selected_idx]]
-    question = retrieval_question_list[args.selected_idx]
-    answer = golden_answer_list[args.selected_idx]
-    tag = tags[args.selected_idx]
+    for s_id in args.selected_idx:
+        logger.info(f"Selected idx: {s_id}")
+        logger.info(f"Question: {retrieval_question_list[s_id]}")
+        logger.info(f"Answer: {golden_answer_list[s_id]}")
+        logger.info(f"Tag: {tags[s_id]}")
+        logger.info(f"Needle: {needle_list[s_id]}")
+        logger.info(f"Real Needle: {evidence_list[s_id]}")
+        logger.info("=============================================")
+        
+        needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[args.selected_idx]]
+        evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[args.selected_idx]]
+        question = retrieval_question_list[args.selected_idx]
+        answer = golden_answer_list[args.selected_idx]
+        tag = tags[args.selected_idx]
 
-    # 初始化采样器
-    haystack = datasets.load_dataset(args.dataset_path, split="test")
-    noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
-    background_text = noise_sampler_test.get_sample(5900)  # zecheng_note: 我们设置了6K上下文长度
-    disturb_tok_needles = [i for i in needle if i not in evidence]
-    disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+        # 初始化采样器
+        haystack = datasets.load_dataset(args.dataset_path, split="test")
+        noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
+        background_text = noise_sampler_test.get_sample(args.context_length)  # zecheng_note: 我们设置了8K上下文长度
+        disturb_tok_needles = [i for i in needle if i not in evidence]
+        disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
 
-    all_combinations = list(itertools.combinations(list(range(0, 10)), len(evidence)))
-    
-    logger.info(all_combinations)
-    model = None
-    with tqdm(total=len(all_combinations)) as pbar:
-        for depth_percent in all_combinations:
-            del model
-            torch.cuda.empty_cache()
-            model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
-            pbar.set_description(f"Processing depth {depth_percent}")
-            depth_tag = "-".join([str(i) for i in depth_percent])
-            model_name = args.model_path.split("/")[-1]
-            save_file_name = f"{model_name}/{tag}_{depth_tag}"
-            begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
-            pbar.update(1)
+        all_combinations = list(itertools.combinations(list(range(0, 10)), len(evidence)))
+        
+        logger.info(all_combinations)
+        model = None
+        with tqdm(total=len(all_combinations)) as pbar:
+            for depth_percent in all_combinations:
+                del model
+                torch.cuda.empty_cache()
+                model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
+                pbar.set_description(f"Processing depth {depth_percent}")
+                depth_tag = "-".join([str(i) for i in depth_percent])
+                model_name = args.model_path.split("/")[-1]
+                save_file_name = f"{model_name}/{args.context_length}/{tag}_{depth_tag}"
+                begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
+                pbar.update(1)
