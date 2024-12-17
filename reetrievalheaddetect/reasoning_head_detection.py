@@ -287,7 +287,6 @@ class LLMNeedleHaystackTester:
                     if self.check_if_attend_ref(i, retrieval_score, layer_idx, head_idx):
                         break
 
-
     def check_if_attend_ref(self, i, retrieval_score, layer_idx, head_idx):
         total_length = 0
         for pos in self.needle_pos:
