@@ -485,7 +485,8 @@ if __name__ == "__main__":
     args.dataset_path = "/data/data/zecheng/data/pg19-test"
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-    args.context_length
+    args.context_length = 7900
+    
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 
     needles_and_stacks = auto_read_data(args.needle_path)
