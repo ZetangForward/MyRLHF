@@ -1,0 +1,44 @@
+{
+    "flip-flop":{
+        
+        "nodes": 1,
+        "gpus" : 8,
+        "hidden_size": 256,
+        "num_layers" : 4,
+        "num_heads"  : 4,
+        "train_steps": 10000,
+        "optimizer"  : "adamw",
+        "lr"         : 3e-4,
+        "beta1"      : 0.9,
+        "beta2"      : 0.999,
+        "epsilon"    : 1e-3,
+        "batch_size" : 16,
+        "num_steps"  : 10000
+
+
+    },
+
+    "language_modeling":{
+        "nodes": 4,
+        "gpus" : 32,
+        "dataset": "Wikitext-103",
+        "architecture": "gpt-2",
+        "num_layers"  : 12,
+        "hidden_size" : 768,
+        "num_epochs"  : 10,
+        "batch_size"  : 64,
+        "npos_max"    : 64,
+        "ctx_length"  : 1024
+    },
+    "code_modeling":{
+        "nodes": 4,
+        "gpus" : 32,
+        "dataset":"llama-2",
+        "num_layers" : 4,
+        "num_heads"  : 8,
+        "hidden_size": 256,
+        "ctx_length" : 4096,
+        "lr"         : 5e-4
+
+    }
+}

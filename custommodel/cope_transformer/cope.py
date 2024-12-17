@@ -140,7 +140,7 @@ class CoPELlamaAttention(nn.Module):
         **kwargs
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
         assert attention_mask.ndim==4,"mask shape: " + str(attention_mask.shape) + "is not allowed!"
-        
+        print("attention_mask:\n",attention_mask)
         bsz, q_len, _ =hidden_states.size()
         
         if self.config.pretraining_tp > 1:
@@ -214,7 +214,7 @@ class CoPELlamaForCausalLM(LlamaForCausalLM):
 if __name__=="__main__":
     from transformers import AutoConfig, AutoTokenizer
     import datasets
-    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "7"
     config = AutoConfig.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
     config.npos_max = 64
     config._attn_implementation="eager"

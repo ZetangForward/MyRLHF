@@ -54,7 +54,6 @@ inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}
 
 print(inp.shape)
 
-
 with torch.no_grad(), Trace(model.model.layers[8], "self_attn") as ret:
     _ = model(inp, output_attentions=True)
     representation = ret.output
