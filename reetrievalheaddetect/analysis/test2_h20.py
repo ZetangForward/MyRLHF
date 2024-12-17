@@ -541,7 +541,7 @@ if __name__ == "__main__":
         for depth_percent in all_combinations:
             del model
             torch.cuda.empty_cache()
-            model = LlamaForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
+            model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
             pbar.set_description(f"Processing depth {depth_percent}")
             depth_tag = "-".join([str(i) for i in depth_percent])
             model_name = args.model_path.split("/")[-1]
