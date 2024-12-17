@@ -431,7 +431,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name):
+def begin_test(args, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name):
 
     depth_percent = [i / 10 for i in depth_percent]
     updated_sample = [[] for _ in range(len(background_text) + 1)]
@@ -450,7 +450,7 @@ def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_p
     input_context = new_context + f"\nQuestion: {question}\nAnswer:"
     inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
 
-    search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[args.selected_idx])
+    search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
     inp = inp.to(model.device)
     
@@ -465,7 +465,7 @@ def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_p
     # 构造完测试数据集
     flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos, model_name)
     flow_res["pred_res"] = pred_res
-    flow_res["score"] = 100 if answer in pred_res else 0
+    flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0
 
     logger.info(flow_res)
     auto_save_data(flow_res, f"{args.save_dir}/{save_file_name}.pkl")
@@ -480,11 +480,12 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
-    args.model_path = "Qwen/Qwen2.5-7B-Instruct"
+    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
-    args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl"
+    args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-    args.selected_idx = [0,1,2,3]
+    args.selected_idx = [2,3]
+    args.context_length = 5900
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 
@@ -504,11 +505,11 @@ if __name__ == "__main__":
         logger.info(f"Real Needle: {evidence_list[s_id]}")
         logger.info("=============================================")
         
-        needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[args.selected_idx]]
-        evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[args.selected_idx]]
-        question = retrieval_question_list[args.selected_idx]
-        answer = golden_answer_list[args.selected_idx]
-        tag = tags[args.selected_idx]
+        needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
+        evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
+        question = retrieval_question_list[s_id]
+        answer = golden_answer_list[s_id]
+        tag = tags[s_id]
 
         # 初始化采样器
         haystack = datasets.load_dataset(args.dataset_path, split="test")
@@ -530,5 +531,5 @@ if __name__ == "__main__":
                 depth_tag = "-".join([str(i) for i in depth_percent])
                 model_name = args.model_path.split("/")[-1]
                 save_file_name = f"{model_name}/{args.context_length}/{tag}_{depth_tag}"
-                begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
+                begin_test(args, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
                 pbar.update(1)
