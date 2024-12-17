@@ -465,7 +465,7 @@ def begin_test(args, selected_idx, model, tokenizer, depth_percent, background_t
     # 构造完测试数据集
     flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos, model_name)
     flow_res["pred_res"] = pred_res
-    flow_res["score"] = 100 if answer in pred_res else 0
+    flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0
 
     logger.info(flow_res)
     auto_save_data(flow_res, f"{args.save_dir}/{save_file_name}.pkl")
