@@ -504,7 +504,7 @@ if __name__ == "__main__":
     # 初始化采样器
     haystack = datasets.load_dataset(args.dataset_path, split="test")
     noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
-    background_text = noise_sampler_test.get_sample(7900)  # zecheng_note: 我们设置了8K上下文长度
+    background_text = noise_sampler_test.get_sample(5900)  # zecheng_note: 我们设置了6K上下文长度
     disturb_tok_needles = [i for i in needle if i not in evidence]
     disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
 
