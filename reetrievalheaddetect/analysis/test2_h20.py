@@ -239,8 +239,9 @@ def manager_decoractor(manager):
 
 
 class AttentionerManagerBase:
-    def __init__(self, model: PreTrainedModel):
+    def __init__(self, model: PreTrainedModel, model_name: str):
         self.model = model
+        self.model_name = model_name
         self.attention_adapters = self.register_attentioner_to_model()
         self.model.forward = manager_decoractor(self)(self.model.forward)
 
@@ -294,7 +295,7 @@ class AttentionerManagerBase:
 
 class AttentionerManager(AttentionerManagerBase):
     def __init__(self, model: PreTrainedModel, model_name: str):
-        super().__init__(model)
+        super().__init__(model, model_name)
         self.model_name = model_name
     def register_attentioner_to_model(self):
         attention_adapters = []
@@ -474,7 +475,6 @@ def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_p
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--selected_idx', type=int, default=0, help='selected index')
-    parser.add_argument('--context_length', type=int, default=3900, help='selected index')
     parser.add_argument('--needle_path', type=str, default=None, help='path to multi-hop file')
     parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
@@ -485,8 +485,7 @@ if __name__ == "__main__":
     args.dataset_path = "/data/data/zecheng/data/pg19-test"
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-   
-
+    args.context_length
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 
     needles_and_stacks = auto_read_data(args.needle_path)
