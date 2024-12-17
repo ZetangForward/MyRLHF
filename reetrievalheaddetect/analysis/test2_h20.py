@@ -14,7 +14,8 @@ from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repea
 from baukit import Trace
 import numpy as np
 from transformers import PreTrainedModel
-import ipdb
+import itertools
+from tqdm import trange
 
 def hack_attn_v2(
     self,
@@ -334,27 +335,58 @@ class AttentionerManager(AttentionerManagerBase):
             attention_adapters.append(attention_adapter)
         return attention_adapters
     
+def np_topk(arr, k):
+    # 获取排序后的索引（从小到大）
+    sorted_indices = np.argsort(arr)
+    # 获取前k个最大元素的索引
+    topk_indices = sorted_indices[-k:]
+    # 获取前k个最大元素的值
+    topk_values = arr[topk_indices]
+    return topk_values, topk_indices
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], target_poss: int):
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: int):
     """
     saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
     """
-    saliency = saliency.detach().clone().cpu()
+    saliency = saliency.float().detach().clone().cpu()
     assert len(saliency.shape) == 2 or (len(saliency.shape) == 3 and saliency.shape[0] == 1)
     if len(saliency.shape) == 3:
         saliency = saliency.squeeze(0)
     saliency = saliency.numpy()
     np.fill_diagonal(saliency, 0)
-    import ipdb; ipdb.set_trace()
-    # proportion1: evidence -> target token
+    total_context_length = saliency.shape[1]
+
+    # zecheng_note: 查询信息流里面的Peak Tokens, 关键词Flow
+    _, topk_indices = np_topk(saliency[target_poss, :], 20)
+
+    # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
     proportion1 = 0
+    evidence_length = 0
     for span_idx in evi_poss:
-        import ipdb; ipdb.set_trace()
-        proportion1 += saliency[np.array(span_idx), :].sum()
+        proportion1 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
+        evidence_length += span_idx[1] - span_idx[0]
 
+    # proportion2: all context -> target token
+    proportion2 = saliency[target_poss, :].sum()
 
+    # proportion3: irrevelent evidence -> target token
+    proportion3 = 0
+    irr_evidence_length = 0
+    for span_idx in attack_pos:
+        proportion3 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
+        irr_evidence_length += span_idx[1] - span_idx[0]
 
+    # proportion4: remain context -> target token
+    proportion4 = proportion2 - proportion1 - proportion3
+
+    proportion1 = proportion1 / evidence_length
+    proportion2 = proportion2 / total_context_length
+    proportion3 = proportion3 / irr_evidence_length
+    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
+
+    return proportion1, proportion2, proportion3, proportion4, topk_indices
+    
 
 
 def get_proportion_wla(saliency, class_poss, final_poss):
@@ -379,7 +411,7 @@ def get_proportion_wla(saliency, class_poss, final_poss):
     return proportions
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, target_poss, take_last_loss = True):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, take_last_loss = True):
     """
     zecheng_note: 这里计算的是language modeling loss
     """
@@ -392,25 +424,26 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, target_p
     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
     loss.backward()
 
-    pros = []
-    for i in range(len(attentionermanger.attention_adapters)):
-        saliency = attentionermanger.grad(use_abs=True)[i]
-        saliency = saliency[:, :-1, :-1]  # remove the last token (which is golden token) saliency
-        import ipdb; ipdb.set_trace()
-        calculate_portions(saliency, search_pos, target_poss)
-        
-    #     pro = get_proportion(saliency, class_poss, final_poss)
-    #     pros.append(pro)
-    # pros = np.array(pros)
-    # pros = pros.T
-    # pros_list.append(pros)
+    pros_dict = dict()
+    for i in trange(len(attentionermanger.attention_adapters)):
+        saliency = attentionermanger.grad(use_abs=True)[i]        
+        proportion1, proportion2, proportion3, proportion4, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
+        top_tokens = []
+        for idx in topk_indices:
+            top_tokens.append(tokenizer.decode(input[0][idx].item()))
+        pros_dict[i] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens}
+    return pros_dict
+
 
 
 def find_multi_needle_idx(input_ids, tokenizer, needles):
     all_evi_pos = []
     for i, evi in enumerate(needles):
-        needle_ids = tokenizer(evi, add_special_tokens=False)["input_ids"]
-        logger.info(f"evidence {i} --> {evi}")
+        if isinstance(evi, str):
+            needle_ids = tokenizer(evi, add_special_tokens=False)["input_ids"]
+        else:
+            needle_ids = evi
+        logger.info(f"evidence {i} --> {tokenizer.decode(needle_ids, skip_special_tokens=False)}")
         span_len = len(needle_ids)
         for j in range(len(input_ids)):
             token_span = input_ids[j : j + span_len]
@@ -423,36 +456,9 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-if __name__ == "__main__":
-    get_empty_gpus(auto_set=True)  # only work for single machine
+def begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name):
 
-    model = LlamaForCausalLM.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct", device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
-    tokenizer = AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
-    data = auto_read_data("../haystack_for_detect/reasoning_needle.jsonl")
-
-    # needle
-    needles_and_stacks = [json.loads(l) for l in open(f"../haystack_for_detect/reasoning_needle.jsonl")]
-    needle_list = [l["needle"] for l in needles_and_stacks]
-    retrieval_question_list = [l["question"] for l in needles_and_stacks]
-    evidence_list = [l["real_needle"] for l in needles_and_stacks]
-    golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
-    tags = [l["tag"] for l in needles_and_stacks]
-
-    selected_idx = 0
-    needle = [tokenizer(i)['input_ids'] for i in needle_list[selected_idx]]
-    evidence = [tokenizer(i)['input_ids'] for i in evidence_list[selected_idx]]
-    question = retrieval_question_list[selected_idx]
-    answer = golden_answer_list[selected_idx]
-    tag = tags[selected_idx]
-
-    # 初始化采样器
-    haystack = datasets.load_dataset("/data/data/zecheng/data/pg19-test", split="test")
-    noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
-    background_text = noise_sampler_test.get_sample(4800)
-    disturb_tok_needles = [i for i in needle if i not in evidence]
-    disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
-    depth_percent = [0.1, 0.2, 0.3]
-
+    depth_percent = [i / 10 for i in depth_percent]
     updated_sample = [[] for _ in range(len(background_text) + 1)]
     real_pos = [int(len(background_text) * i) for i in depth_percent]
     for fact, pos in zip(evidence, real_pos):  # insert real needle
@@ -469,15 +475,76 @@ if __name__ == "__main__":
     input_context = new_context + f"\nQuestion: {question}\nAnswer:"
     inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
 
-    search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
+    search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[args.selected_idx])
+    attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
     inp = inp.to(model.device)
+    
+    with torch.no_grad():
+        pred_res = tokenizer.decode(model.generate(inp, max_new_tokens=32, do_sample=False)[0, inp.size(-1):])
+        logger.info(pred_res)
 
     logger.info(inp.shape)
     last_golden_ids = tokenizer(answer, return_tensors='pt')["input_ids"].to(model.device)
     # input_ids = torch.cat([inp, last_golden_ids], dim=1)
-    target_pos = inp.shape[-1]
+    target_pos = inp.shape[-1] - 1
     # 构造完测试数据集
-    test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, target_pos)
-    # with torch.no_grad(), Trace(model.model.layers[8], "self_attn") as ret:
-    #     _ = model(inp, output_attentions=True)
-    #     representation = ret.output
+    flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos)
+    flow_res["pred_res"] = pred_res
+    flow_res["score"] = 100 if answer in pred_res else 0
+
+    logger.info(flow_res)
+    auto_save_data(flow_res, f"{args.save_dir}/{save_file_name}.pkl")
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--selected_idx', type=int, default=0, help='selected index')
+    parser.add_argument('--needle_path', type=str, default=None, help='path to multi-hop file')
+    parser.add_argument('--model_path', type=str, default=None, help='path to model')
+    parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
+    parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
+    args = parser.parse_args()
+    args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    args.dataset_path = "/data/data/zecheng/data/pg19-test"
+    args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle.jsonl"
+    args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
+    args.selected_idx = 0
+
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+
+    needles_and_stacks = auto_read_data(args.needle_path)
+    needle_list = [l["needle"] for l in needles_and_stacks]
+    retrieval_question_list = [l["question"] for l in needles_and_stacks]
+    evidence_list = [l["real_needle"] for l in needles_and_stacks]
+    golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
+    tags = [l["tag"] for l in needles_and_stacks]
+
+    needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[args.selected_idx]]
+    evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[args.selected_idx]]
+    question = retrieval_question_list[args.selected_idx]
+    answer = golden_answer_list[args.selected_idx]
+    tag = tags[args.selected_idx]
+
+    # 初始化采样器
+    haystack = datasets.load_dataset(args.dataset_path, split="test")
+    noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=None)
+    background_text = noise_sampler_test.get_sample(7900)
+    disturb_tok_needles = [i for i in needle if i not in evidence]
+    disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+
+    all_combinations = list(itertools.combinations(list(range(0, 10)), len(evidence)))
+    
+    logger.info(all_combinations)
+    model = None
+    with tqdm(total=len(all_combinations)) as pbar:
+        for depth_percent in all_combinations:
+            del model
+            torch.cuda.empty_cache()
+            model = LlamaForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
+            pbar.set_description(f"Processing depth {depth_percent}")
+            depth_tag = "-".join([str(i) for i in depth_percent])
+            model_name = args.model_path.split("/")[-1]
+            save_file_name = f"{model_name}/{tag}_{depth_tag}"
+            begin_test(args, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name)
+            pbar.update(1)
