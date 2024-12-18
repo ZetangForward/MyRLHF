@@ -25,7 +25,7 @@ if __name__ == "__main__":
     args.save_dir = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis/information_flow"
     args.selected_idx = [0,1]
     args.context_length = 5900
-    args.loss_type = "ce"
+    args.loss_type = "label"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 

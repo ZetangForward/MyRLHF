@@ -559,29 +559,27 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     logger.info(inp.shape)
 
+    inp = tokenizer.apply_chat_template(
+        [
+            {"role": "user", "content": input_context}, 
+            {"role": "assitant", "content": answer}
+        ], 
+        tokenize=True, add_generation_prompt=True, return_tensors='pt'
+    ).to(model.device)
+    answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"]
+    
+    for j in range(inp.size(-1), 0, -1):
+        if inp[0, j - 1] == answer_ids:
+            target_pos = j - 1 
+    
     if args.loss_type == "label":
-        last_golden_ids = tokenizer(answer, return_tensors='pt')["input_ids"].to(model.device)
-        # input_ids = torch.cat([inp, last_golden_ids], dim=1)
-        target_pos = inp.shape[-1] - 1
-        # 构造完测试数据集
-        flow_res = test_model_with_attention_adapter(model, inp, last_golden_ids, search_pos, attack_pos, target_pos, model_name, tokenizer)
+        label = torch.full(inp.shape, -100).to(model.device)
+        label[0, target_pos] = inp[0, target_pos]
+        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, target_pos-1, model_name, tokenizer)
     
     elif args.loss_type == "ce":
-        inp = tokenizer.apply_chat_template(
-            [
-                {"role": "user", "content": input_context}, 
-                {"role": "assitant", "content": answer}
-            ], 
-            tokenize=True, add_generation_prompt=True, return_tensors='pt'
-        )
-        answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"]
-        
-        for j in range(inp.size(-1), 0, -1):
-            if inp[0, j - 1] == answer_ids:
-                target_pos = j - 1   
-        target_pos -= 1 # shift to left before the label token
-        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, target_pos, model_name, tokenizer)
-
+         # shift to left before the label token
+        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, target_pos-1, model_name, tokenizer)
 
     flow_res["pred_res"] = pred_res
     flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0
