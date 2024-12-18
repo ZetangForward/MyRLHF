@@ -569,7 +569,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             {"role": "user", "content": input_context}, 
             {"role": "assitant", "content": answer}
         ], 
-        tokenize=True, add_generation_prompt=True, return_tensors='pt'
+        tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
     
