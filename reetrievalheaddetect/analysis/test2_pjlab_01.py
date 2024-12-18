@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
-    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
+    args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
     args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis/information_flow"
