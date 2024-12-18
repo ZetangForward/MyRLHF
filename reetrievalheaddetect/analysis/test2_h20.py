@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
     args.selected_idx = [0,1,2,3]
-    args.context_length = 3900
+    args.context_length = 5900
     args.loss_type = "ce"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)

@@ -426,12 +426,17 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     # zecheng_note: 查询信息流里面的Peak Tokens, 关键词Flow
     _, topk_indices = np_topk(saliency[target_poss, :], 20)
 
+    # add: proportion-n: each evidence -> target token
+    evidence_proportions = []
+
     # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
     proportion1 = 0
     evidence_length = 0
     for span_idx in evi_poss:
         proportion1 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
         evidence_length += span_idx[1] - span_idx[0]
+        # evidence proportions
+        evidence_proportions.append(saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum() // (span_idx[1] - span_idx[0]))
 
     # proportion2: all context -> target token
     proportion2 = saliency[target_poss, :].sum()
@@ -451,7 +456,7 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     proportion3 = proportion3 / irr_evidence_length
     proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
-    return proportion1, proportion2, proportion3, proportion4, topk_indices
+    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
     
 
 
@@ -522,11 +527,11 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     pros_dict = dict()
     for i in trange(len(attentionermanger.attention_adapters)):
         saliency = attentionermanger.grad(use_abs=True)[i]        
-        proportion1, proportion2, proportion3, proportion4, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
+        proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
         top_tokens = []
         for idx in topk_indices:
             top_tokens.append(tokenizer.decode(input[0][idx].item()))
-        pros_dict[i] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens}
+        pros_dict[i] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
     return pros_dict
 
 
