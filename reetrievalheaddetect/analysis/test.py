@@ -567,7 +567,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     inp = tokenizer.apply_chat_template(
         [
             {"role": "user", "content": input_context}, 
-            {"role": "assitant", "content": answer}
+            {"role": "assistant", "content": answer}
         ], 
         tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
