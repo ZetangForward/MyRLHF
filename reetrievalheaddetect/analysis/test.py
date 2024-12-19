@@ -182,6 +182,7 @@ def hack_attn_mistral(
     output_attentions: bool = False,
     use_cache: bool = False,
     cache_position: Optional[torch.LongTensor] = None,
+    attention_adapter=None,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     bsz, q_len, _ = hidden_states.size()
 
@@ -212,6 +213,9 @@ def hack_attn_mistral(
 
     # upcast attention to fp32
     attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+
+    if attention_adapter is not None:  # pass attention weights to adapter
+        attn_weights = attention_adapter(attn_weights)
     attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
     attn_output = torch.matmul(attn_weights, value_states)
 
@@ -451,7 +455,7 @@ class AttentionerManager(AttentionerManagerBase):
         attention_adapters = []
         for i, layer in enumerate(self.model.model.layers):
             attention_adapter = AttentionAdapter()
-            if "llama" in self.model_name.lower():
+            if "llama" in self.model_name.lower() or "tulu" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_llama, layer.self_attn, attention_adapter=attention_adapter)
             elif "qwen" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_qwen, layer.self_attn, attention_adapter=attention_adapter)
@@ -545,9 +549,6 @@ def get_proportion_wla(saliency, class_poss, final_poss):
     return proportions
 
 
-
-
-
 def find_multi_needle_idx(input_ids, tokenizer, needles):
     all_evi_pos = []
     for i, evi in enumerate(needles):
@@ -630,9 +631,9 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     inp = tokenizer.apply_chat_template(
         [
             {"role": "user", "content": input_context}, 
-            {"role": "assitant", "content": answer}
+            {"role": "assistant", "content": answer}
         ], 
-        tokenize=True, add_generation_prompt=True, return_tensors='pt'
+        tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
     
