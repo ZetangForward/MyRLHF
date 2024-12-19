@@ -27,57 +27,43 @@ def hack_attn_phi(
     output_attentions: bool = False,
     use_cache: bool = False,
     cache_position: Optional[torch.LongTensor] = None,
-    position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,  # necessary, but kept here for BC
     attention_adapter=None,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+
     bsz, q_len, _ = hidden_states.size()
 
-    query_states = self.q_proj(hidden_states)
-    key_states = self.k_proj(hidden_states)
-    value_states = self.v_proj(hidden_states)
-
-    if self.qk_layernorm:
-        query_states = self.q_layernorm(query_states)
-        key_states = self.k_layernorm(key_states)
+    qkv = self.qkv_proj(hidden_states)
+    query_pos = self.num_heads * self.head_dim
+    query_states = qkv[..., :query_pos]
+    key_states = qkv[..., query_pos : query_pos + self.num_key_value_heads * self.head_dim]
+    value_states = qkv[..., query_pos + self.num_key_value_heads * self.head_dim :]
 
     query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
     key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
     value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
 
-    cos, sin = position_embeddings
+    kv_seq_len = key_states.shape[-2]
+    if past_key_value is not None:
+        if self.layer_idx is None:
+            raise ValueError(
+                f"The cache structure has changed since version v4.36. If you are using {self.__class__.__name__} "
+                "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
+                "with a layer index."
+            )
+        kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+    cos, sin = self.rotary_emb(value_states, position_ids, seq_len=kv_seq_len)
 
-    # Partial rotary embedding
-    query_rot, query_pass = (
-        query_states[..., : self.rotary_ndims],
-        query_states[..., self.rotary_ndims :],
-    )
-    key_rot, key_pass = (
-        key_states[..., : self.rotary_ndims],
-        key_states[..., self.rotary_ndims :],
-    )
-    # [batch_size, seq_length, num_heads, head_dim // config.partial_rotary_factor]
-    query_rot, key_rot = apply_rotary_pos_emb(query_rot, key_rot, cos, sin)
-
-    # [batch_size, seq_length, num_heads, head_dim]
-    query_states = torch.cat((query_rot, query_pass), dim=-1)
-    key_states = torch.cat((key_rot, key_pass), dim=-1)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
     if past_key_value is not None:
-        cache_kwargs = {
-            "sin": sin,
-            "cos": cos,
-            "partial_rotation_size": self.rotary_ndims,
-            "cache_position": cache_position,
-        }
+        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}  # Specific to RoPE models
         key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
+    # repeat k/v heads if n_kv_heads < n_heads
     key_states = repeat_kv(key_states, self.num_key_value_groups)
     value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-    # Queries and keys upcast to fp32 is required by Phi-2 to avoid overflow
-    attn_weights = torch.matmul(
-        query_states.to(torch.float32), key_states.to(torch.float32).transpose(2, 3)
-    ) / math.sqrt(self.head_dim)
+    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
 
     if attention_mask is not None:
         causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
@@ -90,6 +76,7 @@ def hack_attn_phi(
         attn_weights = attention_adapter(attn_weights)
 
     attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
+
     attn_output = torch.matmul(attn_weights, value_states)
 
     if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
@@ -101,7 +88,7 @@ def hack_attn_phi(
     attn_output = attn_output.transpose(1, 2).contiguous()
     attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
 
-    attn_output = self.dense(attn_output)
+    attn_output = self.o_proj(attn_output)
 
     if not output_attentions:
         attn_weights = None
@@ -172,6 +159,68 @@ def hack_attn_qwen(
 
     return attn_output, attn_weights, past_key_value
 
+
+def hack_attn_mistral(
+    self,
+    hidden_states: torch.Tensor,
+    attention_mask: Optional[torch.Tensor] = None,
+    position_ids: Optional[torch.LongTensor] = None,
+    past_key_value: Optional[Cache] = None,
+    output_attentions: bool = False,
+    use_cache: bool = False,
+    cache_position: Optional[torch.LongTensor] = None,
+    attention_adapter=None,
+) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
+    bsz, q_len, _ = hidden_states.size()
+
+    query_states = self.q_proj(hidden_states)
+    key_states = self.k_proj(hidden_states)
+    value_states = self.v_proj(hidden_states)
+
+    query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
+    key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+    value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
+
+    cos, sin = self.rotary_emb(value_states, position_ids)
+    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
+
+    if past_key_value is not None:
+        # sin and cos are specific to RoPE models; cache_position needed for the static cache
+        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
+        key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
+
+    key_states = repeat_kv(key_states, self.num_key_value_groups)
+    value_states = repeat_kv(value_states, self.num_key_value_groups)
+
+    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+
+    if attention_mask is not None:  # no matter the length, we just slice it
+        causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
+        attn_weights = attn_weights + causal_mask
+
+    # upcast attention to fp32
+    attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+
+    if attention_adapter is not None:  # pass attention weights to adapter
+        attn_weights = attention_adapter(attn_weights)
+    attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
+    attn_output = torch.matmul(attn_weights, value_states)
+
+    if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
+        raise ValueError(
+            f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"
+            f" {attn_output.size()}"
+        )
+
+    attn_output = attn_output.transpose(1, 2).contiguous()
+
+    attn_output = attn_output.view(bsz, q_len, -1)
+    attn_output = self.o_proj(attn_output)
+
+    if not output_attentions:
+        attn_weights = None
+
+    return attn_output, attn_weights, past_key_value
 
 def hack_attn_llama(
     self,
@@ -374,6 +423,7 @@ class AttentionerManagerBase:
         return grads
 
 
+
 # class AttentionerManager(AttentionerManagerBase):
 #     def __init__(self, model: PreTrainedModel, attention_adapters: List[AttentionAdapterBase]):
 #         super().__init__(model, attention_adapters)
@@ -392,10 +442,14 @@ class AttentionerManager(AttentionerManagerBase):
         attention_adapters = []
         for i, layer in enumerate(self.model.model.layers):
             attention_adapter = AttentionAdapter()
-            if "llama" in self.model_name.lower():
+            if "llama" in self.model_name.lower() or "tulu" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_llama, layer.self_attn, attention_adapter=attention_adapter)
             elif "qwen" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_qwen, layer.self_attn, attention_adapter=attention_adapter)
+            elif "phi" in self.model_name.lower():
+                layer.self_attn.forward = partial(hack_attn_phi, layer.self_attn, attention_adapter=attention_adapter)
+            elif "mistral" in self.model_name.lower():
+                layer.self_attn.forward = partial(hack_attn_mistral, layer.self_attn, attention_adapter=attention_adapter)
             else:
                 raise NotImplementedError(f"{self.model_name} not supported")
             attention_adapters.append(attention_adapter)
@@ -436,7 +490,7 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
         proportion1 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
         evidence_length += span_idx[1] - span_idx[0]
         # evidence proportions
-        evidence_proportions.append(saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum() // (span_idx[1] - span_idx[0]))
+        evidence_proportions.append(saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum() / (span_idx[1] - span_idx[0]))
 
     # proportion2: all context -> target token
     proportion2 = saliency[target_poss, :].sum()
@@ -480,9 +534,6 @@ def get_proportion_wla(saliency, class_poss, final_poss):
     proportion3 = proportion3 / sum3
     proportions = np.array([proportion1, proportion2, proportion3])
     return proportions
-
-
-
 
 
 def find_multi_needle_idx(input_ids, tokenizer, needles):
@@ -591,6 +642,3 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     logger.info(flow_res)
     auto_save_data(flow_res, f"{args.save_dir}/{save_file_name}.pkl")
-
-
-
