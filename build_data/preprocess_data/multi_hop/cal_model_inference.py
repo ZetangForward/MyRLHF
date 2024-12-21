@@ -153,7 +153,7 @@ if __name__ == "__main__":
     args = Args()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-    all_file_names = [auto_read_dir(args.dataset_path)[-1]]
+    all_file_names = auto_read_dir(args.dataset_path)[1:]
     content = []
     for file_name in all_file_names:
         content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
