@@ -107,6 +107,7 @@ def process_data_item(args):
 
     meta_data = copy.deepcopy(item)
     meta_data.pop('concat_content')
+    meta_data.pop('instruction_format')
     return {
         "message": input_data,
         "answer": answer,
@@ -139,7 +140,7 @@ class Args:
         self.inference_args = dict(
             n = 1, 
             temperature = 0.7, 
-            max_tokens = 512, 
+            max_tokens = 256, 
             seed = 42, 
             top_p = 0.95,
         )
@@ -171,7 +172,8 @@ if __name__ == "__main__":
     content = []
     for file_name in all_file_names:
         content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
-    logger.info(f"length of content {len(content)}")
+    logger.info(f"length of content {len(content)}, begin to preprocess")
+    # content = content[:24]  # FIXME: debug
     input_queries = process_data(content, tokenizer, num_workers=64)
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
@@ -196,11 +198,11 @@ if __name__ == "__main__":
         for j in range(0, len(avail_gpu_ids), args.tp_size):
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-    
-    
+
     # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, args.model_args, args.inference_args, return_list)  # FIXME: Debug
     
     # 使用 tqdm 显示总进度
+    logger.info(f"Start to generate")
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
         p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, args.model_args, args.inference_args, return_list))
         p.start()
