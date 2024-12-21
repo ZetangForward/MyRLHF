@@ -96,15 +96,19 @@ def process_item(item, drop_num=1):
     
 
 
-def process_data(content, tokenizer):
+def process_data(content, tokenizer, max_length = 63500):
 
     all_inference_content = []
     for item in content:
         prompt, answer = process_item(item)
         input_data = tokenizer.apply_chat_template(
             [{"role": "user", "content": prompt}],
-            add_generation_prompt=True, tokenize=False
+            add_generation_prompt=True, tokenize=True,
+            truncation=True, max_length=max_length
         )
+
+        input_data = tokenizer.decode(input_data)
+
         meta_data = copy.deepcopy(item)
         meta_data.pop('concat_content')
         all_inference_content.append(
@@ -138,13 +142,16 @@ class Args:
         self.num_gpus = 8
         self.tp_size = 1
         self.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-        self.dataset_path = "/data/zecheng/data/processed_multi_hop/train_processed_en.pkl"
+        self.dataset_path = "/data/zecheng/data/processed_multi_hop/filter_en"
 
 if __name__ == "__main__":
     args = Args()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-    content = auto_read_data(args.dataset_path)
+    all_file_name = auto_read_dir(args.dataset_path)
+    content = []
+    for file_name in all_file_name:
+        content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
 
     input_queries = process_data(content, tokenizer)
     chunk_num = args.num_gpus // args.tp_size
@@ -173,12 +180,12 @@ if __name__ == "__main__":
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
     
-    worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, args.model_args, args.inference_args, return_list)  # FIXME: Debug
+    # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, args.model_args, args.inference_args, return_list)  # FIXME: Debug
     
-    """
+
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
-        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, model_args, inference_args[args.sampling_type], return_list))
+        p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, args.model_args, args.inference_args, return_list))
         p.start()
         processes.append(p)
 
@@ -188,8 +195,8 @@ if __name__ == "__main__":
     # 保存生成结果
     logger.info('Have collected ', len(return_list), 'samples, begin to save ...')
     normal_list = list(return_list)
-    auto_save_data(normal_list, out_file_path)
-    """
+    auto_save_data(normal_list, args.out_file_path)
+
 
 
 
