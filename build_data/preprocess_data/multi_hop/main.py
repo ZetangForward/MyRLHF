@@ -101,9 +101,13 @@ def process_longmit_datasets(
             
 
 if __name__ == "__main__":
-    model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    dataset_path = "/data/zecheng/data/LongMIT-128K"
-    save_path = "/data/zecheng/data/processed_multi_hop"
+    # model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    # dataset_path = "/data/zecheng/data/LongMIT-128K"
+    # save_path = "/data/zecheng/data/processed_multi_hop"
+
+    model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    dataset_path = "donmaclean/LongMIT-128K"
+    save_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en"
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     process_longmit_datasets(dataset_name=dataset_path, save_dir=save_path, tokenizer=tokenizer, total_num=8000)
