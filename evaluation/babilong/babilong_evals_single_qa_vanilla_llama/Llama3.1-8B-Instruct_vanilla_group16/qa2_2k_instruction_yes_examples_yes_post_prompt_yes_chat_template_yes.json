@@ -1,0 +1,19 @@
+{
+    "prompt": {
+        "instruction": "I give you context with the facts about locations and actions of different persons hidden in some random text and a statement.You need to determine whether the statement is true of false based only on the information from the facts.\nIf a person got an item in the first location and travelled to the second location the item is also in the second location. If a person dropped an item in the first location and moved to the second location the item remains in the first location.",
+        "examples": "<example>\nCharlie went to the kitchen. Charlie got a bottle. Charlie moved to the balcony. Statement: The bottle is in the balcony.\nAnswer: yes.\n</example>\n<example>\nAlan moved to the garage. Alan got a screw driver. Alan moved to the kitchen. Statement: The screw driver is in the kitchen.\nAnswer: no\n</example>",
+        "post_prompt": "Your answer should contain only one word - $yes$ or $no$. Do not write anything else after that. Do not explain your answer.",
+        "template": "{instruction}\n\n{examples}\n\n{post_prompt}\n\nQuestion: {question}\n\n<context>\n{context}\n</context>",
+        "chat_template": true
+    },
+    "generate_kwargs": {
+        "max_new_tokens": 20,
+        "max_length": null,
+        "num_beams": 1,
+        "do_sample": false,
+        "temperature": null,
+        "top_p": null,
+        "top_k": null,
+        "pad_token_id": 128009
+    }
+}

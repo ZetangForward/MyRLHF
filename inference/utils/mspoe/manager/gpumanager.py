@@ -1,8 +1,10 @@
 import os,sys
+sys.path.append(".")
 from argparse import Namespace
 from typing import List
 import torch
 from .waitwork import ProducerConsumerManager
+import multiprocessing as mp
 
 class LLMEvalGPUManager(ProducerConsumerManager):
     def __init__(self, 
@@ -72,7 +74,7 @@ class LLMEvalGPUManager(ProducerConsumerManager):
         glb is the return value of the `set_producer_global_variables`
 
         preprocess datas for model inputs,
-        for each sample, do: yield sample
+        for each sample, do: return sample
         
         the sample will soon be passed to the argment :`sample` of the function: `process` 
 
@@ -88,7 +90,7 @@ class LLMEvalGPUManager(ProducerConsumerManager):
     
         model generate process, sample is the prepared data,
 
-        while the output comes, do: yield output 
+        while the output comes, do: return output 
         '''
         raise NotImplementedError
 

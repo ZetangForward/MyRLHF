@@ -1,9 +1,11 @@
-import os,random
+import os,sys,random
 from typing import List,Optional
+import torch
 from argparse import Namespace
 from tqdm import tqdm
 import multiprocessing as mp
-
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 
 class ProducerConsumerManager:
@@ -124,6 +126,9 @@ class ProducerConsumerManager:
         for task_info in tqdm(task_info_list,desc=f"Producer: {os.getpid()}"):
             for task_sample in tqdm(produce(task_info, produce_config, global_variables),
                                     desc=f"P single: {os.getpid()}"):
+                if task_queue.qsize()>2048:
+                    while task_queue.qsize()>1024:
+                        time.sleep(1)
                 task_queue.put(task_sample)
     @classmethod
     def _consumer(cls, set_consumer_global_variables, consume, _estimate_avg_tasks,

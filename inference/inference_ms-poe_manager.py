@@ -14,21 +14,25 @@ import datasets
 from argparse import Namespace
 
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
-from utils.mspoe.manager.gpumanager import LLMEvalGPUManager
+from utils.mspoe.manager.gpumanager import LLMEvalGPUManager,LLMEvalGPUPoolManager
 
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
-RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
-TASKS=['qa1','qa2', 'qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10']
-SPLIT_NAMES=['0k','1k','2k','4k','8k', '16k', '32k', '64k', '128k']
+RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe_draft/"
+TASKS=['qa1','qa2', 'qa3','qa4', 
+    #    'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
+       ]
+SPLIT_NAMES=['0k','1k',
+            #  '2k','4k','8k', '16k', '32k', '64k', '128k'
+             ]
 use_chat_template = True
 use_instruction = True
 use_examples = True
 use_post_prompt = True
 
-# nohup python inference_ms-poe_mg.py >ms_poe_draft.log
+# nohup python inference_ms-poe_manager.py >ms_poe_draft.log
 import time
 
-class BabilongManager(LLMEvalGPUManager):
+class BabilongManager(LLMEvalGPUPoolManager):
     @classmethod
     def setup_model(cls, model_config: Namespace):
         model=setup_model(model_config)
@@ -57,7 +61,8 @@ class BabilongManager(LLMEvalGPUManager):
             input_text = get_formatted_input(context, question, prompt_cfg['examples'],
                                             prompt_cfg['instruction'], prompt_cfg['post_prompt'],
                                             template=prompt_cfg['template'])
-
+            print("-"*30)
+            print(input_text)
             if use_chat_template:
                 input_text = [{'role': 'user', 'content': input_text}]
                 model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
