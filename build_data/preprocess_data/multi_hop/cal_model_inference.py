@@ -153,12 +153,12 @@ if __name__ == "__main__":
     args = Args()
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-    all_file_name = auto_read_dir(args.dataset_path)
+    all_file_names = [auto_read_dir(args.dataset_path)[-1]]
     content = []
-    for file_name in all_file_name:
+    for file_name in all_file_names:
         content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
-
-    input_queries = process_data(content, tokenizer)
+    logger.info(f"length of content {len(content)}")
+    input_queries = process_data(content, tokenizer, num_workers=64)
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
