@@ -129,7 +129,7 @@ def process_data(content, tokenizer, max_length=63500, num_workers=24):
 
 
 class Args:
-    def __init__(self):
+    def __init__(self, platform):
         self.model_args = {
             "tensor_parallel_size": 1, 
             "gpu_memory_utilization": 0.98,
@@ -144,14 +144,28 @@ class Args:
             seed = 42, 
             top_p = 0.95,
         )
-        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop_1"
         self.num_gpus = 8
         self.tp_size = 1
+
+        if platform == 'pjlab':
+            self.pjlab()
+        else:
+            self.h20()
+
+    def h20(self):
         self.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
         self.dataset_path = "/data/zecheng/data/processed_multi_hop/filter_en"
+        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop_1"
+
+    def pjlab(self):
+        self.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+        self.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en"
+        self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_1"
+
+
 
 if __name__ == "__main__":
-    args = Args()
+    args = Args("pjlab")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     all_file_names = auto_read_dir(args.dataset_path)
@@ -180,7 +194,6 @@ if __name__ == "__main__":
         gpu_id_lst = [str(i) for i in range(args.num_gpus)]
     else:
         gpu_id_lst = []
-
         for j in range(0, len(avail_gpu_ids), args.tp_size):
             tmp = [avail_gpu_ids[i + j] for i in range(args.tp_size)]
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
@@ -188,7 +201,6 @@ if __name__ == "__main__":
     
     # worker(gpu_id_lst[0], prompts_chunks[0], args.model_path, args.model_args, args.inference_args, return_list)  # FIXME: Debug
     
-
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):
         p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, args.model_args, args.inference_args, return_list))
@@ -201,7 +213,8 @@ if __name__ == "__main__":
     # 保存生成结果
     logger.info('Have collected ', len(return_list), 'samples, begin to save ...')
     normal_list = list(return_list)
-    auto_save_data(normal_list, args.out_file_path)
+    auto_mkdir(args.out_file_path)
+    auto_save_data(normal_list, os.path.join(args.out_file_path, "infernet_res.pkl"))
 
 
 
