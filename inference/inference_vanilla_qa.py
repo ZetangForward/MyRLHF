@@ -18,17 +18,19 @@ from utils.babilong.single_prompts import DEFAULT_PROMPTS
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_single_qa_vanilla_llama/"
 TASKS=['qa2',
-    #    'qa3','qa4', 'qa5', 'qa7'
+       'qa3','qa4', 'qa5', 'qa7'
        ]
-SPLIT_NAMES=['0k','1k',
-            #  '2k','4k','8k', '16k', '32k', '64k'
+SPLIT_NAMES=[
+    '0k','1k',
+             '2k','4k',
+            '8k', '16k', '32k', '64k'
              ]
 use_chat_template = True
 use_instruction = True
 use_examples = True
 use_post_prompt = True
 
-# nohup python inference_vanilla_qa.py > single_qa.log
+# nohup python inference_vanilla_qa.py > single_qa_true.log
 from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
 def setup_model(args):
@@ -57,18 +59,21 @@ class BabilongManager(LLMEvalGPUManager):
         prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']
         prompt_name = '_'.join(prompt_name)
 
-        data = datasets.load_dataset(data_dir, split_name)
-        task_data = data[task]
-
+        data = json.load(open("/data/zecheng/data/single_qa/datas.json","r"))
+        task_data = data[task][split_name]['datas']
+        
         for index,sample in enumerate(task_data):
-            target = sample['target']
+            target = sample['golden']
             context = sample['input']
-            question = "Statement: " + sample['question']
+            question = sample['question']
 
             # format input text
             input_text = get_formatted_input(context, question, prompt_cfg['examples'],
                                             prompt_cfg['instruction'], prompt_cfg['post_prompt'],
-                                            template=prompt_cfg['template'])
+                                            template=prompt_cfg['template']).replace("Question",
+                                                                                     "Statement")
+            # print("--"*20)
+            # print(input_text)
 
             if use_chat_template:
                 input_text = [{'role': 'user', 'content': input_text}]

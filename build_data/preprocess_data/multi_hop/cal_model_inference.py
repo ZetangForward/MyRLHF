@@ -107,6 +107,7 @@ def process_data_item(args):
 
     meta_data = copy.deepcopy(item)
     meta_data.pop('concat_content')
+    meta_data.pop('instruction_format')
     return {
         "message": input_data,
         "answer": answer,
@@ -139,7 +140,7 @@ class Args:
         self.inference_args = dict(
             n = 1, 
             temperature = 0.7, 
-            max_tokens = 512, 
+            max_tokens = 256, 
             seed = 42, 
             top_p = 0.95,
         )
