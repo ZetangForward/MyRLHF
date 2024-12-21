@@ -2,7 +2,7 @@ import os,sys
 from argparse import Namespace
 from typing import List
 import torch
-from waitwork import ProducerConsumerManager
+from .waitwork import ProducerConsumerManager
 
 class LLMEvalGPUManager(ProducerConsumerManager):
     def __init__(self, 

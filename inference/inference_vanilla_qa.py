@@ -17,14 +17,18 @@ from utils.mspoe.manager.gpumanager import LLMEvalGPUManager
 from utils.babilong.single_prompts import DEFAULT_PROMPTS
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_single_qa_vanilla_llama/"
-TASKS=['qa2','qa3','qa4', 'qa5', 'qa7']
-SPLIT_NAMES=['0k','1k','2k','4k','8k', '16k', '32k', '64k']
+TASKS=['qa2',
+    #    'qa3','qa4', 'qa5', 'qa7'
+       ]
+SPLIT_NAMES=['0k','1k',
+            #  '2k','4k','8k', '16k', '32k', '64k'
+             ]
 use_chat_template = True
 use_instruction = True
 use_examples = True
 use_post_prompt = True
 
-# nohup python inference_vanilla_qa.py > vanilla.log
+# nohup python inference_vanilla_qa.py > single_qa.log
 from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
 def setup_model(args):
@@ -59,7 +63,7 @@ class BabilongManager(LLMEvalGPUManager):
         for index,sample in enumerate(task_data):
             target = sample['target']
             context = sample['input']
-            question = sample['question']
+            question = "Statement: " + sample['question']
 
             # format input text
             input_text = get_formatted_input(context, question, prompt_cfg['examples'],
