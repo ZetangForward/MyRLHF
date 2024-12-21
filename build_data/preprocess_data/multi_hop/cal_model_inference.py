@@ -13,7 +13,7 @@ from loguru import logger
 import subprocess
 import itertools
 import random
-
+from multiprocessing import Pool, cpu_count
 
 def get_gpu_memory():
     """
@@ -93,32 +93,37 @@ def process_item(item, drop_num=1):
     prompt = instruction_format.format(concat_content=concat_content_str, q=question)
 
     return prompt, answer
-    
 
+def process_data_item(args):
+    item, tokenizer, max_length = args
+    prompt, answer = process_item(item)
+    input_data = tokenizer.apply_chat_template(
+        [{"role": "user", "content": prompt}],
+        add_generation_prompt=True, tokenize=True,
+        truncation=True, max_length=max_length
+    )
 
-def process_data(content, tokenizer, max_length = 63500):
+    input_data = tokenizer.decode(input_data)
 
-    all_inference_content = []
-    for item in content:
-        prompt, answer = process_item(item)
-        input_data = tokenizer.apply_chat_template(
-            [{"role": "user", "content": prompt}],
-            add_generation_prompt=True, tokenize=True,
-            truncation=True, max_length=max_length
-        )
+    meta_data = copy.deepcopy(item)
+    meta_data.pop('concat_content')
+    return {
+        "message": input_data,
+        "answer": answer,
+        "meta_data": meta_data
+    }
 
-        input_data = tokenizer.decode(input_data)
+def process_data(content, tokenizer, max_length=63500, num_workers=24):
+    if num_workers is None:
+        num_workers = max(1, cpu_count() - 1)  # Default: use all CPUs except one
 
-        meta_data = copy.deepcopy(item)
-        meta_data.pop('concat_content')
-        all_inference_content.append(
-            {
-                "message": input_data,
-                "answer": answer,
-                "meta_data": meta_data
-            }
-        )
-        
+    # Prepare arguments for process_data_item
+    args = [(item, tokenizer, max_length) for item in content]
+
+    # Use multiprocessing to parallelize processing
+    with Pool(num_workers) as pool:
+        all_inference_content = list(tqdm(pool.imap(process_data_item, args), total=len(content)))
+
     return all_inference_content
 
 
