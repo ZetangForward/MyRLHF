@@ -12,14 +12,14 @@ def calculate_clue_length(clue_docs, tokenizer):
     return total_length
 
 
-def download_longmit_datasets(
-        dataset_name: str = "/data/zecheng/data/LongMIT-128K", 
-        save_dir: str = None,
-        language: str = "en",
-        length: int = 64000,
-        tokenizer = None,
-        total_num=10000,
-    ):
+def process_longmit_datasets(
+    dataset_name: str = "/data/zecheng/data/LongMIT-128K", 
+    save_dir: str = None,
+    language: str = "en",
+    length: int = 64000,
+    tokenizer = None,
+    total_num=5000,
+):
     cnt = 0
     qa_pairs = []
     dataset = load_dataset(dataset_name, split='train', trust_remote_code=True)
@@ -42,8 +42,11 @@ def download_longmit_datasets(
             if instruction_format is None:
                 continue
 
+            if len(clue_docs) < 3: 
+                continue
+
             clue_length = calculate_clue_length(clue_docs, tokenizer)
-            clue_ids = [doc['id'] for doc in clue_docs]
+            # clue_ids = [doc['id'] for doc in clue_docs]
             remain_length = length - clue_length
 
             concat_content = []
@@ -54,31 +57,47 @@ def download_longmit_datasets(
                 concat_content.append([all_docs[id_]['content'],])
                 id_ += 1
             
+
             if total_length < remain_length:
                 continue
             
             if len(concat_content) > len(clue_docs):
-                clue_pos = random.sample(range(len(concat_content)), len(clue_docs))
+                clue_pos = random.sample(range(len(concat_content)-1), len(clue_docs))
                 for p, doc in zip(clue_pos, clue_docs):
                     concat_content[p].append(doc['content'])
-                concat_content = list(itertools.chain(*concat_content))
+                # concat_content = list(itertools.chain(*concat_content))
             else:
                 continue
             
-            concat_content_str = '\n'.join(concat_content)
-            question, answer = d['question'], d['answer']
+            item = {
+                "clue_pos": clue_pos,
+                "clue_docs": clue_docs,
+                "concat_content": concat_content,
+                "question": d['question'],
+                "answer": d['answer'],
+                "instruction_format": instruction_format,
+            }
+            qa_pairs.append(item)
 
-            prompt = instruction_format.format(concat_content=concat_content_str, q=question)
-            qa_pairs.append({'prompt': prompt, 'output': answer})
+            # concat_content_str = '\n'.join(concat_content)
+            # question, answer = d['question'], d['answer']
+
+            # prompt = instruction_format.format(concat_content=concat_content_str, q=question)
+            # qa_pairs.append({'prompt': prompt, 'output': answer})
             cnt += 1    
 
             if cnt >= total_num:
                 break
 
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+            if cnt % 2000 == 0:
+                logger.info(f"already having {cnt} samples")
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                auto_save_data(qa_pairs, os.path.join(save_dir, f'train_processed_en_snap_{cnt//2000}.pkl'))
 
-    auto_save_data(save_dir, os.path.join(save_dir, 'train_processed_en.jsonl'))
+           
+
+            
 
 if __name__ == "__main__":
     model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
@@ -86,4 +105,4 @@ if __name__ == "__main__":
     save_path = "/data/zecheng/data/processed_multi_hop"
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    download_longmit_datasets(dataset_name=dataset_path, save_dir=save_path, tokenizer=tokenizer)
+    process_longmit_datasets(dataset_name=dataset_path, save_dir=save_path, tokenizer=tokenizer, total_num=8000)
