@@ -92,34 +92,34 @@ def process_item(item, drop_num=1):
     instruction_format = item['instruction_format']
     prompt = instruction_format.format(concat_content=concat_content_str, q=question)
 
-    return prompt, answer
+    return prompt, answer, selected_ids
 
 def process_data_item(args):
-    item, tokenizer, max_length = args
-    prompt, answer = process_item(item)
+    item, tokenizer, drop_num = args
+    prompt, answer, selected_ids = process_item(item, drop_num)
+
     input_data = tokenizer.apply_chat_template(
         [{"role": "user", "content": prompt}],
-        add_generation_prompt=True, tokenize=True,
-        truncation=True, max_length=max_length
+        add_generation_prompt=True, tokenize=False,
     )
-
-    input_data = tokenizer.decode(input_data)
 
     meta_data = copy.deepcopy(item)
     meta_data.pop('concat_content')
     meta_data.pop('instruction_format')
+    meta_data.pop('answer')
     return {
         "message": input_data,
         "answer": answer,
-        "meta_data": meta_data
+        "meta_data": meta_data, 
+        "selected_ids": selected_ids,
     }
 
-def process_data(content, tokenizer, max_length=63500, num_workers=24):
+def process_data(content, tokenizer, drop_num=1, num_workers=24):
     if num_workers is None:
         num_workers = max(1, cpu_count() - 1)  # Default: use all CPUs except one
 
     # Prepare arguments for process_data_item
-    args = [(item, tokenizer, max_length) for item in content]
+    args = [(item, tokenizer, drop_num) for item in content]
 
     # Use multiprocessing to parallelize processing
     with Pool(num_workers) as pool:
@@ -146,6 +146,7 @@ class Args:
         )
         self.num_gpus = 8
         self.tp_size = 1
+        self.drop_num = 1
 
         if platform == 'pjlab':
             self.pjlab()
@@ -155,18 +156,15 @@ class Args:
     def h20(self):
         self.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
         self.dataset_path = "/data/zecheng/data/processed_multi_hop/filter_en"
-        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop_1"
+        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop"
 
     def pjlab(self):
         self.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
         self.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en"
-        self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_1"
+        self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop"
 
 
-
-if __name__ == "__main__":
-    args = Args("pjlab")
-
+def main(args):
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     all_file_names = auto_read_dir(args.dataset_path)
     content = []
@@ -174,7 +172,7 @@ if __name__ == "__main__":
         content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
     logger.info(f"length of content {len(content)}, begin to preprocess")
     # content = content[:24]  # FIXME: debug
-    input_queries = process_data(content, tokenizer, num_workers=64)
+    input_queries = process_data(content, tokenizer, drop_num=args.drop_num, num_workers=64)
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
@@ -215,9 +213,16 @@ if __name__ == "__main__":
     logger.info('Have collected ', len(return_list), 'samples, begin to save ...')
     normal_list = list(return_list)
     auto_mkdir(args.out_file_path)
-    auto_save_data(normal_list, os.path.join(args.out_file_path, "infernet_res.pkl"))
+    auto_save_data(normal_list, os.path.join(args.out_file_path, f"inference_drop_{args.drop_num}.pkl"))
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--drop_num', type=int, default=1,  help="randomly dropped evidence number")
+    extra_args = parser.parse_args()
 
-
+    args = Args("pjlab")
+    args.drop_num = extra_args.drop_num
+    main(args)
+    
     

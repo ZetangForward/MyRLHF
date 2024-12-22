@@ -16,7 +16,8 @@ def process_longmit_datasets(
     dataset_name: str = "/data/zecheng/data/LongMIT-128K", 
     save_dir: str = None,
     language: str = "en",
-    length: int = 64000,
+    length: int = 32000,
+    max_length: int = 64000,
     tokenizer = None,
     total_num=5000,
 ):
@@ -57,8 +58,7 @@ def process_longmit_datasets(
                 concat_content.append([all_docs[id_]['content'],])
                 id_ += 1
             
-
-            if total_length < remain_length:
+            if (total_length < remain_length) or total_length > max_length:
                 continue
             
             if len(concat_content) > len(clue_docs):
@@ -96,9 +96,6 @@ def process_longmit_datasets(
                 auto_save_data(qa_pairs, os.path.join(save_dir, f'train_processed_en_snap_{cnt//1000}.pkl'))
                 qa_pairs.clear()
 
-           
-
-            
 
 if __name__ == "__main__":
     # model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
@@ -107,7 +104,7 @@ if __name__ == "__main__":
 
     model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     dataset_path = "donmaclean/LongMIT-128K"
-    save_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en"
+    save_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en_drop_2"
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     process_longmit_datasets(dataset_name=dataset_path, save_dir=save_path, tokenizer=tokenizer, total_num=8000)
