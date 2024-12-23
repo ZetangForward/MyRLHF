@@ -1,0 +1,201 @@
+,target,output,question
+0,yes,$no$ ,To the east of the bathroom is the bedroom.
+1,no,$no$ ,To the east of the bathroom is the office.
+2,yes,$no$,To the south of the fice is the kitchen.
+3,no,$no$,To the south of the fice is the bathroom.
+4,yes,no ,To the north of the fice is the garden.
+5,no,no ,To the north of the fice is the hallway.
+6,yes,$no$ ,To the north of the bedroom is the garden.
+7,no,$no$ ,To the north of the bedroom is the bedroom.
+8,yes,$no$ ,To the south of the bathroom is the garden.
+9,no,$no$ ,To the south of the bathroom is the bedroom.
+10,yes,$no$,To the north of the bedroom is the office.
+11,no,$no$,To the north of the bedroom is the bedroom.
+12,yes,$no$ ,To the north of the garden is the bathroom.
+13,no,$no$,To the north of the garden is the bedroom.
+14,yes,$no$ ,To the west of the fice is the bedroom.
+15,no,$no$ ,To the west of the fice is the garden.
+16,yes,$no$,To the south of the garden is the kitchen.
+17,no,$no$ ,To the south of the garden is the office.
+18,yes,$no$,To the north of the hallway is the bathroom.
+19,no,$no$,To the north of the hallway is the hallway.
+20,yes,$no$,To the south of the hallway is the bedroom.
+21,no,$no$,To the south of the hallway is the office.
+22,yes,$no$,To the east of the bedroom is the office.
+23,no,$no$ ,To the east of the bedroom is the bedroom.
+24,yes,$no$ ,To the north of the garden is the hallway.
+25,no,no ,To the north of the garden is the office.
+26,yes,$no$ ,To the west of the garden is the bedroom.
+27,no,$no$,To the west of the garden is the hallway.
+28,yes,$yes$ ,To the east of the bathroom is the hallway.
+29,no,$no$,To the east of the bathroom is the office.
+30,yes,$no$ ,To the west of the fice is the bathroom.
+31,no,$no$,To the west of the fice is the kitchen.
+32,yes,$no$ ,To the west of the bedroom is the bathroom.
+33,no,no ,To the west of the bedroom is the bedroom.
+34,yes,$no$ ,To the north of the hallway is the kitchen.
+35,no,$no$,To the north of the hallway is the hallway.
+36,yes,$yes$ ,To the south of the kitchen is the bathroom.
+37,no,$yes$ ,To the south of the kitchen is the hallway.
+38,yes,$no$,To the south of the bedroom is the office.
+39,no,no,To the south of the bedroom is the kitchen.
+40,yes,no ,To the west of the hallway is the bedroom.
+41,no,no ,To the west of the hallway is the office.
+42,yes,$yes$ ,To the east of the bedroom is the office.
+43,no,$no$ ,To the east of the bedroom is the bathroom.
+44,yes,no ,To the south of the hallway is the bedroom.
+45,no,$no$ ,To the south of the hallway is the kitchen.
+46,yes,$no$ ,To the west of the bedroom is the kitchen.
+47,no,$no$,To the west of the bedroom is the office.
+48,yes,$yes$ ,To the south of the bathroom is the bedroom.
+49,no,$no$,To the south of the bathroom is the hallway.
+50,yes,$no$,To the west of the bathroom is the hallway.
+51,no,$no$,To the west of the bathroom is the kitchen.
+52,yes,$yes$ ,To the south of the hallway is the office.
+53,no,$no$ ,To the south of the hallway is the bathroom.
+54,yes,$yes$ ,To the east of the fice is the bedroom.
+55,no,no ,To the east of the fice is the hallway.
+56,yes,$yes$ ,To the west of the bathroom is the garden.
+57,no,$no$ ,To the west of the bathroom is the hallway.
+58,yes,$no$,To the north of the garden is the kitchen.
+59,no,$no$ ,To the north of the garden is the garden.
+60,yes,$yes$ ,To the east of the garden is the office.
+61,no,$no$ ,To the east of the garden is the garden.
+62,yes,no ,To the south of the hallway is the bathroom.
+63,no,$no$ ,To the south of the hallway is the garden.
+64,yes,$yes$ ,To the east of the fice is the garden.
+65,no,no ,To the east of the fice is the office.
+66,yes,$no$ ,To the south of the hallway is the bedroom.
+67,no,$no$ ,To the south of the hallway is the bathroom.
+68,yes,$no$,To the east of the hallway is the garden.
+69,no,$no$ ,To the east of the hallway is the hallway.
+70,yes,$yes$ ,To the south of the hallway is the kitchen.
+71,no,no,To the south of the hallway is the garden.
+72,yes,$no$ ,To the west of the kitchen is the bathroom.
+73,no,$no$,To the west of the kitchen is the hallway.
+74,yes,no,To the west of the bathroom is the kitchen.
+75,no,$yes$ ,To the west of the bathroom is the garden.
+76,yes,$no$ ,To the south of the garden is the bathroom.
+77,no,no ,To the south of the garden is the kitchen.
+78,yes,$no$ ,To the south of the garden is the bedroom.
+79,no,$no$ ,To the south of the garden is the bathroom.
+80,yes,$yes$ ,To the west of the bathroom is the bedroom.
+81,no,$no$,To the west of the bathroom is the hallway.
+82,yes,$no$ ,To the west of the fice is the garden.
+83,no,$no$,To the west of the fice is the kitchen.
+84,yes,$yes$ ,To the west of the hallway is the bathroom.
+85,no,$no$,To the west of the hallway is the office.
+86,yes,yes ,To the north of the kitchen is the hallway.
+87,no,no ,To the north of the kitchen is the garden.
+88,yes,$no$,To the north of the hallway is the bathroom.
+89,no,$no$,To the north of the hallway is the hallway.
+90,yes,$yes$ ,To the south of the bedroom is the office.
+91,no,$no$ ,To the south of the bedroom is the bedroom.
+92,yes,$no$ ,To the west of the fice is the kitchen.
+93,no,no,To the west of the fice is the office.
+94,yes,$no$,To the south of the fice is the bedroom.
+95,no,no,To the south of the fice is the garden.
+96,yes,$no$,To the east of the kitchen is the office.
+97,no,$no$ ,To the east of the kitchen is the hallway.
+98,yes,yes ,To the south of the bathroom is the hallway.
+99,no,$no$ ,To the south of the bathroom is the garden.
+100,yes,$yes$ ,To the east of the bathroom is the hallway.
+101,no,$no$ ,To the east of the bathroom is the bedroom.
+102,yes,$no$,To the south of the fice is the bathroom.
+103,no,$no$,To the south of the fice is the garden.
+104,yes,$no$,To the east of the hallway is the office.
+105,no,$no$,To the east of the hallway is the hallway.
+106,yes,$no$ ,To the south of the bedroom is the kitchen.
+107,no,$no$ ,To the south of the bedroom is the bathroom.
+108,yes,no,To the west of the hallway is the kitchen.
+109,no,$no$ ,To the west of the hallway is the hallway.
+110,yes,$no$ ,To the east of the bedroom is the bathroom.
+111,no,$no$ ,To the east of the bedroom is the bedroom.
+112,yes,$no$ ,To the south of the kitchen is the bedroom.
+113,no,yes ,To the south of the kitchen is the hallway.
+114,yes,$yes$ ,To the west of the kitchen is the office.
+115,no,$yes$ ,To the west of the kitchen is the bedroom.
+116,yes,$no$,To the south of the hallway is the kitchen.
+117,no,$no$ ,To the south of the hallway is the bathroom.
+118,yes,$no$,To the east of the bedroom is the office.
+119,no,no ,To the east of the bedroom is the hallway.
+120,yes,no,To the east of the kitchen is the bathroom.
+121,no,no ,To the east of the kitchen is the office.
+122,yes,$no$ ,To the south of the bathroom is the kitchen.
+123,no,$no$ ,To the south of the bathroom is the bathroom.
+124,yes,$no$ ,To the north of the kitchen is the bedroom.
+125,no,no ,To the north of the kitchen is the kitchen.
+126,yes,$no$ ,To the east of the garden is the kitchen.
+127,no,$no$ ,To the east of the garden is the garden.
+128,yes,$yes$ ,To the south of the hallway is the kitchen.
+129,no,$no$ ,To the south of the hallway is the hallway.
+130,yes,$no$ ,To the east of the garden is the kitchen.
+131,no,$no$,To the east of the garden is the garden.
+132,yes,no,To the north of the garden is the hallway.
+133,no,$no$ ,To the north of the garden is the kitchen.
+134,yes,$no$,To the south of the bedroom is the garden.
+135,no,$no$,To the south of the bedroom is the bathroom.
+136,yes,$no$ ,To the south of the hallway is the garden.
+137,no,$no$ ,To the south of the hallway is the hallway.
+138,yes,$yes$ ,To the west of the kitchen is the office.
+139,no,$no$ ,To the west of the kitchen is the bathroom.
+140,yes,$yes$ ,To the east of the fice is the bedroom.
+141,no,$no$,To the east of the fice is the office.
+142,yes,$yes$ ,To the south of the kitchen is the hallway.
+143,no,no ,To the south of the kitchen is the bathroom.
+144,yes,$yes$ ,To the east of the garden is the bedroom.
+145,no,$yes$ ,To the east of the garden is the office.
+146,yes,$yes$ ,To the west of the kitchen is the bedroom.
+147,no,$yes$ ,To the west of the kitchen is the kitchen.
+148,yes,$no$ ,To the west of the fice is the kitchen.
+149,no,$no$ ,To the west of the fice is the office.
+150,yes,$no$,To the west of the bedroom is the bathroom.
+151,no,$yes$ ,To the west of the bedroom is the garden.
+152,yes,no ,To the south of the bathroom is the office.
+153,no,no,To the south of the bathroom is the garden.
+154,yes,$no$ ,To the north of the garden is the hallway.
+155,no,$no$ ,To the north of the garden is the bathroom.
+156,yes,no ,To the west of the bedroom is the bathroom.
+157,no,$no$ ,To the west of the bedroom is the hallway.
+158,yes,$no$,To the north of the bedroom is the kitchen.
+159,no,$no$ ,To the north of the bedroom is the bedroom.
+160,yes,$no$ ,To the east of the kitchen is the bedroom.
+161,no,$no$ ,To the east of the kitchen is the office.
+162,yes,$no$ ,To the east of the bathroom is the garden.
+163,no,$no$,To the east of the bathroom is the bedroom.
+164,yes,no ,To the west of the garden is the hallway.
+165,no,$no$,To the west of the garden is the garden.
+166,yes,$no$,To the north of the fice is the kitchen.
+167,no,no ,To the north of the fice is the office.
+168,yes,$yes$ ,To the east of the bathroom is the bedroom.
+169,no,$no$,To the east of the bathroom is the office.
+170,yes,$no$,To the east of the garden is the kitchen.
+171,no,$no$ ,To the east of the garden is the bathroom.
+172,yes,$no$ ,To the west of the hallway is the kitchen.
+173,no,$no$ ,To the west of the hallway is the hallway.
+174,yes,$no$ ,To the east of the garden is the bathroom.
+175,no,$yes$ ,To the east of the garden is the bedroom.
+176,yes,no ,To the north of the fice is the hallway.
+177,no,no ,To the north of the fice is the kitchen.
+178,yes,$no$,To the east of the fice is the bathroom.
+179,no,$no$,To the east of the fice is the bedroom.
+180,yes,$yes$ ,To the north of the garden is the bathroom.
+181,no,$no$,To the north of the garden is the garden.
+182,yes,$yes$ ,To the east of the bedroom is the hallway.
+183,no,$no$ ,To the east of the bedroom is the bathroom.
+184,yes,$no$,To the south of the hallway is the kitchen.
+185,no,$no$ ,To the south of the hallway is the office.
+186,yes,$no$ ,To the north of the garden is the hallway.
+187,no,$no$,To the north of the garden is the bedroom.
+188,yes,$no$ ,To the west of the bathroom is the kitchen.
+189,no,$yes$ ,To the west of the bathroom is the hallway.
+190,yes,$no$ ,To the north of the garden is the bathroom.
+191,no,$no$,To the north of the garden is the garden.
+192,yes,$no$ ,To the south of the bedroom is the bathroom.
+193,no,$no$ ,To the south of the bedroom is the kitchen.
+194,yes,$yes$ ,To the west of the bedroom is the bathroom.
+195,no,$no$ ,To the west of the bedroom is the hallway.
+196,yes,$no$ ,To the south of the hallway is the bedroom.
+197,no,$no$,To the south of the hallway is the hallway.
+198,yes,$yes$ ,To the north of the bedroom is the kitchen.
+199,no,$no$ ,To the north of the bedroom is the bedroom.

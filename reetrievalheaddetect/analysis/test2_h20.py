@@ -23,12 +23,10 @@ if __name__ == "__main__":
     args.dataset_path = "/data/data/zecheng/data/pg19-test"
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-    args.selected_idx = [0,1,2,3]
-    args.context_length = 3900
+    args.selected_idx = [4,5]
     args.loss_type = "ce"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
-
     needles_and_stacks = auto_read_data(args.needle_path)
     needle_list = [l["needle"] for l in needles_and_stacks]
     retrieval_question_list = [l["question"] for l in needles_and_stacks]
@@ -36,7 +34,7 @@ if __name__ == "__main__":
     golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
     tags = [l["tag"] for l in needles_and_stacks]
 
-    for context_length in [1900, 3900]:
+    for context_length in [1900, 3900, 5900]:
         for loss_type in ["ce", "label"]:
             args.context_length = context_length
             args.loss_type = loss_type

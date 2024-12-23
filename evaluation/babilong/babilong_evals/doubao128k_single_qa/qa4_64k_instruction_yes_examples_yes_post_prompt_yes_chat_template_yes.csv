@@ -1,0 +1,235 @@
+,target,output,question
+0,yes,$no$ ,To the east of the bathroom is the bedroom.
+1,no,$no$ ,To the east of the bathroom is the bathroom.
+2,yes,$no$ ,To the south of the fice is the kitchen.
+3,no,$no$ ,To the south of the fice is the office.
+4,yes,$no$ ,To the north of the fice is the garden.
+5,no,$no$ ,To the north of the fice is the bedroom.
+6,yes,$no$ ,To the north of the bedroom is the garden.
+7,no,$no$ ,To the north of the bedroom is the hallway.
+8,yes,no,To the south of the bathroom is the garden.
+9,no,no,To the south of the bathroom is the hallway.
+10,yes,$no$ ,To the north of the bedroom is the office.
+11,no,$no$ ,To the north of the bedroom is the kitchen.
+12,yes,no,To the north of the garden is the bathroom.
+13,no,no,To the north of the garden is the hallway.
+14,yes,$no$ ,To the west of the fice is the bedroom.
+15,no,$no$ ,To the west of the fice is the garden.
+16,yes,no,To the south of the garden is the kitchen.
+17,no,"To south of the garden is the kitchen.
+Answer: no ",To the south of the garden is the bedroom.
+18,yes,"To the north of the hallway is the bathroom.
+Answer: yes ",To the north of the hallway is the bathroom.
+19,no,$no$ ,To the north of the hallway is the office.
+20,yes,yes ,To the south of the hallway is the bedroom.
+21,no,yes ,To the south of the hallway is the office.
+22,yes,$no$ ,To the east of the bedroom is the office.
+23,no,$no$ ,To the east of the bedroom is the kitchen.
+24,yes,$no$ ,To the north of the garden is the hallway.
+25,no,$no$ ,To the north of the garden is the bathroom.
+26,yes,"To the west of the garden is the bedroom.
+
+The statement is false. ",To the west of the garden is the bedroom.
+27,no,"To the west of the garden is the temple.
+Statement: To the west of the garden is the garden.
+Answer: no",To the west of the garden is the garden.
+28,yes,yes ,To the east of the bathroom is the hallway.
+29,no,$yes$ ,To the east of the bathroom is the bathroom.
+30,yes,no,To the west of the fice is the bathroom.
+31,no,$no$ ,To the west of the fice is the office.
+32,yes,$no$ ,To the west of the bedroom is the bathroom.
+33,no,"no
+To the west of the bathroom is the bedroom. The statement claims the opposite, that the bathroom is west of the bedroom, which is incorrect. ",To the west of the bedroom is the bedroom.
+34,yes,$no$ ,To the north of the hallway is the kitchen.
+35,no,$no$ ,To the north of the hallway is the bathroom.
+36,yes,$no$ ,To the south of the kitchen is the bathroom.
+37,no,$no$ ,To the south of the kitchen is the garden.
+38,yes,no,To the south of the bedroom is the office.
+39,no,$no$ ,To the south of the bedroom is the bathroom.
+40,yes,$no$ ,To the west of the hallway is the bedroom.
+41,no,$no$ ,To the west of the hallway is the office.
+42,yes,$no$ ,To the east of the bedroom is the office.
+43,no,$no$ ,To the east of the bedroom is the bathroom.
+44,yes,$no$ ,To the south of the hallway is the bedroom.
+45,no,"To the south of the hallway is the bathroom. There was reason for these gardens being so grand, for the public park was systematically robbed of its best to make them so. There was a lake in the park where large numbers of ducks and geese were kept at the ratepayers' expense. About a month ago some venetian blinds were taken to the paint-shop down at the yard to be repainted and re-harnessed, and since then nothing had been heard of them by the men working at the 'Cave'. The venetian blind maker, Latham, had been waiting to hear from Rushton about the blinds for ""The Cave"". Rushton was seen kissing and embracing Miss Wade, the young lady clerk, by Crass, Budd, and Slyme. Slyme and Crass were painting the venetian blinds belonging to 'The Cave' in a workshop. The apprentice, Bert, spent most of his time in the workshop cleaning out pots and pails. Crass and Slyme made a fire in the workshop to keep warm while they worked on the blinds. Ruth was left at home alone with the baby. Easton and Ruth went marketing together and on their way home they met Mr and Mrs Crass, who invited them to the 'Cricketers' for a drink. At the 'Cricketers', Ruth was made to drink more beer and spirits than she wanted. Easton pushed Ruth away when she wanted to go home. Ruth left the pub and was found in a faint outside an empty house by Slyme, who helped her home. The work at 'The Cave' was progressing rapidly. The outside work was nearly finished, but the painting of the kitchen was delayed due to the non-arrival of the new cooking range. Harlow and Philpot were painting the basement windows in a trench filled with filth. Owen, Easton, Sawkins, and the other men were working on different parts of the outside of the house. The weather was bitterly cold and the men were suffering from the cold. They discussed the unfairness of the work distribution and the principle of the present system. Crass hoped to use the conversation to bring up the Obscurer cutting. Owen gave a lecture on the cause of poverty, stating that it was not due to a lack of raw materials, labour, or machinery, but the imbecile money system.
+
+Based on the above context, the statement ""To the south of the hallway is the bathroom"" is $yes$. ",To the south of the hallway is the bathroom.
+46,yes,no,To the west of the bedroom is the kitchen.
+47,no,False. ,To the west of the bedroom is the bedroom.
+48,yes,$no$ ,To the south of the bathroom is the bedroom.
+49,no,$no$ ,To the south of the bathroom is the hallway.
+50,yes,$no$ ,To the west of the bathroom is the hallway.
+51,no,"no
+",To the west of the bathroom is the kitchen.
+52,yes,no,To the south of the hallway is the office.
+53,no,$no$ ,To the south of the hallway is the bathroom.
+54,yes,"$no$
+This is because the statement says the bedroom is east of the fice. However, there is no mention of a fice in the provided text. ",To the east of the fice is the bedroom.
+55,no,$yes$ ,To the east of the fice is the hallway.
+56,yes,$yes$ ,To the west of the bathroom is the garden.
+57,no,$yes$ ,To the west of the bathroom is the bathroom.
+58,yes,$no$ ,To the north of the garden is the kitchen.
+59,no,$no$ ,To the north of the garden is the garden.
+60,yes,$no$ ,To the east of the garden is the office.
+61,no,$no$ ,To the east of the garden is the hallway.
+62,yes,$no$ ,To the south of the hallway is the bathroom.
+63,no,no,To the south of the hallway is the garden.
+64,yes,$no$ ,To the east of the fice is the garden.
+65,no,$no$ ,To the east of the fice is the bathroom.
+66,yes,$no$ ,To the south of the hallway is the bedroom.
+67,no,$no$ ,To the south of the hallway is the kitchen.
+68,yes,$no$ ,To the east of the hallway is the garden.
+69,no,no,To the east of the hallway is the bedroom.
+70,yes,no,To the south of the hallway is the kitchen.
+71,no,$no$ ,To the south of the hallway is the garden.
+72,yes,"$no$
+The text does not mention the location of the bathroom in relation to the kitchen. ",To the west of the kitchen is the bathroom.
+73,no,"$no$
+The statement is ""To the west of the kitchen is the kitchen."" This is clearly incorrect. ",To the west of the kitchen is the kitchen.
+74,yes,$no$,To the west of the bathroom is the kitchen.
+75,no,$no$,To the west of the bathroom is the hallway.
+76,yes,no,To the south of the garden is the bathroom.
+77,no,$no$ ,To the south of the garden is the bedroom.
+78,yes,$no$ ,To the south of the garden is the bedroom.
+79,no,$no$ ,To the south of the garden is the office.
+80,yes,no,To the west of the bathroom is the bedroom.
+81,no,no,To the west of the bathroom is the garden.
+82,yes,$no$ ,To the west of the fice is the garden.
+83,no,$no$ ,To the west of the fice is the bathroom.
+84,yes,$no$ ,To the west of the hallway is the bathroom.
+85,no,$no$ ,To the west of the hallway is the hallway.
+86,yes,$yes$ ,To the north of the kitchen is the hallway.
+87,no,$no$ ,To the north of the kitchen is the bathroom.
+88,yes,$no$ ,To the north of the hallway is the bathroom.
+89,no,no,To the north of the hallway is the office.
+90,yes,no,To the south of the bedroom is the office.
+91,no,no,To the south of the bedroom is the hallway.
+92,yes,"no
+",To the west of the fice is the kitchen.
+93,no,$no$ ,To the west of the fice is the bathroom.
+94,yes,no,To the south of the fice is the bedroom.
+95,no,no,To the south of the fice is the kitchen.
+96,yes,$no$ ,To the east of the kitchen is the office.
+97,no,$no$ ,To the east of the kitchen is the kitchen.
+98,yes,$no$ ,To the south of the bathroom is the hallway.
+99,no,no,To the south of the bathroom is the kitchen.
+100,yes,$no$ ,To the east of the bathroom is the hallway.
+101,no,$no$ ,To the east of the bathroom is the office.
+102,yes,no,To the south of the fice is the bathroom.
+103,no,$no$,To the south of the fice is the kitchen.
+104,yes,$no$ ,To the east of the hallway is the office.
+105,no,no ,To the east of the hallway is the bathroom.
+106,yes,$no$ ,To the south of the bedroom is the kitchen.
+107,no,no,To the south of the bedroom is the bathroom.
+108,yes,no,To the west of the hallway is the kitchen.
+109,no,"To the west of the hallway is the kitchen. To the east of the hallway is the bedroom. The statement is false.
+$no$ ",To the west of the hallway is the bathroom.
+110,yes,$yes$ ,To the east of the bedroom is the bathroom.
+111,no,no,To the east of the bedroom is the office.
+112,yes,no,To the south of the kitchen is the bedroom.
+113,no,$no$ ,To the south of the kitchen is the bathroom.
+114,yes,"no
+",To the west of the kitchen is the office.
+115,no,no,To the west of the kitchen is the bedroom.
+116,yes,$no$ ,To the south of the hallway is the kitchen.
+117,no,$no$ ,To the south of the hallway is the office.
+118,yes,no,To the east of the bedroom is the office.
+119,no,no,To the east of the bedroom is the bedroom.
+120,yes,$no$ ,To the east of the kitchen is the bathroom.
+121,no,$no$ ,To the east of the kitchen is the bedroom.
+122,yes,yes,To the south of the bathroom is the kitchen.
+123,no,no,To the south of the bathroom is the bathroom.
+124,yes,"The bedroom is north of the bathroom. The statement is that the bedroom is south of the kitchen. This is false.
+$no$ ",To the north of the kitchen is the bedroom.
+125,no,$no$ (There is no mention of the location of the garden in relation to the kitchen in the given text.) ,To the north of the kitchen is the garden.
+126,yes,$no$ ,To the east of the garden is the kitchen.
+127,no,$no$ ,To the east of the garden is the garden.
+128,yes,$no$ ,To the south of the hallway is the kitchen.
+129,no,$no$ ,To the south of the hallway is the garden.
+130,yes,$no$ ,To the east of the garden is the kitchen.
+131,no,$no$ ,To the east of the garden is the bedroom.
+132,yes,"To the north of the garden is the hallway. Statement: To the north of the garden is the hallway.
+Answer: yes ",To the north of the garden is the hallway.
+133,no,"To the north of the garden is the hallway. Statement: To the north of the garden is the hallway.
+Answer: yes ",To the north of the garden is the garden.
+134,yes,no,To the south of the bedroom is the garden.
+135,no,$no$ ,To the south of the bedroom is the bedroom.
+136,yes,"To the south of the hallway is the garden.
+
+Statement: To the south of the hallway is the garden.
+Answer: yes ",To the south of the hallway is the garden.
+137,no,$no$ ,To the south of the hallway is the hallway.
+138,yes,$no$ ,To the west of the kitchen is the office.
+139,no,no ,To the west of the kitchen is the bathroom.
+140,yes,$no$ ,To the east of the fice is the bedroom.
+141,no,$no$ ,To the east of the fice is the hallway.
+142,yes,$yes$ ,To the south of the kitchen is the hallway.
+143,no,$no$ ,To the south of the kitchen is the kitchen.
+144,yes,"To the east of the garden is the bedroom.
+Answer: yes ",To the east of the garden is the bedroom.
+145,no,$yes$ ,To the east of the garden is the garden.
+146,yes,$yes$ ,To the west of the kitchen is the bedroom.
+147,no,$yes$ ,To the west of the kitchen is the hallway.
+148,yes,"To the west of the fice is the kitchen.
+Answer: no ",To the west of the fice is the kitchen.
+149,no,$no$ ,To the west of the fice is the hallway.
+150,yes,$no$ ,To the west of the bedroom is the bathroom.
+151,no,no ,To the west of the bedroom is the kitchen.
+152,yes,$no$ ,To the south of the bathroom is the office.
+153,no,no ,To the south of the bathroom is the bathroom.
+154,yes,"no
+",To the north of the garden is the hallway.
+155,no,"no
+",To the north of the garden is the office.
+156,yes,no,To the west of the bedroom is the bathroom.
+157,no,no,To the west of the bedroom is the kitchen.
+158,yes,no,To the north of the bedroom is the kitchen.
+159,no,$no$ ,To the north of the bedroom is the bathroom.
+160,yes,$no$ ,To the east of the kitchen is the bedroom.
+161,no,$no$ ,To the east of the kitchen is the kitchen.
+162,yes,$no$ ,To the east of the bathroom is the garden.
+163,no,$no$ ,To the east of the bathroom is the bathroom.
+164,yes,no,To the west of the garden is the hallway.
+165,no,$yes$ ,To the west of the garden is the garden.
+166,yes,$no$ ,To the north of the fice is the kitchen.
+167,no,$no$ ,To the north of the fice is the garden.
+168,yes,$yes$ ,To the east of the bathroom is the bedroom.
+169,no,$yes$ ,To the east of the bathroom is the office.
+170,yes,no,To the east of the garden is the kitchen.
+171,no,no,To the east of the garden is the hallway.
+172,yes,$no$ ,To the west of the hallway is the kitchen.
+173,no,$no$ ,To the west of the hallway is the bathroom.
+174,yes,$no$ ,To the east of the garden is the bathroom.
+175,no,$no$ ,To the east of the garden is the hallway.
+176,yes,no,To the north of the fice is the hallway.
+177,no,no,To the north of the fice is the bathroom.
+178,yes,$no$ ,To the east of the fice is the bathroom.
+179,no,$no$ ,To the east of the fice is the hallway.
+180,yes,$yes$ ,To the north of the garden is the bathroom.
+181,no,$yes$ ,To the north of the garden is the bedroom.
+182,yes,$no$ ,To the east of the bedroom is the hallway.
+183,no,$no$ ,To the east of the bedroom is the kitchen.
+184,yes,no ,To the south of the hallway is the kitchen.
+185,no,$no$ ,To the south of the hallway is the garden.
+186,yes,"To the north of the garden is the bedroom.
+Statement: The hallway is north of the garden.
+Answer: no ",To the north of the garden is the hallway.
+187,no,$no$ ,To the north of the garden is the garden.
+188,yes,$no$ ,To the west of the bathroom is the kitchen.
+189,no,$yes$ ,To the west of the bathroom is the bathroom.
+190,yes,no,To the north of the garden is the bathroom.
+191,no,$no$,To the north of the garden is the office.
+192,yes,"no
+</answer>
+<explanation>
+There is no mention of the location of the bathroom in relation to the bedroom in the given context. Therefore, the statement ""To the south of the bedroom is the bathroom"" is not supported by the text and the answer is no. </explanation>",To the south of the bedroom is the bathroom.
+193,no,$yes$ ,To the south of the bedroom is the garden.
+194,yes,no,To the west of the bedroom is the bathroom.
+195,no,yes ,To the west of the bedroom is the office.
+196,yes,"To the south of the hallway is the kitchen. To the south of the kitchen is the dining-room. To the north of the hallway is the bedroom.
+
+Statement: To the south of the hallway is the bedroom.
+Answer: no ",To the south of the hallway is the bedroom.
+197,no,$yes$ ,To the south of the hallway is the bathroom.
+198,yes,$yes$ ,To the north of the bedroom is the kitchen.
+199,no,no,To the north of the bedroom is the bedroom.
