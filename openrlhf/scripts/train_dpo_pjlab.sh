@@ -19,6 +19,7 @@ deepspeed --include localhost:0,1 cli/train_simpo.py \
    --max_epochs 2 \
    --packing_samples \
    --bf16 \
+   --num_processors 4 \
    --flash_attn \
    --learning_rate 5e-6 \
    --gradient_checkpointing \

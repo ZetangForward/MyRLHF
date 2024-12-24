@@ -160,8 +160,6 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
 
-    get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
-
     # gradient_checkpointing
     if args.gradient_checkpointing:
         model.gradient_checkpointing_enable(
@@ -180,6 +178,7 @@ def train(args):
         strategy,
         input_template=args.input_template,
         is_dpo=True,
+        num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
     )
     eval_dataset = RewardDataset(
@@ -189,6 +188,7 @@ def train(args):
         strategy,
         input_template=args.input_template,
         is_dpo=True,
+        num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
     )
     import ipdb; ipdb.set_trace()
@@ -326,7 +326,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_probs", type=str, default="1.0", help="sampling probs for datasets")
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")
-
+    parser.add_argument("--num_processors", type=int, default=1, help="number of processors for dataset preprocessing")
+    
     parser.add_argument("--prompt_key", type=str, default=None)
     parser.add_argument("--chosen_key", type=str, default="chosen")
     parser.add_argument("--rejected_key", type=str, default="rejected")
