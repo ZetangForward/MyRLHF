@@ -10,7 +10,7 @@ from datetime import datetime
 from transformers.trainer import get_scheduler
 from openrlhf.datasets import RewardDataset
 from openrlhf.models import Actor
-from openrlhf.trainer import DPOTrainer
+from openrlhf.trainer import SimPOTrainer
 from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 import torch.nn.functional as F
 
@@ -160,7 +160,7 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
 
-    get_tokenizer(args.pretrain, ref_model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
+    get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # gradient_checkpointing
     if args.gradient_checkpointing:
@@ -171,7 +171,7 @@ def train(args):
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
     dataset = load_from_disk(args.dataset)
-    train_data, eval_data = dataset['train'], dataset['test']
+    train_data, eval_data = dataset['train'], dataset['validation']
     
     train_dataset = RewardDataset(
         train_data,
@@ -191,6 +191,7 @@ def train(args):
         is_dpo=True,
         multiple_of=args.ring_attn_size,
     )
+    import ipdb; ipdb.set_trace()
 
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
@@ -222,7 +223,7 @@ def train(args):
     )
 
     # strategy prepare
-    ((model, optim, scheduler), ref_model) = strategy.prepare((model, optim, scheduler), ref_model)
+    model, optim, scheduler = strategy.prepare(model, optim, scheduler)
 
     # load checkpoint
     consumed_samples = 0
@@ -235,9 +236,8 @@ def train(args):
 
     # batch_size here is expected to be C(k,2), k means # response of each prompt
     # be limited with the format of dataset 'Dahoas/rm-static', we'd better use batch_size as 1
-    trainer = DPOTrainer(
+    trainer = SimPOTrainer(
         model=model,
-        ref_model=ref_model,
         tokenizer=tokenizer,
         strategy=strategy,
         optim=optim,

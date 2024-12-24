@@ -32,7 +32,6 @@ class SimPOTrainer(ABC):
 
     def __init__(self,
         model,
-        ref_model,
         strategy,
         tokenizer,
         optim: Optimizer,
@@ -52,7 +51,6 @@ class SimPOTrainer(ABC):
         self.model = model
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader
-        self.ref_model = ref_model
         self.scheduler = scheduler
         self.optimizer = optim
         self.tokenizer = tokenizer
@@ -135,7 +133,7 @@ class SimPOTrainer(ABC):
             )
 
             self.model.train()
-            self.ref_model.eval()
+            import ipdb; ipdb.set_trace()
             acc_mean = 0
             loss_mean = 0
             # train
@@ -150,10 +148,6 @@ class SimPOTrainer(ABC):
                     chosen_logps, rejected_logps, aux_loss, nll_loss = self.concatenated_forward(
                         self.model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
                     )
-                    with torch.no_grad():
-                        reference_chosen_logps, reference_rejected_logps, _, _ = self.concatenated_forward(
-                            self.ref_model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
-                        )
                 else:
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens = data
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
@@ -162,7 +156,7 @@ class SimPOTrainer(ABC):
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
                     
-
+                import ipdb; ipdb.set_trace()
                 # loss function
                 preference_loss, chosen_reward, reject_reward = self.loss_fn(
                     chosen_logps, rejected_logps, reference_chosen_logps, reference_rejected_logps
