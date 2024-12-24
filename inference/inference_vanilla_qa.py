@@ -30,16 +30,26 @@ use_instruction = True
 use_examples = True
 use_post_prompt = True
 
-# nohup python inference_vanilla_qa.py > single_qa_true.log
+# nohup python inference_vanilla_qa.py > single_qa_true_qwen.log
 from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
+
+def setup_tokenizer():
+    return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Qwen2.5-7B-Instruct")
 def setup_model(args):
-    model_name = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+    model_name = "/data/zecheng/hf_models/Qwen2.5-7B-Instruct"
     config = AutoConfig.from_pretrained(model_name)
     return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
 
-def setup_tokenizer():
-    return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
+
+
+# def setup_model(args):
+#     model_name = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
+#     config = AutoConfig.from_pretrained(model_name)
+#     return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
+
+# def setup_tokenizer():
+#     return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
 
 
 class BabilongManager(LLMEvalGPUManager):
@@ -135,8 +145,8 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--model_name", type=str, default="/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct/")
-    parser.add_argument("--saved_model_name", type=str, default="Llama3.1-8B-Instruct_vanilla")
+    parser.add_argument("--model_name", type=str, default="/data/zecheng/hf_models/Qwen-2.5-7B-Instruct/")
+    parser.add_argument("--saved_model_name", type=str, default="Qwen-2.5-7B-Instruct")
     
     parser.add_argument("--results_folder",type=str,default=RESULTS_DIR)
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")

@@ -92,7 +92,25 @@ DEFAULT_PROMPTS = {
             'Your answer should contain only one word - $yes$ or $no$. '
             'Do not write anything else after that. Do not explain your answer.',
     },
-
+    'qa6': {
+        'instruction':
+            'I will give you context with the facts about people and their locations hidden in some random text and a '
+            'question. You need to answer the question based only on the information from the facts. '
+            'If a person was in different locations, use the latest location the person was in to answer the question.',
+        'examples':
+            '<example>\n'
+            'John travelled to the hallway. John travelled to the garden. Is John in the garden?\n'
+            'Answer: yes\n'
+            '</example>\n'
+            '<example>\n'
+            'Mary went to the office. Daniel journeyed to the hallway. Mary went to the bedroom. '
+            'Sandra went to the garden. Is Mary in the office?\n'
+            'Answer: no\n'
+            '</example>\n',
+        'post_prompt':
+            'Your answer should contain only one word - $yes$ or $no$. Do not write anything else after that. '
+            'Do not explain your answer.'
+    },
     'qa7': {
         'instruction':
             'I will give you context with the facts about people and objects they carry, hidden in some random text '

@@ -46,6 +46,78 @@ def preprocess_data(
     return prompt, chosen, rejected, margin
 
 
+
+class SimPODataset:
+    def __init__(self, dataset, tokenizer, max_len, strategy, multiple_of=1):
+        self.dataset = dataset
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+        self.strategy = strategy
+        self.multiple_of = multiple_of
+
+    def __getitem__(self, index):
+        return self.dataset[index]
+    
+    def __len__(self):
+        return len(self.dataset)
+    
+    def collate_fn(self, item_list):
+        wrap_batch = {}
+        batch_size = len(item_list)
+        keys = list(item_list[0].keys())
+        if isinstance(item_list[0][keys[0]], list):
+            for key in keys:
+                if self.filter_fun(key):
+                    wrap_batch[key] = torch.stack([self.auto_cut_length(torch.tensor(item_list[i][key])) for i in range(batch_size)])
+        else:
+            for key in keys:
+                if self.filter_fun(key):
+                    wrap_batch[key] = torch.stack([self.auto_cut_length(item_list[i][key]) for i in range(batch_size)])
+        return wrap_batch
+    
+    def packing_collate_fn(self, item_list):
+        extras = []
+        chosen_ids = []
+        chosen_att_masks = []
+        chosen_pos_ids = []
+        chosen_seq_lens = []
+        rejected_ids = []
+        rejected_att_masks = []
+        rejected_pos_ids = []
+        rejected_seq_lens = []
+        index = 1
+        for item in item_list:
+            chosen_id, reject_id = torch.tensor(item["chosen_input_ids"]), torch.tensor(item["reject_1_input_ids"])
+            chosen_pos, rejected_pos = torch.tensor(item["chosen_position_ids"]), torch.tensor(item["reject_1_position_ids"])
+            chosen_mask, rejected_mask = torch.tensor(item["chosen_attention_mask"]), torch.tensor(item["reject_1_attention_mask"])
+
+            chosen_ids.append(chosen_id.flatten())
+            chosen_att_masks.append(chosen_mask)
+            chosen_pos_ids.append(chosen_pos.flatten())
+            chosen_seq_lens.append(len(chosen_id.flatten()))
+
+            rejected_ids.append(reject_id.flatten())
+            rejected_att_masks.append(rejected_mask)
+            rejected_pos_ids.append(rejected_pos.flatten())
+            rejected_seq_lens.append(len(reject_id.flatten()))
+            index += 1
+
+
+        packed_input_ids = torch.cat(chosen_ids + rejected_ids, dim=0).unsqueeze(0)
+        packed_attention_masks = torch.cat(chosen_att_masks + rejected_att_masks, dim=0).unsqueeze(0)
+        packed_position_ids = torch.cat(chosen_pos_ids + rejected_pos_ids, dim=0).unsqueeze(0)
+        packed_seq_lens = chosen_seq_lens + rejected_seq_lens
+
+        if self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0:  # padding
+            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
+            packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
+            packed_position_ids = F.pad(packed_position_ids, (0, padding_len), value=0)
+            packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
+
+        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras
+
+
+
 class RewardDataset(Dataset):
     """
     Dataset for reward model

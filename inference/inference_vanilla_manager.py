@@ -17,8 +17,10 @@ from utils.mspoe.manager.gpumanager import LLMEvalGPUManager
 
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
-TASKS=['qa1','qa2','qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10']
-SPLIT_NAMES=['0k','1k','2k','4k','8k', '16k', '32k', '64k','128k']
+TASKS=['qa1','qa2','qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
+       ]
+SPLIT_NAMES=['0k','1k','2k','4k','8k', '16k', '32k', '64k','128k'
+             ]
 use_chat_template = True
 use_instruction = True
 use_examples = True
@@ -27,6 +29,8 @@ use_post_prompt = True
 # nohup python inference_vanilla_manager.py > vanilla.log
 from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
+def setup_tokenizer():
+    return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
 def setup_model(args):
     model_name = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     config = AutoConfig.from_pretrained(model_name)
@@ -34,7 +38,6 @@ def setup_model(args):
 
 def setup_tokenizer():
     return AutoTokenizer.from_pretrained("/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct")
-
 
 class BabilongManager(LLMEvalGPUManager):
     @classmethod
@@ -127,7 +130,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_name", type=str, default="/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct/")
-    parser.add_argument("--saved_model_name", type=str, default="Llama3.1-8B-Instruct_vanilla")
+    parser.add_argument("--saved_model_name", type=str, default="Qwen2.5-7B-Instruct_vanilla")
     
     parser.add_argument("--results_folder",type=str,default=RESULTS_DIR)
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
