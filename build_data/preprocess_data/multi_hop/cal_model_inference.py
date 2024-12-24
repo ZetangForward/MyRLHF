@@ -78,6 +78,7 @@ def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, 
 def process_item(item, drop_num=1):
     # zecheng_note: 随机丢掉drop_num个evidence
     selected_ids = random.sample(range(len(item['clue_docs'])), len(item['clue_docs']) - drop_num)
+    selected_ids = sorted(list(selected_ids))
     selected_clues_docs = [item['clue_docs'][i] for i in selected_ids]
     selected_clue_pos = [item['clue_pos'][i] for i in selected_ids]
     concat_content = item['concat_content']
@@ -108,6 +109,7 @@ def process_data_item(args):
     meta_data.pop('instruction_format')
     meta_data.pop('answer')
     return {
+        "prompt": prompt,
         "message": input_data,
         "answer": answer,
         "meta_data": meta_data, 
@@ -182,7 +184,7 @@ def main(args):
     processes = []
 
     # avail_gpu_ids = get_empty_gpus()
-    avail_gpu_ids = list(range(8))
+    avail_gpu_ids = list(range(args.num_gpus))
     avail_gpu_ids = avail_gpu_ids[:len(avail_gpu_ids)//args.tp_size * args.tp_size]
     if len(avail_gpu_ids) == 0:
         logger.error("No available GPUs.")
@@ -219,10 +221,17 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--drop_num', type=int, default=1,  help="randomly dropped evidence number")
+    parser.add_argument('--model_path', type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct",  help="model name or path")
+    parser.add_argument('--out_file_path', type=str, default="/data/zecheng/data/processed_multi_hop/random_drop",  help="save path for inference results")
+    parser.add_argument('--num_gpus', type=int, default="/data/zecheng/data/processed_multi_hop/random_drop",  help="save path for inference results")
+    
     extra_args = parser.parse_args()
 
     args = Args("pjlab")
     args.drop_num = extra_args.drop_num
+    args.model_path = extra_args.model_path
+    args.out_file_path = extra_args.out_file_path
+    args.num_gpus = extra_args.num_gpus
     main(args)
     
     

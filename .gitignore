@@ -6,6 +6,7 @@ __pycache__/
 
 evaluation/babilong/babilong_evals_ms_poe
 reetrievalheaddetect/results/
+sbatch_logs/
 
 # C extensions
 *.so
