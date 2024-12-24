@@ -142,6 +142,7 @@ def train(args):
 
     # configure model
     # load huggingface model
+    # zecheng_note：这里加载Lora训练，原始的模型被freeze住
     model = Actor(
         args.pretrain,
         use_flash_attention_2=args.flash_attn,
@@ -172,7 +173,7 @@ def train(args):
     dataset = load_from_disk(args.dataset)
     train_data, eval_data = dataset['train'], dataset['test']
     
-    train_dataset = CustomBlendingDataset(
+    train_dataset = RewardDataset(
         train_data,
         tokenizer,
         args.max_len,
@@ -181,7 +182,7 @@ def train(args):
         is_dpo=True,
         multiple_of=args.ring_attn_size,
     )
-    eval_dataset = CustomBlendingDataset(
+    eval_dataset = RewardDataset(
         eval_data,
         tokenizer,
         args.max_len,
