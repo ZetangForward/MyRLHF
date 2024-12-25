@@ -195,7 +195,7 @@ if __name__=="__main__":
         tp_size=1,
         gpu_list=[0,1,2,3,4,5,6,7],
         task_info_list=task_info_list,
-         basic_datas_number=len(task_info_list)*200,
+        samples_number=len(task_info_list)*200,
         data_config=data_config,
         model_config=args,
         generate_config=generate_config
