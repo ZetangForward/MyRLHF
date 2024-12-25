@@ -38,10 +38,10 @@ class Args:
     def __init__(self):
         self.dataset = '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop/train_data/merge_v1'
         self.pretrain = 'meta-llama/Meta-Llama-3.1-8B-Instruct'
-        self.num_processors = 2
+        self.num_processors = 8
         self.max_len = 96000
         self.input_template = None
-        self.num_processors = 2
+        self.num_processors = 4
         self.ring_attn_size = 4
         self.zero_stage = 1
         self.prompt_key = "prompt"
