@@ -15,126 +15,6 @@ from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 import torch.nn.functional as F
 
 
-class CustomBlendingDataset:
-    def __init__(self, dataset_path, tokenizer, max_len, multiple_of=1):
-        self.dataset_path = dataset_path
-        self.dataset = auto_read_data(dataset_path)
-        self.tokenizer = tokenizer
-        self.max_len = max_len
-        self.multiple_of = multiple_of
-
-    def __getitem__(self, index):
-        return self.dataset[index]
-    
-    def __len__(self):
-        return len(self.dataset)
-    
-    def collate_fn(self, item_list):
-        wrap_batch = {}
-        batch_size = len(item_list)
-        keys = list(item_list[0].keys())
-        if isinstance(item_list[0][keys[0]], list):
-            for key in keys:
-                if self.filter_fun(key):
-                    wrap_batch[key] = torch.stack([self.auto_cut_length(torch.tensor(item_list[i][key])) for i in range(batch_size)])
-        else:
-            for key in keys:
-                if self.filter_fun(key):
-                    wrap_batch[key] = torch.stack([self.auto_cut_length(item_list[i][key]) for i in range(batch_size)])
-        return wrap_batch
-    
-    def packing_collate_fn(self, item_list):
-        extras = []
-        chosen_ids = []
-        chosen_att_masks = []
-        chosen_pos_ids = []
-        chosen_seq_lens = []
-        rejected_ids = []
-        rejected_att_masks = []
-        rejected_pos_ids = []
-        rejected_seq_lens = []
-        index = 1
-        for item in item_list:
-            chosen_id, reject_id = torch.tensor(item["chosen_input_ids"]), torch.tensor(item["reject_1_input_ids"])
-            chosen_pos, rejected_pos = torch.tensor(item["chosen_position_ids"]), torch.tensor(item["reject_1_position_ids"])
-            chosen_mask, rejected_mask = torch.tensor(item["chosen_attention_mask"]), torch.tensor(item["reject_1_attention_mask"])
-
-            chosen_ids.append(chosen_id.flatten())
-            chosen_att_masks.append(chosen_mask)
-            chosen_pos_ids.append(chosen_pos.flatten())
-            chosen_seq_lens.append(len(chosen_id.flatten()))
-
-            rejected_ids.append(reject_id.flatten())
-            rejected_att_masks.append(rejected_mask)
-            rejected_pos_ids.append(rejected_pos.flatten())
-            rejected_seq_lens.append(len(reject_id.flatten()))
-            index += 1
-
-
-        packed_input_ids = torch.cat(chosen_ids + rejected_ids, dim=0).unsqueeze(0)
-        packed_attention_masks = torch.cat(chosen_att_masks + rejected_att_masks, dim=0).unsqueeze(0)
-        packed_position_ids = torch.cat(chosen_pos_ids + rejected_pos_ids, dim=0).unsqueeze(0)
-        packed_seq_lens = chosen_seq_lens + rejected_seq_lens
-
-        if self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0:  # padding
-            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
-            packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
-            packed_position_ids = F.pad(packed_position_ids, (0, padding_len), value=0)
-            packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
-
-        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras
-
-
-class CustomRewardDataset(RewardDataset):
-    def __init__(self, dataset_path: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.margin_key = getattr(self.strategy.args, "margin_key", None)
-        self.margin = None
-        dataset = load_from_disk(dataset_path)
-        self.train_data = dataset['train']
-        self.test_data = dataset['test']
-
-    def __getitem__(self, index):
-        return self.train_data[index]
-    
-    def __len__(self):
-        return len(self.train_data)
-    
-    def collate_fn(self, item_list):
-        return item_list
-    
-    def packing_collate_fn(self, item_list):
-        extras = []
-        chosen_ids = []
-        chosen_att_masks = []
-        chosen_seq_lens = []
-        rejected_ids = []
-        rejected_att_masks = []
-        rejected_seq_lens = []
-        index = 1
-        for chosen_id, chosen_mask, reject_id, rejects_mask, extra in item_list:
-            chosen_ids.append(chosen_id.flatten())
-            chosen_att_masks.append(torch.full_like(chosen_id.flatten(), index))
-            chosen_seq_lens.append(len(chosen_id.flatten()))
-            extras.append(extra)
-
-            rejected_ids.append(reject_id.flatten())
-            rejected_att_masks.append(torch.full_like(reject_id.flatten(), index + len(item_list)))
-            rejected_seq_lens.append(len(reject_id.flatten()))
-            index += 1
-
-        packed_input_ids = torch.cat(chosen_ids + rejected_ids, dim=0).unsqueeze(0)
-        packed_attention_masks = torch.cat(chosen_att_masks + rejected_att_masks, dim=0).unsqueeze(0)
-        packed_seq_lens = chosen_seq_lens + rejected_seq_lens
-
-        if self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0:
-            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
-            packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
-            packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
-
-        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras
-
-
 def train(args):
     # configure strategy
     strategy = get_strategy(args)
@@ -191,7 +71,6 @@ def train(args):
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
     )
-    import ipdb; ipdb.set_trace()
 
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
@@ -223,7 +102,7 @@ def train(args):
     )
 
     # strategy prepare
-    model, optim, scheduler = strategy.prepare(model, optim, scheduler)
+    (model, optim, scheduler) = strategy.prepare((model, optim, scheduler))
 
     # load checkpoint
     consumed_samples = 0
@@ -286,10 +165,11 @@ if __name__ == "__main__":
     parser.add_argument("--disable_trace_cache", action="store_true", default=False)
     parser.add_argument("--gradient_checkpointing_use_reentrant", action="store_true", default=False)
 
-    # DPO
+    # SimPO
     parser.add_argument("--max_epochs", type=int, default=1)
     parser.add_argument("--l2", type=float, default=0.0, help="weight decay loss")
     parser.add_argument("--beta", type=float, default=0.1)
+    parser.add_argument("--gamma_beta_ratio", type=float, default=0.5)
     parser.add_argument("--ipo", action="store_true", default=False)  # IPO https://arxiv.org/pdf/2310.12036v2.pdf
     parser.add_argument("--label_smoothing", type=float, default=0.0)  # cDPO https://arxiv.org/pdf/2305.18290.pdf
     parser.add_argument("--aux_loss_coef", type=float, default=0, help="MoE balancing loss")

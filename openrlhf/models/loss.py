@@ -143,25 +143,57 @@ class DPOLoss(nn.Module):
         return loss, chosen_rewards, rejected_rewards
 
 
+
+
 class SimPOLoss(nn.Module):
     """
-    DPO Loss
+    SimPO Loss
     """
 
-    def __init__(self, beta: float, label_smoothing: float = 0.0, ipo: bool = False, gamma_beta_ratio: float = 0.5, *args) -> None:
+    def __init__(self, beta: float, device: torch.device, label_smoothing: float = 0.0, gamma_beta_ratio: float = 0.5, loss_type: str = "sigmoid", *args) -> None:
         super().__init__()
         self.beta = beta
         self.label_smoothing = label_smoothing
-        self.ipo = ipo
+        self.gamma_beta_ratio = gamma_beta_ratio
+        self.loss_type = loss_type
+        self.device = device
 
     def forward(
         self,
-        policy_chosen_logps: torch.Tensor,
-        policy_rejected_logps: torch.Tensor,
-        reference_chosen_logps: torch.Tensor,
-        reference_rejected_logps: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        pass
+        policy_chosen_logps: torch.FloatTensor,
+        policy_rejected_logps: torch.FloatTensor,
+    ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
+        """Compute the SimPO loss for a batch of policy model log probabilities.
+
+        Args:
+            policy_chosen_logps: Log probabilities of the policy model for the chosen responses. Shape: (batch_size,)
+            policy_rejected_logps: Log probabilities of the policy model for the rejected responses. Shape: (batch_size,)
+
+        Returns:
+            A tuple of three tensors: (losses, chosen_rewards, rejected_rewards).
+            The losses tensor contains the SimPO loss for each example in the batch.
+            The chosen_rewards and rejected_rewards tensors contain the rewards for the chosen and rejected responses, respectively.
+        """
+        pi_logratios = policy_chosen_logps.to(self.device) - policy_rejected_logps.to(self.device)
+
+        logits = pi_logratios - self.gamma_beta_ratio
+
+        if self.loss_type == "sigmoid":
+            losses = (
+                -F.logsigmoid(self.beta * logits) * (1 - self.label_smoothing)
+                - F.logsigmoid(-self.beta * logits) * self.label_smoothing
+            )
+        elif self.loss_type == "hinge":
+            losses = torch.relu(1 - self.beta * logits)
+        else:
+            raise ValueError(
+                f"Unknown loss type: {self.loss_type}. Should be one of ['sigmoid', 'hinge']"
+            )
+
+        chosen_rewards = self.beta * policy_chosen_logps.to(self.device).detach()
+        rejected_rewards = self.beta * policy_rejected_logps.to(self.device).detach()
+
+        return losses, chosen_rewards, rejected_rewards
 
 
 # Adapted from https://github.com/ContextualAI/HALOs/blob/ca9b7e3eeea220c0944ad8095d641da33f907a7e/trainers.py#L742

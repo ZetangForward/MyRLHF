@@ -10,7 +10,6 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from tqdm import tqdm
-
 from openrlhf.models import SimPOLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
@@ -61,7 +60,7 @@ class SimPOTrainer(ABC):
         self.gamma_beta_ratio = gamma_beta_ratio
         self.sft_weight = sft_weight
 
-        self.loss_fn = SimPOLoss(self.beta, self.args.label_smoothing, self.args.ipo)
+        self.loss_fn = SimPOLoss(self.beta, torch.cuda.current_device(), self.args.label_smoothing, self.args.gamma_beta_ratio)
 
         # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
@@ -133,13 +132,14 @@ class SimPOTrainer(ABC):
             )
 
             self.model.train()
-            import ipdb; ipdb.set_trace()
+            
             acc_mean = 0
             loss_mean = 0
             # train
             for data in self.train_dataloader:
                 if not self.packing_samples:
                     chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens = data
+                    
                     chosen_ids = chosen_ids.squeeze(1).to(torch.cuda.current_device())
                     c_mask = c_mask.squeeze(1).to(torch.cuda.current_device())
                     reject_ids = reject_ids.squeeze(1).to(torch.cuda.current_device())
@@ -148,6 +148,7 @@ class SimPOTrainer(ABC):
                     chosen_logps, rejected_logps, aux_loss, nll_loss = self.concatenated_forward(
                         self.model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
                     )
+
                 else:
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens = data
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
@@ -155,12 +156,21 @@ class SimPOTrainer(ABC):
                     chosen_logps, rejected_logps, aux_loss, nll_loss = self.packed_samples_forward(
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
-                    
-                import ipdb; ipdb.set_trace()
+                    # zecheng_note: 这里是为了debug
+                    # print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
+                    # print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
+                    # print(f"packed_seq_lens -> {packed_seq_lens}")
+                    # print(f"prompt_id_lens -> {prompt_id_lens}")
+                    # print(f"chosen_logps.shape -> {chosen_logps.shape}")
+                    # print(f"rejected_logps.shape -> {rejected_logps.shape}")
+                    # print(f"aux_loss -> {aux_loss}")
+                    # print(f"nll_loss -> {nll_loss}")
+
                 # loss function
-                preference_loss, chosen_reward, reject_reward = self.loss_fn(
-                    chosen_logps, rejected_logps, reference_chosen_logps, reference_rejected_logps
+                losses, chosen_reward, reject_reward = self.loss_fn(
+                    chosen_logps, rejected_logps
                 )
+                preference_loss = losses.mean()
                 # mixtral
                 if not self.aux_loss:
                     aux_loss = 0
@@ -169,13 +179,14 @@ class SimPOTrainer(ABC):
                     nll_loss = 0
 
                 loss = preference_loss + aux_loss * self.args.aux_loss_coef + nll_loss * self.args.nll_loss_coef
+                # print(f"loss: {loss}")
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
                 acc = (chosen_reward > reject_reward).float().mean().item()
                 acc_mean = acc_mean * 0.9 + 0.1 * acc
                 loss_mean = loss_mean * 0.9 + 0.1 * preference_loss.item()
-                # dpo logs
+                # simpo logs
                 logs_dict = {
                     "loss": preference_loss.item(),
                     "acc": acc,
@@ -223,7 +234,6 @@ class SimPOTrainer(ABC):
         if global_step % args.eval_steps == 0:
             self.evaluate(self.eval_dataloader, global_step)
         # save ckpt
-        # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
             self.strategy.save_ckpt(
@@ -264,16 +274,12 @@ class SimPOTrainer(ABC):
                     chosen_logps, rejected_logps, aux_loss, _ = self.packed_samples_forward(
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
-                    with torch.no_grad():
-                        reference_chosen_logps, reference_rejected_logps, _, _ = self.packed_samples_forward(
-                            self.ref_model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
-                        )
 
-                loss, chosen_reward, reject_reward = self.loss_fn(
-                    chosen_logps, rejected_logps, reference_chosen_logps, reference_rejected_logps
+                preference_loss, chosen_reward, reject_reward = self.loss_fn(
+                    chosen_logps, rejected_logps
                 )
                 acc_sum += (chosen_reward > reject_reward).float().mean().item()
-                loss_sum += loss.item()
+                loss_sum += preference_loss.item()
                 times += 1
                 step_bar.update()
 
