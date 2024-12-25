@@ -157,14 +157,14 @@ class SimPOTrainer(ABC):
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
                     # zecheng_note: 这里是为了debug
-                    # print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
-                    # print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
-                    # print(f"packed_seq_lens -> {packed_seq_lens}")
-                    # print(f"prompt_id_lens -> {prompt_id_lens}")
-                    # print(f"chosen_logps.shape -> {chosen_logps.shape}")
-                    # print(f"rejected_logps.shape -> {rejected_logps.shape}")
-                    # print(f"aux_loss -> {aux_loss}")
-                    # print(f"nll_loss -> {nll_loss}")
+                    print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
+                    print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
+                    print(f"packed_seq_lens -> {packed_seq_lens}")
+                    print(f"prompt_id_lens -> {prompt_id_lens}")
+                    print(f"chosen_logps.shape -> {chosen_logps.shape}")
+                    print(f"rejected_logps.shape -> {rejected_logps.shape}")
+                    print(f"aux_loss -> {aux_loss}")
+                    print(f"nll_loss -> {nll_loss}")
 
                 # loss function
                 losses, chosen_reward, reject_reward = self.loss_fn(
@@ -179,7 +179,7 @@ class SimPOTrainer(ABC):
                     nll_loss = 0
 
                 loss = preference_loss + aux_loss * self.args.aux_loss_coef + nll_loss * self.args.nll_loss_coef
-                # print(f"loss: {loss}")
+                print(f"loss: {loss}")
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 

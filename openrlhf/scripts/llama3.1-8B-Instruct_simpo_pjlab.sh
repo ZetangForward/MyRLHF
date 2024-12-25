@@ -24,7 +24,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --bf16 \
    --beta 10 \
    --gamma_beta_ratio 0.3 \
-   --num_processors 1 \
+   --num_processors 4 \
    --learning_rate 1e-6 \
    --flash_attn \
    --learning_rate 5e-6 \
