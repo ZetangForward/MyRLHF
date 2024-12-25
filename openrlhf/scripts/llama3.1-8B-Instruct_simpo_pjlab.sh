@@ -20,7 +20,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --nll_loss_coef 0.1 \
    --max_ckpt_num 5 \
    --max_epochs 2 \
-   --prompt_key "prompt" \
    --packing_samples \
    --bf16 \
    --beta 10 \
