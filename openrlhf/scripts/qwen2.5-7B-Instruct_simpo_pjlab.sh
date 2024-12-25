@@ -20,12 +20,11 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --zero_stage 3 \
    --max_ckpt_num 5 \
    --max_epochs 2 \
-   --prompt_key "prompt" \
    --packing_samples \
    --bf16 \
    --beta 2.5 \
    --gamma_beta_ratio 0.55 \
-   --num_processors 1 \
+   --num_processors 4 \
    --learning_rate 8e-7 \
    --flash_attn \
    --learning_rate 5e-6 \
