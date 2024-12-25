@@ -11,14 +11,15 @@ from typing import List
 import torch
 import datasets
 from argparse import Namespace
-
+from vllm import LLM, SamplingParams
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 from multiprocessingtools.evalmanager import LLMEvalGPUManager
 import pdb
 
 BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
-TASKS=['qa1','qa2','qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
+TASKS=['qa1','qa2','qa3',
+    #    'qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
        ]
 SPLIT_NAMES=['0k','1k','2k',#'4k','8k', '16k', '32k', '64k','128k'
              ]
@@ -29,26 +30,23 @@ use_post_prompt = True
 
 import pdb
 
-# nohup python inference_vanilla_manager.py > vanilla.log
+# nohup python inference_vanilla_vllm.py > vanilla_vllm.log
 from transformers import AutoConfig,AutoModelForCausalLM,AutoTokenizer
 
 def setup_tokenizer(args):
     return AutoTokenizer.from_pretrained(args.model_name)
 def setup_model(args):
-    model_name = args.model_name
-    config = AutoConfig.from_pretrained(model_name)
-    return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
-
+    if False:
+        model_name = args.model_name
+        config = AutoConfig.from_pretrained(model_name)
+        return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
+    else:
+        return LLM(model=args.model_name, **args.model_args)
 
 class BabilongManager(LLMEvalGPUManager):
     @classmethod
     def setup_model(cls, model_config: Namespace):
-        args = model_config
-        model_name = args.model_name
-        config = AutoConfig.from_pretrained(model_name)
-        return AutoModelForCausalLM.from_pretrained(model_name, config=config, attn_implementation="flash_attention_2").half().cuda().eval()
-
-        # return super().set_producer_global_variables(produce_config)
+        return setup_model(model_config)
     
     @classmethod
     def preprocess(cls, task_info, data_config: Namespace, glb: Namespace):
@@ -77,17 +75,10 @@ class BabilongManager(LLMEvalGPUManager):
             input_text = get_formatted_input(context, question, prompt_cfg['examples'],
                                             prompt_cfg['instruction'], prompt_cfg['post_prompt'],
                                             template=prompt_cfg['template'])
-
-            if use_chat_template:
-                input_text = [{'role': 'user', 'content': input_text}]
-                model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
-                                                            return_tensors='pt').cpu()
-                model_inputs = {'input_ids': model_inputs}
-            else:
-                raise ValueError("not_use_chat_template")
             
+            # use vllm 构造批量数据就直接在这里 yield的时候 yield 批量数据就行
             yield {
-                "model_inputs": model_inputs,
+                "input_text"  : input_text,
                 "target"      : target,
                 "question"    : question,
                 "task"        : task,
@@ -95,13 +86,31 @@ class BabilongManager(LLMEvalGPUManager):
                 "index"       : index
             }
 
+            # if use_chat_template:
+            #     input_text = [{'role': 'user', 'content': input_text}]
+            #     model_inputs = tokenizer.apply_chat_template(input_text, add_generation_prompt=True,
+            #                                                 return_tensors='pt').cpu()
+            #     model_inputs = {'input_ids': model_inputs}
+            # else:
+            #     raise ValueError("not_use_chat_template")
+            
+            # yield {
+            #     "model_inputs": model_inputs,
+            #     "target"      : target,
+            #     "question"    : question,
+            #     "task"        : task,
+            #     "split_name"  : split_name,
+            #     "index"       : index
+            # }
+
     @classmethod
     def process(cls, model, sample, generate_config: Namespace):
-        tokenizer=generate_config.tokenizer
-        model_inputs=sample['model_inputs']
-        model_inputs['input_ids']=model_inputs['input_ids'].to(model.device)
+        
 
-        if getattr(generate_config,"backend","gpu") == "gpu":
+        if getattr(generate_config,"backend","vllm") == "gpu":
+            
+            model_inputs=sample['input_text']
+            model_inputs['input_ids']=model_inputs['input_ids'].to(model.device)
             sample_length = model_inputs['input_ids'].shape[1]
             with torch.no_grad():
                 output = model.generate(**model_inputs, **generate_config.generate_kwargs)
@@ -109,12 +118,21 @@ class BabilongManager(LLMEvalGPUManager):
             output = tokenizer.decode(output, skip_special_tokens=True).strip()
             sample['output']=output
             sample.pop('model_inputs')
-        elif getattr(generate_config,"backend","gpu") == "vllm":
-            # TODO use vllm
-            pass
             
-        yield sample
+            yield sample
+        
+        elif getattr(generate_config,"backend","vllm") == "vllm":
+            # TODO use vllm
+            sampling_params = generate_config.sampling_params
+            chunk_message = [sample["input_text"]]
+            outputs = model.generate(chunk_message, sampling_params = sampling_params)
 
+            for i, output in enumerate(outputs):
+                generations = [o.text for o in output.outputs]
+                # original_prompt_data = prompts_chunk[i]  # 获取原始数据
+                sample['output'] = generations  # 插入生成的响应
+                sample.pop('input_text')
+                yield sample
 
 def set_seed(args):
     np.random.seed(args.seed)
@@ -134,7 +152,28 @@ def list_to_df(lst: List[dict],sort_index=None):
             df[k]+=[v]
     return pd.DataFrame(df)
     
-
+inference_args = dict(
+    top_p = dict(
+        n = 1, 
+        temperature = 0.7, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
+    top_n = dict(
+        n = 6, 
+        temperature = 0.7, 
+        max_tokens = 100, 
+        seed = 42, 
+        top_p = 0.95,
+    ),
+    greedy = dict(
+         n = 1,
+        temperature = 0.0,
+        max_tokens = 100,
+        seed = 42,
+    )
+)
 if __name__=="__main__":
     print("INTO-FILE")
 
@@ -152,23 +191,30 @@ if __name__=="__main__":
     args.saved_model_name = args.model_name + "_saved"
     args.model_name = "/data/hf_models/" + args.model_name
     
-
+    args.model_args ={
+        "tensor_parallel_size": 1, 
+        "gpu_memory_utilization": 0.98,
+        "swap_space": 12,
+        "max_model_len": 64000, 
+        "trust_remote_code": True, 
+    }
     set_seed(args)
 
     tokenizer= setup_tokenizer(args)
-    generate_kwargs = {
-        'max_new_tokens': 20,
-        'max_length': None,
-        'num_beams': 1,
-        'do_sample': False,
-        'temperature': None,
-        'top_p': None,
-        'top_k': None,
-        'pad_token_id': tokenizer.eos_token_id
-    }
+    # generate_kwargs = {
+    #     'max_new_tokens': 20,
+    #     'max_length': None,
+    #     'num_beams': 1,
+    #     'do_sample': False,
+    #     'temperature': None,
+    #     'top_p': None,
+    #     'top_k': None,
+    #     'pad_token_id': tokenizer.eos_token_id
+    # }
 
     data_config=Namespace(tokenizer=tokenizer,**vars(args))
-    generate_config=Namespace(tokenizer=tokenizer,generate_kwargs = generate_kwargs)
+    generate_config=Namespace(
+        sampling_params = SamplingParams(**inference_args['greedy']))
     
     task_info_list=[]
     for task in TASKS:
@@ -187,12 +233,8 @@ if __name__=="__main__":
 
 
     with BabilongManager(
-        tp_size=1/2,
-        gpu_list=[
-            # 0,
-                  1,
-                #   2,3,4,5,6,7
-                  ],
+        tp_size=1,
+        gpu_list=[2,3,4,5,6,7],
         
         task_info_list=task_info_list,
 

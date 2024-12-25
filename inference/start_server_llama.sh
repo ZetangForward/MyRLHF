@@ -1,7 +1,6 @@
 #!/bin/bash
 MODEL_NAME=$1
 
-
 for i in 0 1 2 3 4 5 6 7;do
     CUDA_VISIBLE_DEVICES=$i python -m vllm.entrypoints.openai.api_server \
         --model=${MODEL_NAME} \
