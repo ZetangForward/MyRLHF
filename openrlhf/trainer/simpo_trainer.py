@@ -157,14 +157,14 @@ class SimPOTrainer(ABC):
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
                     # zecheng_note: 这里是为了debug
-                    print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
-                    print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
-                    print(f"packed_seq_lens -> {packed_seq_lens}")
-                    print(f"prompt_id_lens -> {prompt_id_lens}")
-                    print(f"chosen_logps.shape -> {chosen_logps.shape}")
-                    print(f"rejected_logps.shape -> {rejected_logps.shape}")
-                    print(f"aux_loss -> {aux_loss}")
-                    print(f"nll_loss -> {nll_loss}")
+                    # print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
+                    # print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
+                    # print(f"packed_seq_lens -> {packed_seq_lens}")
+                    # print(f"prompt_id_lens -> {prompt_id_lens}")
+                    # print(f"chosen_logps.shape -> {chosen_logps.shape}")
+                    # print(f"rejected_logps.shape -> {rejected_logps.shape}")
+                    # print(f"aux_loss -> {aux_loss}")
+                    # print(f"nll_loss -> {nll_loss}")
 
                 # loss function
                 losses, chosen_reward, reject_reward = self.loss_fn(
@@ -179,7 +179,7 @@ class SimPOTrainer(ABC):
                     nll_loss = 0
 
                 loss = preference_loss + aux_loss * self.args.aux_loss_coef + nll_loss * self.args.nll_loss_coef
-                print(f"loss: {loss}")
+                # print(f"loss: {loss}")
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
@@ -309,13 +309,13 @@ class SimPOTrainer(ABC):
         )
         output = model(input_ids, attention_mask=att_masks, return_output=True)
         all_logits = output["logits"]
-        all_logps_sum, all_logps_mean = self._get_batch_logps(
-            all_logits, input_ids, att_masks, prompt_id_lens, average_log_prob=False
+        all_logps = self._get_batch_logps(
+            all_logits, input_ids, att_masks, prompt_id_lens, average_log_prob=True
         )
-        chosen_logps = all_logps_sum[: chosen_ids.shape[0]]
-        rejected_logps = all_logps_sum[chosen_ids.shape[0] :]
+        chosen_logps = all_logps[: chosen_ids.shape[0]]
+        rejected_logps = all_logps[chosen_ids.shape[0] :]
         aux_loss = output.aux_loss if "aux_loss" in output else []
-        return chosen_logps, rejected_logps, aux_loss, -all_logps_mean[: chosen_ids.shape[0]].mean()
+        return chosen_logps, rejected_logps, aux_loss, -all_logps[: chosen_ids.shape[0]].mean()
 
     def concatenated_inputs(self, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens):
         """Concatenate the chosen and rejected inputs into a single tensor.
@@ -367,7 +367,6 @@ class SimPOTrainer(ABC):
         Returns:
             A tensor of shape (batch_size,) containing the average/sum log probabilities of the given labels under the given logits.
         """
-        assert average_log_prob == False
         assert logits.shape[:-1] == labels.shape
 
         labels = labels[:, 1:].clone()
@@ -384,8 +383,9 @@ class SimPOTrainer(ABC):
         per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
 
         logprobs_sums = (per_token_logps * loss_masks).sum(-1)
-        logprobs_means = (per_token_logps * loss_masks).sum(-1) / loss_masks.sum(-1)
-        return logprobs_sums, logprobs_means
+        if average_log_prob:
+            return logprobs_sums / loss_masks.sum(-1) 
+        return logprobs_sums
 
     def packed_samples_forward(self, model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens):
         output = model(
@@ -396,18 +396,18 @@ class SimPOTrainer(ABC):
             packed_seq_lens=packed_seq_lens,
         )
         all_logits = output["logits"]
-        all_logps_sum, all_logps_mean = self._packed_get_batch_logps(
+        all_logps = self._packed_get_batch_logps(
             all_logits,
             packed_input_ids,
             packed_attention_masks,
             prompt_id_lens * 2,
             packed_seq_lens,
-            average_log_prob=False,
+            average_log_prob=True,
         )
-        chosen_logps = all_logps_sum[: len(packed_seq_lens) // 2]
-        rejected_logps = all_logps_sum[len(packed_seq_lens) // 2 :]
+        chosen_logps = all_logps[: len(packed_seq_lens) // 2]
+        rejected_logps = all_logps[len(packed_seq_lens) // 2 :]
         aux_loss = output.aux_loss if "aux_loss" in output else []
-        return chosen_logps, rejected_logps, aux_loss, -all_logps_mean[: len(packed_seq_lens) // 2].mean()
+        return chosen_logps, rejected_logps, aux_loss, -all_logps[: len(packed_seq_lens) // 2].mean()
 
     def _packed_get_batch_logps(
         self,
@@ -418,7 +418,6 @@ class SimPOTrainer(ABC):
         packed_seq_lens,
         average_log_prob: bool = False,
     ) -> torch.FloatTensor:
-        assert average_log_prob == False
 
         if self.strategy.ring_attn_group is None:
             assert logits.shape[:-1] == labels.shape
@@ -461,4 +460,6 @@ class SimPOTrainer(ABC):
             logprobs_means.append((seq * mask).sum() / mask.sum())
             index = index + seq_len
 
-        return torch.stack(logprobs_sums), torch.stack(logprobs_means)
+        if average_log_prob:
+            return torch.stack(logprobs_means)
+        return torch.stack(logprobs_sums), 
