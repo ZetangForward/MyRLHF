@@ -57,10 +57,6 @@ if __name__ == "__main__":
     parser.add_argument('--max_workers', type=int, default=2, help='max number of workers')
     
     args = parser.parse_args()
-    if args.max_position_embeddings == -1:
-        args.max_position_embeddings = None
-    if args.rope_theta == -1:
-        args.rope_theta = None
     
     world_size = torch.cuda.device_count()
     mp.set_start_method('spawn', force=True)

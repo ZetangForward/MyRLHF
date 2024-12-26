@@ -186,6 +186,7 @@ class SimPOTrainer(ABC):
                 acc = (chosen_reward > reject_reward).float().mean().item()
                 acc_mean = acc_mean * 0.9 + 0.1 * acc
                 loss_mean = loss_mean * 0.9 + 0.1 * preference_loss.item()
+                
                 # simpo logs
                 logs_dict = {
                     "loss": preference_loss.item(),
@@ -233,12 +234,14 @@ class SimPOTrainer(ABC):
         # eval
         if global_step % args.eval_steps == 0:
             self.evaluate(self.eval_dataloader, global_step)
+        
         # save ckpt
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
-            self.strategy.save_ckpt(
-                self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
-            )
+            # self.strategy.save_ckpt(
+            #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
+            # )
+            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
 
     def evaluate(self, eval_dataloader, steps=0):
         self.model.eval()
