@@ -66,6 +66,7 @@ class RewardDataset(Dataset):
         is_dpo=False,
         num_processors=8,
         multiple_of=1,
+        shuffle=True,
     ) -> None:
         super().__init__()
         self.is_dpo = is_dpo
@@ -95,6 +96,9 @@ class RewardDataset(Dataset):
         # Filter out None values if necessary
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 
+        if shuffle:
+            processed_dataset = processed_dataset.shuffle(seed=42)
+            
         # Store the processed data in class attributes
         self.prompts = processed_dataset["prompt"]
         self.chosens = processed_dataset["chosen"]

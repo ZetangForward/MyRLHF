@@ -70,7 +70,7 @@ setup(
         )
     ),
     description="A Ray-based High-performance RLHF framework.",
-    # install_requires=_fetch_requirements("requirements.txt"),
+    install_requires=_fetch_requirements("requirements.txt"),
     # extras_require={
     #     "vllm": ["vllm==0.4.2"],
     #     "vllm_latest": ["vllm>0.4.2"],

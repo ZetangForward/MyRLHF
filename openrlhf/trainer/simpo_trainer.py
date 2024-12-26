@@ -235,6 +235,7 @@ class SimPOTrainer(ABC):
         if global_step % args.eval_steps == 0:
             self.evaluate(self.eval_dataloader, global_step)
         
+        print(global_step)
         # save ckpt
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
@@ -465,4 +466,4 @@ class SimPOTrainer(ABC):
 
         if average_log_prob:
             return torch.stack(logprobs_means)
-        return torch.stack(logprobs_sums), 
+        return torch.stack(logprobs_sums)
