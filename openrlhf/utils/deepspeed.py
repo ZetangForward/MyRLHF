@@ -260,7 +260,6 @@ class DeepspeedStrategy(ABC):
         ds_config = get_eval_ds_config(offload=offload, stage=self.stage if self.stage == 3 else 0, bf16=self.bf16)
         ds_config["train_micro_batch_size_per_gpu"] = self.micro_train_batch_size
         ds_config["train_batch_size"] = self.train_batch_size
-
         return ds_config
 
     def moving_average(self, model, model_ema, beta=0.992, device="cpu"):

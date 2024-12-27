@@ -13,7 +13,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
    --save_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/simpo \
    --ckpt_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/simpo \
-   --save_steps 1 \
+   --save_steps 25 \
    --logging_steps 1 \
    --eval_steps 25 \
    --zero_stage 2 \
