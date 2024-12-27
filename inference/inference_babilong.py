@@ -16,10 +16,9 @@ BABILONG_SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning
 
 inference_args = dict(
     top_p = dict(
-        n = 1, 
         temperature = 0.7, 
         max_new_tokens = 100, 
-        seed = 42, 
+        do_sample = True, 
         top_p = 0.95,
     ),
     top_n = dict(
@@ -40,6 +39,8 @@ inference_args = dict(
 def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
     tasks = ['qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7']
     split_names = ['0k', '1k', '2k', '4k', '8k', '16k', '32k', '64k']
+    # tasks = ['qa2']
+    # split_names = ['64k']
     all_input_texts = []
 
     for task in tqdm(tasks, desc='tasks'):
@@ -68,12 +69,12 @@ def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
                     model_inputs = tokenizer.apply_chat_template(
                         [{'role': 'system', 'content': BABILONG_SYSTEM_PROMPT},
                         {'role': 'user', 'content': input_text}], 
-                        add_generation_prompt=True, tokenize=True
+                        add_generation_prompt=True, tokenize=True, return_tensors="pt"
                     )
                 else:
                     model_inputs = tokenizer.apply_chat_template(
                         [{'role': 'user', 'content': input_text}], 
-                        add_generation_prompt=True, tokenize=True
+                        add_generation_prompt=True, tokenize=True, return_tensors="pt"
                     )
                 all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name, 'question': question})
     return all_input_texts             
@@ -92,9 +93,9 @@ def worker(gpu_ids: str, adapter_path: str, prompts_chunk, model_path, inference
 
     results = []
     for i in trange(len(chunk_message)):
-        res = model.generate(chunk_message[i], **inference_args)
-        import ipdb; ipdb.set_trace()
-        pred_str = tokenizer.decode(res[len(chunk_message[i]):], skip_special_tokens=True)
+        inp = chunk_message[i].to(model.device)
+        res = model.generate(inp, **inference_args)
+        pred_str = tokenizer.decode(res[0, inp.size(-1):], skip_special_tokens=True)
         prompts_chunk[i].pop("message")
         prompts_chunk[i]["pred"] = pred_str
         results.append(prompts_chunk[i])
@@ -123,7 +124,7 @@ def main():
     
     input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
     
-    out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}.jsonl")
+    out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{os.path.basename(args.adapter_path)}.jsonl")
 
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
@@ -143,9 +144,7 @@ def main():
             tmp = list(range(i, i + args.tp_size))
             gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     
-    worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
-
-    exit()
+    # worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
 
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):

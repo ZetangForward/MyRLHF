@@ -6,7 +6,7 @@ import torch
 # model_path = "Qwen/Qwen2.5-7B-Instruct"  # 替换为模型的路径或名称
 # adapter_path = "/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Qwen2.5-7B-Instruct/simpo/global_step50"  # 替换为 PEFT adapter 的路径
 model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-adapter_path = "/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step1"
+adapter_path = "/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step125"
 save_path = "./"  # 替换为保存合并后模型的路径
 
 # 加载基础模型

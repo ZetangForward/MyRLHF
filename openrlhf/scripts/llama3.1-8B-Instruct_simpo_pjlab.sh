@@ -16,7 +16,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --save_steps 25 \
    --logging_steps 1 \
    --eval_steps 25 \
-   --zero_stage 3 \
+   --zero_stage 2 \
    --nll_loss_coef 0.1 \
    --max_ckpt_num 5 \
    --max_epochs 1 \
