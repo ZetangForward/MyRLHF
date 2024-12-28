@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from loguru import logger
 from modelzipper.tutils import *
 import itertools
+from peft import peft_model, PeftModelForCausalLM
 import numpy as np
 import datasets
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
     args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    args.adapter_path = "/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
     args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis/information_flow"
@@ -36,7 +38,7 @@ if __name__ == "__main__":
     golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
     tags = [l["tag"] for l in needles_and_stacks]
 
-    for context_length in [1900, 3900]:
+    for context_length in [1900, 3900, 5900]:
         for loss_type in ["ce", "label"]:
             args.context_length = context_length
             args.loss_type = loss_type
@@ -71,6 +73,10 @@ if __name__ == "__main__":
                         del model
                         torch.cuda.empty_cache()
                         model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
+                        if args.adapter_path:
+                            model = PeftModelForCausalLM.from_pretrained(model, args.adapter_path)
+                            model.merge_and_unload()
+                            
                         pbar.set_description(f"Processing depth {depth_percent}")
                         depth_tag = "-".join([str(i) for i in depth_percent])
                         model_name = args.model_path.split("/")[-1]
