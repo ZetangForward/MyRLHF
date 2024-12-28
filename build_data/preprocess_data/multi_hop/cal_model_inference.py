@@ -167,9 +167,9 @@ class Args:
             self.h20()
 
     def h20(self):
-        self.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-        self.dataset_path = "/data/zecheng/data/processed_multi_hop/filter_en"
-        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop"
+        self.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+        self.dataset_path = "/data/pub_data/processed_multi_hop/filter_en"
+        self.out_file_path = "/data/pub_data/processed_multi_hop/random_drop"
 
     def pjlab(self):
         self.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     
     extra_args = parser.parse_args()
 
-    args = Args("pjlab")
+    args = Args("h20")
     args.drop_num = extra_args.drop_num
     args.model_path = extra_args.model_path
     args.out_file_path = extra_args.out_file_path
