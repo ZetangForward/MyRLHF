@@ -69,10 +69,10 @@ def process_item(item, drop_num=1):
 
 def process_data_item(args):
     item, tokenizer, drop_num = args
-    prompt, full_evi_prompt, answer, selected_ids = process_item(item, drop_num)
+    partial_evi_prompt, full_evi_prompt, answer, selected_ids = process_item(item, drop_num)
 
     input_data = tokenizer.apply_chat_template(
-        [{"role": "user", "content": prompt}],
+        [{"role": "user", "content": partial_evi_prompt}],
         add_generation_prompt=True, tokenize=False,
     )
 
@@ -136,7 +136,6 @@ class Args:
         self.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
         self.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en"
         self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix"
-
 
 def main(args):
     for drop_num in [1, 2, 3]:
