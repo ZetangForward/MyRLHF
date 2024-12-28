@@ -197,7 +197,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct",  help="model name or path")
-    parser.add_argument('--out_file_path', type=str, default="/data/zecheng/data/processed_multi_hop/random_drop",  help="save path for inference results")
+    parser.add_argument('--out_file_path', type=str, default="/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix",  help="save path for inference results")
     parser.add_argument('--num_gpus', type=int, default=8,  help="number of gpus")
     
     extra_args = parser.parse_args()
