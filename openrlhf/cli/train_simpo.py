@@ -20,7 +20,6 @@ def train(args):
     strategy = get_strategy(args)
     strategy.setup_distributed()
 
-
     # configure tokenizer
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 

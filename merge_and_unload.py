@@ -33,7 +33,7 @@ if adapter_path:
     # 合并权重
     print("Merging model and PEFT adapter weights...")
     model = model.merge_and_unload()
-import ipdb; ipdb.set_trace()
+
 # 保存合并后的模型
 print(f"Saving merged model to {save_path}...")
 model.save_pretrained(save_path)

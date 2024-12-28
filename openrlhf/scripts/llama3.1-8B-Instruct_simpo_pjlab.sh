@@ -27,7 +27,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --num_processors 16 \
    --learning_rate 1e-6 \
    --flash_attn \
-   --learning_rate 5e-6 \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
