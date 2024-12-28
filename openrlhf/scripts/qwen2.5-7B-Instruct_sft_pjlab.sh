@@ -10,9 +10,9 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
    --apply_chat_template \
-   --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/sft \
-   --ckpt_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/sft \
+   --pretrain 'Qwen/Qwen2.5-7B-Instruct' \
+   --save_path ${SAVE_DIR}/merge_v1/Qwen2.5-7B-Instruct/sft \
+   --ckpt_path ${SAVE_DIR}/merge_v1/Qwen2.5-7B-Instruct/sft \
    --save_steps 50 \
    --logging_steps 1 \
    --eval_steps 50 \
@@ -29,4 +29,4 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project 'merge_v1' \
-   --wandb_run_name 'Llama-3.1-8B-Instruct-sft';
+   --wandb_run_name 'Qwen2.5-7B-Instruct-sft';

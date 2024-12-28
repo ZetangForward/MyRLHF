@@ -43,8 +43,6 @@ def train(args):
         multiple_of=args.ring_attn_size,
     )
 
-    import ipdb; ipdb.set_trace()
-
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
         train_dataset,
@@ -87,8 +85,6 @@ def train(args):
 
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
-
-    
 
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size
