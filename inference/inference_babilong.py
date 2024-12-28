@@ -123,8 +123,10 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
     input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
-    
-    out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{os.path.basename(args.adapter_path)}.jsonl")
+    if args.adapter_path:
+        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{os.path.basename(args.adapter_path)}.jsonl")
+    else:
+        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla.jsonl")
 
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num

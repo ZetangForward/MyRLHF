@@ -1,10 +1,9 @@
 import argparse
 import math
 import os
+from datasets import load_from_disk
 from datetime import datetime
-
 from transformers.trainer import get_scheduler
-
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import Actor
 from openrlhf.trainer import SFTTrainer
@@ -15,6 +14,50 @@ def train(args):
     # configure strategy
     strategy = get_strategy(args)
     strategy.setup_distributed()
+
+    # configure tokenizer
+    tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
+
+    # configure datasets
+    dataset = load_from_disk(args.dataset)
+    train_data, eval_data = dataset['train'], dataset['validation']
+
+    train_dataset = SFTDataset(
+        train_data,
+        tokenizer,
+        args.max_len,
+        strategy,
+        pretrain_mode=args.pretrain_mode,
+        input_template=args.input_template,
+        num_processors=args.num_processors,
+        multiple_of=args.ring_attn_size,
+    )
+    eval_dataset = SFTDataset(
+        eval_data,
+        tokenizer,
+        args.max_len,
+        strategy,
+        pretrain_mode=args.pretrain_mode,
+        input_template=args.input_template,
+        num_processors=args.num_processors,
+        multiple_of=args.ring_attn_size,
+    )
+
+    # prepare dataloader
+    train_dataloader = strategy.setup_dataloader(
+        train_dataset,
+        args.micro_train_batch_size,
+        True,
+        True,
+        train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
+    )
+    eval_dataloader = strategy.setup_dataloader(
+        eval_dataset,
+        args.micro_train_batch_size,
+        True,
+        False,
+        eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
+    )
 
     # configure model
     # load huggingface model
@@ -43,51 +86,6 @@ def train(args):
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
-    # prepare for data and dataset
-    train_data, eval_data = blending_datasets(
-        args.dataset,
-        args.dataset_probs,
-        strategy,
-        args.seed,
-        max_count=args.max_samples,
-        train_split=args.train_split,
-        eval_split=args.eval_split,
-    )
-    train_data = train_data.select(range(min(args.max_samples, len(train_data))))
-    eval_data = eval_data.select(range(min(args.max_samples, len(eval_data))))
-    train_dataset = SFTDataset(
-        train_data,
-        tokenizer,
-        args.max_len,
-        strategy,
-        pretrain_mode=args.pretrain_mode,
-        input_template=args.input_template,
-    )
-    eval_dataset = SFTDataset(
-        eval_data,
-        tokenizer,
-        args.max_len,
-        strategy,
-        pretrain_mode=args.pretrain_mode,
-        input_template=args.input_template,
-    )
-
-    # prepare dataloader
-    train_dataloader = strategy.setup_dataloader(
-        train_dataset,
-        args.micro_train_batch_size,
-        True,
-        True,
-        train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
-    )
-    eval_dataloader = strategy.setup_dataloader(
-        eval_dataset,
-        args.micro_train_batch_size,
-        True,
-        False,
-        eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
-    )
-
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size
     max_steps = math.ceil(args.max_epochs * num_update_steps_per_epoch)
@@ -95,7 +93,7 @@ def train(args):
     scheduler = get_scheduler(
         args.lr_scheduler,
         optim,
-        num_warmup_steps=math.ceil(max_steps * 0.03),
+        num_warmup_steps=math.ceil(max_steps * args.lr_warmup_ratio),
         num_training_steps=max_steps,
         scheduler_specific_kwargs={"min_lr": args.learning_rate * 0.1},
     )
@@ -158,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--adam_offload", action="store_true", default=False, help="Offload Adam Optimizer")
     parser.add_argument("--flash_attn", action="store_true", default=False, help="Enable FlashAttention2")
     parser.add_argument("--grad_accum_dtype", type=str, default=None, help="Adam grad accum data type")
-    parser.add_argument("--disable_trace_cache", action="store_true", default=False)
+    parser.add_argument("--overlap_comm", action="store_true", default=False)
     parser.add_argument("--gradient_checkpointing_use_reentrant", action="store_true", default=False)
     parser.add_argument("--disable_fast_tokenizer", action="store_true", default=False)
 
@@ -167,10 +165,22 @@ if __name__ == "__main__":
     parser.add_argument("--aux_loss_coef", type=float, default=0, help="MoE balancing loss")
     parser.add_argument("--pretrain", type=str, default=None)
     parser.add_argument("--learning_rate", type=float, default=5e-6)
+    parser.add_argument("--lr_warmup_ratio", type=float, default=0.03)
     parser.add_argument("--pretrain_mode", action="store_true", default=False, help="Use pretrain loss")
     parser.add_argument("--lr_scheduler", type=str, default="cosine_with_min_lr")
     parser.add_argument("--l2", type=float, default=0, help="weight decay loss")
     parser.add_argument("--adam_betas", type=float, nargs=2, default=(0.9, 0.95), help="Betas for Adam optimizer")
+
+    # ring-attention
+    parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")
+    parser.add_argument(
+        "--ring_head_stride",
+        type=int,
+        default=1,
+        help="the number of heads to do ring attention each time. "
+        "It should be a divisor of the number of heads. "
+        "A larger value may results in faster training but will consume more memory.",
+    )
 
     # LoRA
     parser.add_argument("--load_in_4bit", action="store_true", default=False)
@@ -197,6 +207,7 @@ if __name__ == "__main__":
     parser.add_argument("--tokenizer_chat_template", type=str, default=None)
     parser.add_argument("--max_samples", type=int, default=1e8, help="Max number of samples")
     parser.add_argument("--max_len", type=int, default=2048, help="Max tokens for the samples")
+    parser.add_argument("--num_processors", type=int, default=1, help="number of processors")
 
     # wandb parameters
     parser.add_argument("--use_wandb", type=str, default=None)
@@ -214,12 +225,22 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.input_template and not "{}" in args.input_template:
+    if args.input_template and "{}" not in args.input_template:
         print("[Warning] {} not in args.input_template, set to None")
         args.input_template = None
+
+    if args.input_template and "\\n" in args.input_template:
+        print(
+            "[Warning] input_template contains \\n chracters instead of newline. "
+            "You likely want to pass $'\\n' in Bash or \"`n\" in PowerShell."
+        )
 
     if args.packing_samples and not args.flash_attn:
         print("[Warning] Please --flash_attn to accelerate when --packing_samples is enabled.")
         args.flash_attn = True
+
+    # TODO: [packing samples]
+    if args.ring_attn_size > 1:
+        assert args.packing_samples, "packing_samples must be enabled when using ring attention"
 
     train(args)
