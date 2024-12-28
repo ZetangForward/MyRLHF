@@ -11,12 +11,12 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain 'Qwen/Qwen2.5-7B-Instruct' \
-   --save_path ${SAVE_DIR}/merge_v1/Qwen2.5-7B-Instruct/simpo \
-   --ckpt_path ${SAVE_DIR}/merge_v1/Qwen2.5-7B-Instruct/simpo \
-   --save_steps 25 \
+   --save_path ${SAVE_DIR}/merge_v1_fix/Qwen2.5-7B-Instruct/simpo \
+   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Qwen2.5-7B-Instruct/simpo \
+   --save_steps 50 \
    --logging_steps 1 \
    --nll_loss_coef 0.1 \
-   --eval_steps 25 \
+   --eval_steps 50 \
    --zero_stage 3 \
    --max_ckpt_num 5 \
    --max_epochs 2 \
@@ -30,6 +30,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project='merge_v1' \
+   --wandb_project='merge_v1_fix' \
    --wandb_run_name='Qwen2.5-7B-Instruct-SimPO-beta-2.5-gamma_beta_ratio-0.55-nll_loss_coef-0.1' \
    --ring_attn_size 4

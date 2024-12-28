@@ -82,22 +82,32 @@ def process_item(item, drop_num=1):
     selected_clues_docs = [item['clue_docs'][i] for i in selected_ids]
     selected_clue_pos = [item['clue_pos'][i] for i in selected_ids]
     concat_content = item['concat_content']
+    full_evi_concat_content = copy.deepcopy(concat_content)
+
+    # zecheng_note: 拼接所有evidence
+    for p, doc in zip(item['clue_pos'], item['clue_docs']):
+        full_evi_concat_content[p].append(doc['content'])
 
     # zecheng_note: 首先截断长度过长的结果
     for p, doc in zip(selected_clue_pos, selected_clues_docs):
         concat_content[p].append(doc['content'])
+
     concat_content = list(itertools.chain(*concat_content))
     concat_content_str = '\n'.join(concat_content)
+
+    full_evi_concat_content = list(itertools.chain(*full_evi_concat_content))
+    full_evi_concat_content_str = '\n'.join(full_evi_concat_content)
 
     question, answer = item['question'], item['answer']
     instruction_format = item['instruction_format']
     prompt = instruction_format.format(concat_content=concat_content_str, q=question)
-
-    return prompt, answer, selected_ids
+    full_evi_prompt = instruction_format.format(concat_content=full_evi_concat_content_str, q=question)
+    
+    return prompt, answer, selected_ids, full_evi_prompt
 
 def process_data_item(args):
     item, tokenizer, drop_num = args
-    prompt, answer, selected_ids = process_item(item, drop_num)
+    prompt, full_evi_prompt, answer, selected_ids = process_item(item, drop_num)
 
     input_data = tokenizer.apply_chat_template(
         [{"role": "user", "content": prompt}],
@@ -110,6 +120,7 @@ def process_data_item(args):
     meta_data.pop('answer')
     return {
         "prompt": prompt,
+        "ori_prompt": full_evi_prompt,
         "message": input_data,
         "answer": answer,
         "meta_data": meta_data, 
@@ -175,6 +186,7 @@ def main(args):
     logger.info(f"length of content {len(content)}, begin to preprocess")
     # content = content[:24]  # FIXME: debug
     input_queries = process_data(content, tokenizer, drop_num=args.drop_num, num_workers=64)
+    
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]

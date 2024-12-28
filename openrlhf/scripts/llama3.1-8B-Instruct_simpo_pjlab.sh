@@ -11,11 +11,11 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/simpo \
-   --ckpt_path ${SAVE_DIR}/merge_v1/Llama-3.1-8B-Instruct/simpo \
-   --save_steps 25 \
+   --save_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/simpo \
+   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/simpo \
+   --save_steps 50 \
    --logging_steps 1 \
-   --eval_steps 25 \
+   --eval_steps 50 \
    --zero_stage 2 \
    --nll_loss_coef 0.1 \
    --max_ckpt_num 5 \
@@ -30,6 +30,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project='merge_v1' \
+   --wandb_project='merge_v1_fix' \
    --wandb_run_name='Llama-3.1-8B-Instruct-SimPO-beta-10-gamma_beta_ratio-0.3-nll_loss_coef-0.1' \
    --ring_attn_size 4
