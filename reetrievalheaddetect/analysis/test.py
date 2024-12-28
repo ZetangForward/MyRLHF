@@ -379,9 +379,10 @@ def manager_decoractor(manager):
 
 
 class AttentionerManagerBase:
-    def __init__(self, model: PreTrainedModel, model_name: str):
+    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False):
         self.model = model
         self.model_name = model_name
+        self.with_adapter = with_adapter
         self.attention_adapters = self.register_attentioner_to_model()
         self.model.forward = manager_decoractor(self)(self.model.forward)
 
@@ -436,9 +437,8 @@ class AttentionerManagerBase:
 
 class AttentionerManager(AttentionerManagerBase):
     def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False):
-        super().__init__(model, model_name)
+        super().__init__(model, model_name, with_adapter)
         self.model_name = model_name
-        self.with_adapter = with_adapter
 
     def register_attentioner_to_model(self):
         attention_adapters = []
