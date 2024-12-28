@@ -6,6 +6,7 @@ from modelzipper.tutils import *
 import itertools
 import numpy as np
 import datasets
+from peft import peft_model, PeftModelForCausalLM
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logger.info(sys.path)
 from retrieval_head_detection import SentenceSampler
@@ -19,11 +20,12 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
-    args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.dataset_path = "/data/data/zecheng/data/pg19-test"
+    args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+    args.adapter_path = "/data/zecheng/repos/lcm_reason_adapter/llama/global_step325"
+    args.dataset_path = "/data/pub_data/pg19-test"
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_single.jsonl"
     args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow"
-    args.selected_idx = [4,5]
+    args.selected_idx = [0,1,2,3]
     args.loss_type = "ce"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
@@ -69,9 +71,13 @@ if __name__ == "__main__":
                         del model
                         torch.cuda.empty_cache()
                         model = AutoModelForCausalLM.from_pretrained(args.model_path, device_map='auto', torch_dtype=torch.bfloat16, attn_implementation="eager")
+                        if args.adapter_path:
+                            model = PeftModelForCausalLM.from_pretrained(model, args.adapter_path)
+                            model.merge_and_unload()
+                        
                         pbar.set_description(f"Processing depth {depth_percent}")
                         depth_tag = "-".join([str(i) for i in depth_percent])
                         model_name = args.model_path.split("/")[-1]
                         save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_{depth_tag}"
-                        begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
+                        begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter= True if args.adapter_path else False)
                         pbar.update(1)

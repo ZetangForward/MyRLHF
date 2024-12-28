@@ -435,12 +435,18 @@ class AttentionerManagerBase:
 
 
 class AttentionerManager(AttentionerManagerBase):
-    def __init__(self, model: PreTrainedModel, model_name: str):
+    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False):
         super().__init__(model, model_name)
         self.model_name = model_name
+        self.with_adapter = with_adapter
+
     def register_attentioner_to_model(self):
         attention_adapters = []
-        for i, layer in enumerate(self.model.model.layers):
+        if self.with_adapter:
+            layer_module = self.model.base_model.model.model.layers
+        else:
+            layer_module = self.model.model.layers
+        for i, layer in enumerate(layer_module):
             attention_adapter = AttentionAdapter()
             if "llama" in self.model_name.lower() or "tulu" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_llama, layer.self_attn, attention_adapter=attention_adapter)
@@ -556,11 +562,11 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True, with_adapter=False):
     """
     zecheng_note: 这里计算的是language modeling loss
     """
-    attentionermanger = AttentionerManager(model, model_name)
+    attentionermanger = AttentionerManager(model, model_name, with_adapter=with_adapter)
     attentionermanger.zero_grad()
 
     output = model(input)
@@ -586,7 +592,7 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     return pros_dict
 
 
-def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name):
+def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter=False):
 
     depth_percent = [i / 10 for i in depth_percent]
     updated_sample = [[] for _ in range(len(background_text) + 1)]
@@ -631,11 +637,11 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     if args.loss_type == "label":
         label = torch.full(inp.shape, -100).to(model.device)
         label[0, target_pos] = inp[0, target_pos]
-        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, target_pos-1, model_name, tokenizer)
+        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, target_pos-1, model_name, tokenizer, with_adapter=with_adapter)
     
     elif args.loss_type == "ce":
          # shift to left before the label token
-        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, target_pos-1, model_name, tokenizer)
+        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, target_pos-1, model_name, tokenizer, with_adapter=with_adapter)
 
     flow_res["pred_res"] = pred_res
     flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0

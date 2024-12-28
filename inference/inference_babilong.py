@@ -82,7 +82,7 @@ def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
 
 def worker(gpu_ids: str, adapter_path: str, prompts_chunk, model_path, inference_args, return_list):
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
-    model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.bfloat16, use_flash_attention_2="flash_attention_2",trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto", torch_dtype=torch.bfloat16, use_flash_attention_2="flash_attention_2", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
     if adapter_path:
         model = PeftModelForCausalLM.from_pretrained(model, adapter_path)
