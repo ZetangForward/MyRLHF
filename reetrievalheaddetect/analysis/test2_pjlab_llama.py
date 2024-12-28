@@ -75,10 +75,13 @@ if __name__ == "__main__":
                         if args.adapter_path:
                             model = PeftModelForCausalLM.from_pretrained(model, args.adapter_path)
                             model.merge_and_unload()
-                            
+
                         pbar.set_description(f"Processing depth {depth_percent}")
                         depth_tag = "-".join([str(i) for i in depth_percent])
                         model_name = args.model_path.split("/")[-1]
-                        save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_{depth_tag}"
-                        begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name)
+                        if args.adapter_path:
+                            save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_{depth_tag}_adapter"
+                        else:
+                            save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_{depth_tag}"
+                        begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter= True if args.adapter_path else False)
                         pbar.update(1)
