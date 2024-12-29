@@ -5,7 +5,7 @@ SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_simpo.py \
    --max_len 96000 \
-   --dataset '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix/train_data/merge_v1_drop_1_evi' \
+   --dataset '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop/train_qwen_data/merge_v1' \
    --train_batch_size 64 \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
