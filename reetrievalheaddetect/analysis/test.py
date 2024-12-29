@@ -11,7 +11,6 @@ import datasets
 from functools import wraps, partial
 from transformers.cache_utils import Cache
 from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv
-from baukit import Trace
 import numpy as np
 from transformers import PreTrainedModel
 import itertools

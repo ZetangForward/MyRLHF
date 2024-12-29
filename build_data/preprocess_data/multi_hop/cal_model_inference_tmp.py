@@ -138,7 +138,7 @@ class Args:
         self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix"
 
 def main(args):
-    for drop_num in [1, 2]:
+    for drop_num in [3]:
         tokenizer = AutoTokenizer.from_pretrained(args.model_path)
         all_file_names = auto_read_dir(args.dataset_path)
         content = []
