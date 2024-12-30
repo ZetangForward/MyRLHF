@@ -42,7 +42,7 @@ class SimPOTrainer(ABC):
         gamma_beta_ratio: float = 0.5,
         sft_weight: float = 0.1,
         max_epochs: int = 2,
-        aux_clue_loss: float = 0.0
+        aux_ctx_weight: float = 0.0
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -55,14 +55,13 @@ class SimPOTrainer(ABC):
         self.optimizer = optim
         self.tokenizer = tokenizer
         self.args = strategy.args
-        self.aux_clue_loss = aux_clue_loss
         
         # simpo hyperparameters
         self.beta = beta
         self.gamma_beta_ratio = gamma_beta_ratio
         self.sft_weight = sft_weight
 
-        self.loss_fn = SimPOLoss(self.beta, torch.cuda.current_device(), self.args.label_smoothing, self.args.gamma_beta_ratio)
+        self.loss_fn = SimPOLoss(self.beta, torch.cuda.current_device(), self.args.label_smoothing, self.args.gamma_beta_ratio, aux_ctx_weight=aux_ctx_weight)
 
         # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
