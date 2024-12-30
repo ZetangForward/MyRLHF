@@ -1,49 +1,33 @@
-import math
-from abc import ABC
 import os
-import wandb
+from abc import ABC
+
 import torch
-from torch import nn
+import torch.distributed as dist
+from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
-from tqdm import tqdm
-from transformers.trainer import get_scheduler
 from torch.nn import functional as F
-from openrlhf.datasets import SFTDataset
+from tqdm import tqdm
+
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
-from flash_attn.utils.distributed import all_gather, all_reduce
-import torch.distributed as dist
-
-class GPTLMLoss(nn.Module):
-    """
-    GPT Language Model Loss
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.IGNORE_INDEX = -100
-        self.loss = nn.CrossEntropyLoss(ignore_index=self.IGNORE_INDEX)
-
-    def forward(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-        shift_logits = logits[..., :-1, :].contiguous()
-        shift_labels = labels[..., 1:].contiguous()
-        # Flatten the tokens
-        return self.loss(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
 
 
 class SFTTrainer(ABC):
     """
-        Trainer to use while training reward model.
+    Trainer for supervised fine-tuning (SFT).
 
     Args:
-        model (torch.nn.Module): the model to train
-        strategy (Strategy): the strategy to use for training
-        optim(Optimizer): the optimizer to use for training
-        train_dataset (RewardDataset): the dataset to use for training
-        eval_dataset (RewardDataset): the dataset to use for evaluation
-        batch_size (int, defaults to 1): the batch size while training
-        max_epochs (int, defaults to 2): the number of epochs to train
-        optim_kwargs (dict, defaults to {'lr':1e-4}): the kwargs to use while initializing optimizer
+        model (torch.nn.Module): The model to be trained.
+        strategy (Strategy): The training strategy to be applied.
+        optim (Optimizer): The optimizer for model training.
+        train_dataloader (DataLoader): The dataloader for the training dataset.
+        eval_dataloader (DataLoader): The dataloader for the evaluation dataset.
+        scheduler (Scheduler): The learning rate scheduler to adjust training rates.
+        max_norm (float, defaults to 1): Maximum gradient norm for clipping to prevent exploding gradients.
+        pretrain_mode (bool, defaults to False): Flag to indicate if the trainer is in pre-training mode.
+        batch_size (int, defaults to 1): Batch size for training.
+        max_epochs (int, defaults to 2): The maximum number of training epochs.
+        tokenizer (Tokenizer, optional): The tokenizer for processing input data.
     """
 
     def __init__(
@@ -73,7 +57,10 @@ class SFTTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
-        self.loss_fn = GPTLMLoss()
+
+        self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
+
+        # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
 
         # packing samples
@@ -83,6 +70,8 @@ class SFTTrainer(ABC):
         self._wandb = None
         self._tensorboard = None
         if self.strategy.args.use_wandb and self.strategy.is_rank_0():
+            import wandb
+
             self._wandb = wandb
             if not wandb.api.api_key:
                 wandb.login(key=strategy.args.use_wandb)
@@ -111,7 +100,7 @@ class SFTTrainer(ABC):
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
         if args.eval_steps == -1:
-            args.eval_steps = 10000000  # Evaluate once per epoch
+            args.eval_steps = num_update_steps_per_epoch  # Evaluate once per epoch
         if args.save_steps == -1:
             args.save_steps = float("inf")  # do not save ckpt
 
@@ -125,9 +114,6 @@ class SFTTrainer(ABC):
             desc="Train epoch",
             disable=not self.strategy.is_rank_0(),
         )
-
-        rank = self.strategy.ring_attn_rank
-
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -143,111 +129,71 @@ class SFTTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
-            accumulated_loss = 0
-            accumulated_gpt_loss = 0
-            accumulated_aux_loss = 0
-            
-            for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in self.train_dataloader:
+            for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
-                
-                # create labels
-                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
-                
-                if not self.pretrain_mode:
-                    if self.packing_samples:
-                        index = 0
-                        for input_length, source_len in zip(infos["input_length"], prompts_id_lens):
-                            labels[0][index: index + source_len] = self.loss_fn.IGNORE_INDEX
-                            index += input_length
-                    else:
-                        for label, source_len in zip(labels, prompts_id_lens):
-                            label[:source_len] = self.loss_fn.IGNORE_INDEX
-                
-                if self.strategy.ring_attn_size == 1: # vanilla sft training
+
+                if self.strategy.ring_attn_group is None:
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                    gpt_loss = self.loss_fn(output.logits, labels)
                 else:
-                    assert self.packing_samples, "Ring attention only works with packing samples"
-                    num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
-                    
-                    local_logits = self.model(
-                        inputs,
-                        attention_mask=attention_mask,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=packed_seq_lens, 
+                    output = self.model(
+                        inputs, 
+                        attention_mask=attention_mask, 
                         return_output=True,
-                    )["logits"]
-                    
-                    total_seq_len = labels.numel()
-                    local_seq_len = total_seq_len // self.strategy.ring_attn_size
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=infos["input_length"],
+                    )
 
-                    ########################### loss computation ###########################
-                    # global labels                     [0,1,2,3,4,5]
-                    # global masks                      [0,0,0,0,1,1]  # only compute SFT loss on [4, 5]
-                    # shifted labels                    [1,2,3,4,5,0]
-                    # global masks (shifted)            [0,0,0,1,1,0]  # only compute SFT loss on [4, 5]
-                    # local labels (ring_attn_size=2)   [[1,2,3], [4,5,0]]
-                    # local masks  (ring_attn_size=2)   [[0,0,0], [1,1,0]]
-                    ########################### loss computation ###########################
-
-                    local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    local_label = labels[:, local_slice]
-                    if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
-                        local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                    
-                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)
-                    
-                    # convert -100 in local_label into 0 for `torch.gather` operation
-                    local_label[local_mask] = 0
-                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
-                    per_token_logps = per_token_logps * (~local_mask)
-
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
-                    gpt_loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
-                    gpt_loss = gpt_loss / self.strategy.accumulated_gradient
-                
+                # loss function
+                labels = torch.where(
+                    attention_mask.bool(),
+                    inputs,
+                    self.loss_fn.IGNORE_INDEX,
+                )
                 # mixtral
                 if self.aux_loss:
                     aux_loss = output.aux_loss
                 else:
                     aux_loss = 0
 
-                accumulated_loss += gpt_loss
-                accumulated_gpt_loss += gpt_loss.item()
-                if self.aux_loss:
-                    accumulated_aux_loss += aux_loss.item()
-                
+                if not self.pretrain_mode:
+                    if self.packing_samples:
+                        index = 0
+                        for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                            labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                            index += input_length
+                    else:
+                        for label, source_len in zip(labels, prompt_id_lens):
+                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+
+                gpt_loss = self.loss_fn(output.logits, labels)
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
-                
+
+                loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
+                logs_dict = {
+                    "gpt_loss": gpt_loss.item(),
+                    "loss_mean": loss_mean,
+                    "lr": self.scheduler.get_last_lr()[0],
+                }
+                if self.aux_loss:
+                    logs_dict["aux_loss"] = aux_loss.item()
+                # step bar
+                logs_dict = self.strategy.all_reduce(logs_dict)
+                step_bar.set_postfix(logs_dict)
                 step_bar.update()
-                torch.cuda.empty_cache()
+
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
                     global_step = step // self.strategy.accumulated_gradient
-                    loss_mean = loss_mean * 0.9 + 0.1 * accumulated_gpt_loss
-                    logs_dict = {
-                        "gpt_loss": accumulated_gpt_loss,
-                        "loss_mean": loss_mean,
-                        "lr": self.scheduler.get_last_lr()[0],
-                    }
-                    if self.aux_loss:
-                        logs_dict["aux_loss"] = accumulated_aux_loss
-                    logs_dict = self.strategy.all_reduce(logs_dict)
-                    step_bar.set_postfix(logs_dict)
-                    
-                    accumulated_loss = 0
-                    accumulated_gpt_loss = 0
-                    accumulated_aux_loss = 0
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-                    
+
                 step += 1
 
             epoch_bar.update()
@@ -271,18 +217,16 @@ class SFTTrainer(ABC):
 
         # eval
         if global_step % args.eval_steps == 0:
-            self.evaluate(self.eval_dataloader, global_step)
+            # do eval when len(dataloader) > 0, avoid zero division in eval.
+            if len(self.eval_dataloader) > 0:
+                self.evaluate(self.eval_dataloader, global_step)
         # save ckpt
         # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
-        # print(f"check save states ---> global_step: {global_step}, save_steps: {args.save_steps}")
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
-            # print(f"check eval states ---> global_step: {global_step}, save_steps: {args.save_steps}, tag: {tag}")
-            self.strategy.save_model(self.model.model, self.tokenizer, os.path.join(args.save_path, tag))
-            # self.strategy.save_ckpt(
-            #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
-            # )
-
+            self.strategy.save_ckpt(
+                self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
+            )
 
     def evaluate(self, eval_dataloader, steps=0):
         times = 0
@@ -295,7 +239,7 @@ class SFTTrainer(ABC):
                 disable=not self.strategy.is_rank_0(),
             )
 
-            for prompts_id_lens, inputs, attention_masks, packed_seq_lens, infos in eval_dataloader:
+            for prompt_id_lens, inputs, attention_masks, infos in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
@@ -303,48 +247,35 @@ class SFTTrainer(ABC):
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                # create labels
-                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+                if self.strategy.ring_attn_group is None:
+                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
+                else:
+                    output = self.model(
+                        inputs, 
+                        attention_mask=attention_mask, 
+                        return_output=True,
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=infos["input_length"],
+                    )
+                    
+                # loss function
+                labels = torch.where(
+                    attention_mask.bool(),
+                    inputs,
+                    self.loss_fn.IGNORE_INDEX,
+                )
 
                 if not self.pretrain_mode:
                     if self.packing_samples:
                         index = 0
-                        for input_length, source_len in zip(infos["input_length"], prompts_id_lens):
-                            labels[0][index: index + source_len] = self.loss_fn.IGNORE_INDEX
+                        for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                            labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
                             index += input_length
                     else:
-                        for label, source_len in zip(labels, prompts_id_lens):
+                        for label, source_len in zip(labels, prompt_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
-                if self.strategy.ring_attn_size == 1: # vanilla sft training
-                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                    loss = self.loss_fn(output.logits, labels)
-                else:
-                    assert self.packing_samples, "Ring attention only works with packing samples"
-                    num_calculate_tokens = labels.ne(self.loss_fn.IGNORE_INDEX).sum().item()
-
-                    local_logits = self.model(
-                        inputs,
-                        attention_mask=attention_mask,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=packed_seq_lens, 
-                        return_output=True,
-                    )["logits"]
-
-                    total_seq_len = labels.numel()
-                    local_seq_len = total_seq_len // self.strategy.ring_attn_size
-
-                    local_slice = slice(rank * local_seq_len + 1, (rank + 1) * local_seq_len + 1)
-                    local_label = labels[:, local_slice]
-                    if rank == self.strategy.ring_attn_size - 1: # add a dummy label to the last logit
-                        local_label = F.pad(local_label, (0, 1), value=self.loss_fn.IGNORE_INDEX)
-                    
-                    local_mask = (local_label == self.loss_fn.IGNORE_INDEX)
-                    local_label[local_mask] = 0
-                    per_token_logps = torch.gather(local_logits.log_softmax(-1), dim=2, index=local_label.unsqueeze(2)).squeeze(2)
-                    per_token_logps = per_token_logps * (~local_mask)
-                    gathered_logps = all_gather(per_token_logps, self.strategy.ring_attn_group) 
-                    loss = -torch.sum(gathered_logps) / num_calculate_tokens # compute loss on non-masked tokens
+                loss = self.loss_fn(output.logits, labels)
 
                 times += 1
                 loss_sum += loss.item()
@@ -360,5 +291,4 @@ class SFTTrainer(ABC):
                 elif self._tensorboard is not None:
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
-
         self.model.train()  # reset model state
