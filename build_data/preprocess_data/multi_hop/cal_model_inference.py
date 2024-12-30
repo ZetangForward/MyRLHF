@@ -107,21 +107,21 @@ def process_data(content, tokenizer, drop_num=1, num_workers=24):
 class Args:
     def __init__(self, platform):
         self.model_args = {
-            "tensor_parallel_size": 1, 
+            "tensor_parallel_size": 2, 
             "gpu_memory_utilization": 0.98,
             "swap_space": 12,
-            "max_model_len": 96000, 
+            "max_model_len": 128000, 
             "trust_remote_code": True, 
         }
         self.inference_args = dict(
             n = 1, 
             temperature = 0.7, 
-            max_tokens = 256, 
+            max_tokens = 512, 
             seed = 42, 
             top_p = 0.95,
         )
         self.num_gpus = 8
-        self.tp_size = 1
+        self.tp_size = 2
         self.drop_num = 1
 
         if platform == 'pjlab':
@@ -130,9 +130,9 @@ class Args:
             self.h20()
 
     def h20(self):
-        self.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-        self.dataset_path = "/data/zecheng/data/processed_multi_hop/filter_en"
-        self.out_file_path = "/data/zecheng/data/processed_multi_hop/random_drop_fix"
+        self.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+        self.dataset_path = "/data/pub_data/processed_multi_hop/filter_en_for_eval"
+        self.out_file_path = "/data/pub_data/processed_multi_hop/random_drop"
 
     def pjlab(self):
         self.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
@@ -148,7 +148,7 @@ def main(args):
             content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
         logger.info(f"length of content {len(content)}, begin to preprocess")
         # content = content[:24]  # FIXME: debug
-        input_queries = process_data(content, tokenizer, drop_num=drop_num, num_workers=16)
+        input_queries = process_data(content, tokenizer, drop_num=drop_num, num_workers=64)
         
         chunk_num = args.num_gpus // args.tp_size
         chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
@@ -203,9 +203,9 @@ if __name__ == "__main__":
     
     extra_args = parser.parse_args()
 
-    args = Args("pjlab")
-    args.model_path = extra_args.model_path
-    args.out_file_path = extra_args.out_file_path
+    args = Args("h20")
+    # args.model_path = extra_args.model_path
+    # args.out_file_path = extra_args.out_file_path
     args.num_gpus = extra_args.num_gpus
     main(args)
     
