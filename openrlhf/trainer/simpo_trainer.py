@@ -497,8 +497,8 @@ class SimPOTrainer(ABC):
                 seg_logprobs_means = []
                 for seg_pos in seg_poss:
                     st, ed = seg_pos 
-                    seg_logprobs_means.append(seq[st: ed])
-                clue_logprobs_means.append(sum(seg_logprobs_means) / len(seg_poss))
+                    seg_logprobs_means.append(seq[st: ed].sum() / (ed - st))
+                clue_logprobs_means.append(sum(seg_logprobs_means) / len(seg_logprobs_means))
         
         if average_log_prob:
             return torch.stack(logprobs_means)
