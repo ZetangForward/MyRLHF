@@ -95,7 +95,7 @@ class RewardDataset(Dataset):
         )
 
         # Filter out None values if necessary
-        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
+        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None, cache_file_name=None)
 
         if shuffle:
             processed_dataset = processed_dataset.shuffle(seed=42)
