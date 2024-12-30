@@ -16,6 +16,7 @@ import random
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 
+
 def worker(gpu_ids: str, prompts_chunk, model_path, model_args, inference_args, return_list):
     os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
 
@@ -66,6 +67,7 @@ def process_item(item, drop_num=1):
     full_evi_prompt = instruction_format.format(concat_content=full_evi_concat_content_str, q=question)
     
     return prompt, full_evi_prompt, answer, selected_ids
+
 
 def process_data_item(args):
     item, tokenizer, drop_num = args

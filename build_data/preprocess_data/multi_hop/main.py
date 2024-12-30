@@ -89,11 +89,11 @@ def process_longmit_datasets(
             if cnt >= total_num:
                 break
 
-            if cnt % 1000 == 0:
+            if cnt % 2000 == 0:
                 logger.info(f"already having {cnt} samples")
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
-                auto_save_data(qa_pairs, os.path.join(save_dir, f'train_processed_en_snap_{cnt//1000}.pkl'))
+                auto_save_data(qa_pairs, os.path.join(save_dir, f'train_processed_en_snap_{cnt//2000}.pkl'))
                 qa_pairs.clear()
 
 
@@ -102,9 +102,9 @@ if __name__ == "__main__":
     # dataset_path = "/data/zecheng/data/LongMIT-128K"
     # save_path = "/data/zecheng/data/processed_multi_hop"
 
-    model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-    dataset_path = "donmaclean/LongMIT-128K"
-    save_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/filter_en_drop_2"
+    model_path = "/nvme/big_models/Llama-3.3-70B-Instruct"
+    dataset_path = "/data/pub_data/LongMIT-128K"
+    save_path = "/data/pub_data/processed_multi_hop/filter_en_for_eval"
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    process_longmit_datasets(dataset_name=dataset_path, save_dir=save_path, tokenizer=tokenizer, total_num=8000)
+    process_longmit_datasets(dataset_name=dataset_path, length=16000, max_length=96000, save_dir=save_path, tokenizer=tokenizer, total_num=32000)
