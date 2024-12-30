@@ -42,6 +42,7 @@ class SimPOTrainer(ABC):
         gamma_beta_ratio: float = 0.5,
         sft_weight: float = 0.1,
         max_epochs: int = 2,
+        aux_ctx_weight: float = 0.0
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -60,7 +61,7 @@ class SimPOTrainer(ABC):
         self.gamma_beta_ratio = gamma_beta_ratio
         self.sft_weight = sft_weight
 
-        self.loss_fn = SimPOLoss(self.beta, torch.cuda.current_device(), self.args.label_smoothing, self.args.gamma_beta_ratio)
+        self.loss_fn = SimPOLoss(self.beta, torch.cuda.current_device(), self.args.label_smoothing, self.args.gamma_beta_ratio, aux_ctx_weight=aux_ctx_weight)
 
         # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
@@ -135,6 +136,7 @@ class SimPOTrainer(ABC):
             
             acc_mean = 0
             loss_mean = 0
+            ctx_acc_mean = 0
             # train
             for data in self.train_dataloader:
                 if not self.packing_samples:
@@ -150,11 +152,11 @@ class SimPOTrainer(ABC):
                     )
 
                 else:
-                    packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens = data
+                    packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss = data
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
                     packed_attention_masks = packed_attention_masks.to(torch.cuda.current_device())
-                    chosen_logps, rejected_logps, aux_loss, nll_loss = self.packed_samples_forward(
-                        self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
+                    chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, nll_loss = self.packed_samples_forward(
+                        self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss
                     )
                     # zecheng_note: 这里是为了debug
                     # print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
@@ -167,10 +169,11 @@ class SimPOTrainer(ABC):
                     # print(f"nll_loss -> {nll_loss}")
 
                 # loss function
-                losses, chosen_reward, reject_reward = self.loss_fn(
-                    chosen_logps, rejected_logps
+                losses, chosen_reward, reject_reward, chosen_ctx_reward, rejected_ctx_reward = self.loss_fn(
+                    chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps,
                 )
                 preference_loss = losses.mean()
+
                 # mixtral
                 if not self.aux_loss:
                     aux_loss = 0
@@ -184,6 +187,11 @@ class SimPOTrainer(ABC):
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
                 acc = (chosen_reward > reject_reward).float().mean().item()
+                if chosen_ctx_reward and rejected_ctx_reward:
+                    ctx_acc = (chosen_ctx_reward > rejected_ctx_reward).float().mean().item()
+                    ctx_acc_mean = ctx_acc_mean * 0.9 + 0.1 * ctx_acc
+                else: 
+                    ctx_acc = 0
                 acc_mean = acc_mean * 0.9 + 0.1 * acc
                 loss_mean = loss_mean * 0.9 + 0.1 * preference_loss.item()
                 
@@ -191,8 +199,12 @@ class SimPOTrainer(ABC):
                 logs_dict = {
                     "loss": preference_loss.item(),
                     "acc": acc,
+                    "ctx_acc": ctx_acc,
+                    "ctx_acc_mean": ctx_acc_mean,
                     "chosen_reward": chosen_reward.mean().item(),
                     "reject_reward": reject_reward.mean().item(),
+                    "chosen_ctx_reward": chosen_ctx_reward.mean().item() if chosen_ctx_reward else 0,
+                    "rejected_ctx_reward": rejected_ctx_reward.mean().item() if rejected_ctx_reward else 0,
                     "loss_mean": loss_mean,
                     "acc_mean": acc_mean,
                     "lr": self.scheduler.get_last_lr()[0],
@@ -252,6 +264,7 @@ class SimPOTrainer(ABC):
                 disable=not self.strategy.is_rank_0(),
             )
             acc_sum = 0
+            ctx_acc_sum = 0
             loss_sum = 0
             times = 0
             for data in eval_dataloader:
@@ -274,14 +287,16 @@ class SimPOTrainer(ABC):
                     packed_input_ids, packed_attention_masks = packed_input_ids.to(
                         torch.cuda.current_device()
                     ), packed_attention_masks.to(torch.cuda.current_device())
-                    chosen_logps, rejected_logps, aux_loss, _ = self.packed_samples_forward(
+                    chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, _ = self.packed_samples_forward(
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
                     )
 
-                preference_loss, chosen_reward, reject_reward = self.loss_fn(
-                    chosen_logps, rejected_logps
+                preference_loss, chosen_reward, reject_reward, chosen_ctx_reward, rejected_ctx_reward = self.loss_fn(
+                    chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps,
                 )
                 acc_sum += (chosen_reward > reject_reward).float().mean().item()
+                if chosen_ctx_reward and rejected_ctx_reward:
+                    ctx_acc_sum += (chosen_ctx_reward > rejected_ctx_reward).float().mean().item()
                 loss_sum += preference_loss.item()
                 times += 1
                 step_bar.update()
@@ -289,6 +304,7 @@ class SimPOTrainer(ABC):
             logs = {
                 "eval_loss": loss_sum / times,
                 "acc_mean": acc_sum / times,
+                "ctx_acc_mean": ctx_acc_sum / times,
             }
             logs = self.strategy.all_reduce(logs)
             step_bar.set_postfix(logs)
@@ -390,7 +406,7 @@ class SimPOTrainer(ABC):
             return logprobs_sums / loss_masks.sum(-1) 
         return logprobs_sums
 
-    def packed_samples_forward(self, model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens):
+    def packed_samples_forward(self, model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss=None):
         output = model(
             packed_input_ids,
             attention_mask=packed_attention_masks,
@@ -399,18 +415,29 @@ class SimPOTrainer(ABC):
             packed_seq_lens=packed_seq_lens,
         )
         all_logits = output["logits"]
-        all_logps = self._packed_get_batch_logps(
+        all_logps, clue_logps = self._packed_get_batch_logps(  # 如果seg_poss 是 None的话，clue_logps = []
             all_logits,
             packed_input_ids,
             packed_attention_masks,
             prompt_id_lens * 2,
             packed_seq_lens,
             average_log_prob=True,
+            seg_poss=seg_poss,
         )
         chosen_logps = all_logps[: len(packed_seq_lens) // 2]
         rejected_logps = all_logps[len(packed_seq_lens) // 2 :]
+        if len(clue_logps) > 0:
+            chosen_clue_logps, rejected_clue_logps = clue_logps[0], clue_logps[1]
+        else:
+            chosen_clue_logps, rejected_clue_logps = None, None
         aux_loss = output.aux_loss if "aux_loss" in output else []
-        return chosen_logps, rejected_logps, aux_loss, -all_logps[: len(packed_seq_lens) // 2].mean()
+        
+        return (
+            chosen_logps, rejected_logps, 
+            chosen_clue_logps, rejected_clue_logps, 
+            aux_loss, -all_logps[: len(packed_seq_lens) // 2].mean()
+        )
+            
 
     def _packed_get_batch_logps(
         self,
@@ -420,6 +447,7 @@ class SimPOTrainer(ABC):
         prompt_id_lens,
         packed_seq_lens,
         average_log_prob: bool = False,
+        seg_poss: List = None,
     ) -> torch.FloatTensor:
 
         if self.strategy.ring_attn_group is None:
@@ -455,6 +483,7 @@ class SimPOTrainer(ABC):
 
         logprobs_sums = []
         logprobs_means = []
+        clue_logprobs_means = []
         index = 0
         for i, seq_len in enumerate(packed_seq_lens):
             seq = per_token_logps[0, index : index + seq_len - 1]
@@ -463,6 +492,13 @@ class SimPOTrainer(ABC):
             logprobs_means.append((seq * mask).sum() / mask.sum())
             index = index + seq_len
 
+            if seg_poss is not None:  # 在计算完结果的loss之后，再对中间的evidence进行计算
+                seg_logprobs_means = []
+                for seg_pos in seg_poss:
+                    st, ed = seg_pos 
+                    seg_logprobs_means.append(seq[st: ed].sum() / (ed - st))
+                clue_logprobs_means.append(sum(seg_logprobs_means) / len(seg_logprobs_means))
+        
         if average_log_prob:
             return torch.stack(logprobs_means)
-        return torch.stack(logprobs_sums)
+        return torch.stack(logprobs_sums), clue_logprobs_means

@@ -15,17 +15,17 @@ def preprocess_data(
     rejected_key="rejected",
     apply_chat_template=None,
     is_dpo=False,
+    meta_key="meta_info",
 ) -> str:
     if apply_chat_template:
         if prompt_key:
             prompt = apply_chat_template(data[prompt_key], tokenize=False, add_generation_prompt=True)
             chosen = apply_chat_template(data[prompt_key] + data[chosen_key], tokenize=False)[len(prompt) :]
             rejected = apply_chat_template(data[prompt_key] + data[rejected_key], tokenize=False)[len(prompt) :]
-        else:
+        else:  # 目前是走下面的处理数据逻辑
             prompt = ""
             chosen = apply_chat_template(data[chosen_key], tokenize=False)
             rejected = apply_chat_template(data[rejected_key], tokenize=False)
-
             if is_dpo:
                 prompt = apply_chat_template(data[chosen_key][:-1], tokenize=False, add_generation_prompt=True)
                 chosen = chosen[len(prompt) :]
@@ -42,8 +42,8 @@ def preprocess_data(
 
     # margin loss
     margin = data["margin"] if exist_and_not_none(data, "margin") else 0
-
-    return prompt, chosen, rejected, margin
+    
+    return prompt, chosen, rejected, margin, data[meta_key]
 
 
 class RewardDataset(Dataset):
@@ -66,7 +66,7 @@ class RewardDataset(Dataset):
         is_dpo=False,
         num_processors=8,
         multiple_of=1,
-        shuffle=True,
+        search_clue_seg=False,
     ) -> None:
         super().__init__()
         self.is_dpo = is_dpo
@@ -74,6 +74,7 @@ class RewardDataset(Dataset):
         self.strategy = strategy
         self.max_length = max_length
         self.multiple_of = multiple_of
+        self.search_clue_seg = search_clue_seg
 
         # chat_template
         self.input_template = input_template
@@ -95,10 +96,8 @@ class RewardDataset(Dataset):
         )
 
         # Filter out None values if necessary
-        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
+        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None, cache_file_name=None)
 
-        if shuffle:
-            processed_dataset = processed_dataset.shuffle(seed=42)
             
         # Store the processed data in class attributes
         self.prompts = processed_dataset["prompt"]
@@ -106,8 +105,13 @@ class RewardDataset(Dataset):
         self.rejects = processed_dataset["reject"]
         self.extras = processed_dataset["extra"]
 
+        if self.search_clue_seg:
+            self.matches = processed_dataset["matches"]
+        else:
+            self.matches = None
+
     def process_data(self, data):
-        prompt, chosen, reject, margin = preprocess_data(
+        prompt, chosen, reject, margin, clue_list = preprocess_data(
             data,
             self.input_template,
             self.prompt_key,
@@ -115,6 +119,7 @@ class RewardDataset(Dataset):
             self.rejected_key,
             self.apply_chat_template,
             self.is_dpo,
+            meta_key="meta_info"
         )
 
         if self.is_dpo:
@@ -128,15 +133,34 @@ class RewardDataset(Dataset):
             )
             prompt_ids_len = prompt_token["attention_mask"].int().sum().item()
 
+            if self.search_clue_seg: # 找到clue_list里面所有clues在prompt_token_ids中的位置信息
+                assert len(clue_list) > 0, "clue_list should not be empty if search_clue_seg is True"
+                matches = []
+                prompt_len = prompt_token.input_ids.size(-1)
+                for clue in clue_list:
+                    clue_ids = self.tokenizer(clue, return_tensors="pt", add_special_tokens=False)["input_ids"]
+                    clue_ids = clue_ids[0, 1:-1]  # 去掉开头和结尾的token做匹配
+                    clue_len = clue_ids.size(-1)
+                    for i in range(prompt_len - clue_len + 1):
+                        if torch.equal(prompt_token.input_ids[0, i : i + clue_len], clue_ids):
+                            matches.append((i, i + clue_len - 1))
+                            break 
+            else:
+                matches = []
             # Filter the sample whose length is greater than max_length (2 for answer length)
+            
             if prompt_ids_len >= self.max_length - 2:
+                prompt = None
+
+            if len(matches) != len(clue_list):
                 prompt = None
 
         return {
             "prompt": prompt,
             "chosen": chosen,
             "reject": reject,
-            "extra": prompt_ids_len if self.is_dpo else margin,
+            "extra": prompt_ids_len if self.is_dpo else margin, 
+            "matches": matches
         }
 
     def __len__(self):
@@ -145,10 +169,15 @@ class RewardDataset(Dataset):
 
     def __getitem__(self, idx):
         prompt, chosen, reject, extra = self.prompts[idx], self.chosens[idx], self.rejects[idx], self.extras[idx]
+        if self.matches:  # 找到匹配的segment在prompt的位置
+            seg_pos = self.matches[idx]
+        else:
+            seg_pos = None
 
         chosen = (prompt + chosen).rstrip("\n")
         if not chosen.endswith(self.tokenizer.eos_token):
             chosen += " " + self.tokenizer.eos_token
+        
         chosen_token = self.tokenizer(
             chosen,
             max_length=self.max_length,
@@ -182,6 +211,7 @@ class RewardDataset(Dataset):
             reject_token["input_ids"],
             reject_token["attention_mask"],
             extra,
+            seg_pos,
         )
 
     def collate_fn(self, item_list):
@@ -216,13 +246,14 @@ class RewardDataset(Dataset):
         rejected_ids = []
         rejected_att_masks = []
         rejected_seq_lens = []
+        seg_poss = []
         index = 1
-        for chosen_id, chosen_mask, reject_id, rejects_mask, extra in item_list:
+        for chosen_id, chosen_mask, reject_id, rejects_mask, extra, seg_pos in item_list:
             chosen_ids.append(chosen_id.flatten())
             chosen_att_masks.append(torch.full_like(chosen_id.flatten(), index))
             chosen_seq_lens.append(len(chosen_id.flatten()))
             extras.append(extra)
-
+            seg_poss.append(seg_pos)
             rejected_ids.append(reject_id.flatten())
             rejected_att_masks.append(torch.full_like(reject_id.flatten(), index + len(item_list)))
             rejected_seq_lens.append(len(reject_id.flatten()))
@@ -237,4 +268,4 @@ class RewardDataset(Dataset):
             packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
 
-        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras
+        return packed_input_ids, packed_attention_masks, packed_seq_lens, extras, seg_poss

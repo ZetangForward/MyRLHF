@@ -1,7 +1,7 @@
 python inference_babilong.py \
     --dataset_name "RMT-team/babilong" \
     --model_path 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-    --adapter_path '/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step100' \
+    --adapter_path '/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1_fix/Llama-3.1-8B-Instruct/simpo' \
     --save_path '/mnt/petrelfs/tangzecheng/MyRLHF/inference/babilong/merge_v1/Llama-3.1-8B-Instruct/' \
     --num_gpus 8 \
     --tp_size 1 \

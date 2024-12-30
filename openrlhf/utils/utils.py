@@ -1,10 +1,8 @@
 import os
-from pathlib import Path
 
-from datasets import Dataset, interleave_datasets, load_dataset, load_from_disk
+from datasets import interleave_datasets, load_dataset, load_from_disk
 from transformers import AutoTokenizer
 
-from openrlhf.utils import DeepspeedStrategy
 
 DEFAULT_PAD_TOKEN = "[PAD]"
 DEFAULT_EOS_TOKEN = "</s>"
@@ -12,7 +10,7 @@ DEFAULT_BOS_TOKEN = "<s>"
 DEFAULT_UNK_TOKEN = "<unk>"
 
 
-def get_tokenizer(pretrain, model=None, padding_side="left", strategy=None, use_fast=True):
+def get_tokenizer(pretrain, model, padding_side="left", strategy=None, use_fast=True):
     tokenizer = AutoTokenizer.from_pretrained(pretrain, trust_remote_code=True, use_fast=use_fast)
     tokenizer.padding_side = padding_side
     # NOTE: When enable vLLM, do not resize_token_embeddings, or the vocab size will mismatch with vLLM.
@@ -20,13 +18,14 @@ def get_tokenizer(pretrain, model=None, padding_side="left", strategy=None, use_
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
-        if model is not None:
-            model.config.pad_token_id = tokenizer.pad_token_id
+        model.config.pad_token_id = tokenizer.pad_token_id
 
     return tokenizer
 
 
 def get_strategy(args):
+    from openrlhf.utils.deepspeed import DeepspeedStrategy
+
     strategy = DeepspeedStrategy(
         seed=getattr(args, "seed", 42),
         max_norm=getattr(args, "max_norm", 1.0),
@@ -49,7 +48,6 @@ def blending_datasets(
     stopping_strategy="first_exhausted",
     train_split="train",
     eval_split="test",
-    train_batch_size=8,
 ):
     datasets = datasets.split(",")
     probabilities = list(map(float, probabilities.split(",")))
@@ -57,7 +55,7 @@ def blending_datasets(
 
     train_data_list = []
     eval_data_list = []
-    for _, dataset in enumerate(datasets):
+    for i, dataset in enumerate(datasets):
         dataset = dataset.strip()
         strategy.print(f"dataset: {dataset}")
 
@@ -92,14 +90,8 @@ def blending_datasets(
             train_data = data[train_split].select(range(min(max_count, len(data[train_split]))))
         else:
             train_data = data.select(range(min(max_count, len(data))))
-
-        # The residual data causes gradient accumulation issues in the last few steps, 
-        # here we automatically discard the extra samples at the end.
-        total_size = len(train_data)
-        keep_size = (total_size // train_batch_size) * train_batch_size
-        train_data = train_data.select(range(keep_size))
         train_data_list.append(train_data)
-        
+
         if return_eval:
             if eval_split and eval_split in data:
                 eval_data = data[eval_split].select(range(min(max_count, len(data[eval_split]))))
@@ -112,12 +104,6 @@ def blending_datasets(
     if strategy.is_rank_0():
         print(train_data_list)
 
-    # The residual data causes gradient accumulation issues in the last few steps, 
-    # here we automatically discard the extra samples at the end.
-    # print(len(train_data_list))
-    # print(len(train_data_list) // multiple_of * multiple_of)
-    # train_data_list = train_data_list[: len(train_data_list) // multiple_of * multiple_of]
-    
     train_dataset = interleave_datasets(
         train_data_list,
         probabilities=probabilities,
@@ -133,4 +119,13 @@ def blending_datasets(
         )
         return train_dataset, eval_dataset
     else:
-        return train_dataset, None
+        return train_dataset
+
+
+def convert_token_to_id(token, tokenizer):
+    if isinstance(token, str):
+        token = tokenizer.encode(token, add_special_tokens=False)
+        assert len(token) == 1
+        return token[0]
+    else:
+        raise ValueError("token should be int or str")

@@ -129,6 +129,7 @@ def train(args):
         max_norm=args.max_norm,
         beta=args.beta,
         max_epochs=args.max_epochs,
+        aux_ctx_weight=args.aux_ctx_weight
     )
 
     trainer.fit(args, consumed_samples, num_update_steps_per_epoch)
@@ -172,6 +173,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_epochs", type=int, default=1)
     parser.add_argument("--l2", type=float, default=0.0, help="weight decay loss")
     parser.add_argument("--beta", type=float, default=0.1)
+    parser.add_argument("--aux_ctx_weight", type=float, default=0.1)  # zecheng_note: TODO：这里是默认0.1，其实要关闭才是原始的SimPO Loss
     parser.add_argument("--gamma_beta_ratio", type=float, default=0.5)
     parser.add_argument("--ipo", action="store_true", default=False)  # IPO https://arxiv.org/pdf/2310.12036v2.pdf
     parser.add_argument("--label_smoothing", type=float, default=0.0)  # cDPO https://arxiv.org/pdf/2305.18290.pdf
@@ -180,7 +182,7 @@ if __name__ == "__main__":
         "--nll_loss_coef", type=float, default=0, help="Regularization with NLL loss, see LLama 3.1 tech report."
     )
     parser.add_argument("--adam_betas", type=float, nargs=2, default=(0.9, 0.95), help="Betas for Adam optimizer")
-
+    
     # Context Parallel
     parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")
     parser.add_argument(
