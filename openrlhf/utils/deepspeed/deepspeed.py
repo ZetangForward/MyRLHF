@@ -18,9 +18,9 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from openrlhf.models import Actor
+from openrlhf.models.ring_attn_utils import get_ring_attn_group, set_ring_attn_group
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
-from ..models.ring_attn_utils import get_ring_attn_group, set_ring_attn_group
 from .deepspeed_utils import (
     _z3_params_to_fetch,
     get_eval_ds_config,
@@ -58,9 +58,9 @@ class DeepspeedStrategy(ABC):
         self.max_norm = max_norm
         self.adam_offload = getattr(args, "adam_offload", False)
         self.zpg = getattr(args, "zpg", 1)
-        self.grad_accum_dtype = getattr(args, "grad_accum_dtype", "fp32")
-        # disable_trace_cache
-        self.disable_trace_cache = getattr(args, "disable_trace_cache", False)
+        self.grad_accum_dtype = getattr(args, "grad_accum_dtype", None)
+        # overlap_comm
+        self.overlap_comm = getattr(args, "overlap_comm", False)
 
         self.is_rlhf = False
         self.time_steps = defaultdict(int)
@@ -71,7 +71,7 @@ class DeepspeedStrategy(ABC):
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
 
-    def setup_distributed(self, timeout=timedelta(minutes=30)) -> None:
+    def setup_distributed(self, timeout=timedelta(minutes=60)) -> None:
         self.set_seed(self.seed)
 
         if self.args.local_rank == -1 and "LOCAL_RANK" in os.environ:  # for slurm
@@ -84,7 +84,7 @@ class DeepspeedStrategy(ABC):
         self.setup_ring_attn()
         self.world_size = dist.get_world_size()
         self.accumulated_gradient = (
-            self.train_batch_size // self.micro_train_batch_size // self.world_size * self.ring_attn_size
+            self.train_batch_size * self.ring_attn_size // self.micro_train_batch_size // self.world_size
         )
 
     def setup_ring_attn(self):
@@ -190,7 +190,10 @@ class DeepspeedStrategy(ABC):
         for arg in models_or_model_optim_pairs:
             if isinstance(arg, tuple):
                 assert len(arg) == 3, f'Expect (model, optimizer, scheduler) pair, got a tuple with size "{len(arg)}"'
-                ret.append(self._ds_init_train_model(*arg))
+                if arg[0] is not None:
+                    ret.append(self._ds_init_train_model(*arg))
+                else:
+                    ret.append((None, None, None))
             else:
                 ret.append(self._ds_init_eval_model(arg))
 
@@ -225,7 +228,7 @@ class DeepspeedStrategy(ABC):
             max_norm=self.max_norm,
             zpg=self.zpg,
             grad_accum_dtype=self.grad_accum_dtype,
-            disable_trace_cache=self.disable_trace_cache,
+            overlap_comm=self.overlap_comm,
         )
 
         ds_config["train_micro_batch_size_per_gpu"] = self.micro_train_batch_size
@@ -259,7 +262,8 @@ class DeepspeedStrategy(ABC):
         # DS Config
         ds_config = get_eval_ds_config(offload=offload, stage=self.stage if self.stage == 3 else 0, bf16=self.bf16)
         ds_config["train_micro_batch_size_per_gpu"] = self.micro_train_batch_size
-        ds_config["train_batch_size"] = self.train_batch_size
+        ds_config["train_batch_size"] = self.train_batch_size * self.ring_attn_size
+
         return ds_config
 
     def moving_average(self, model, model_ema, beta=0.992, device="cpu"):

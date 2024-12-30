@@ -150,18 +150,22 @@ class SimPOLoss(nn.Module):
     SimPO Loss
     """
 
-    def __init__(self, beta: float, device: torch.device, label_smoothing: float = 0.0, gamma_beta_ratio: float = 0.5, loss_type: str = "sigmoid", *args) -> None:
+    def __init__(self, beta: float, device: torch.device, label_smoothing: float = 0.0, gamma_beta_ratio: float = 0.5, loss_type: str = "sigmoid", aux_ctx_weight: float = 0.0, *args) -> None:
         super().__init__()
         self.beta = beta
         self.label_smoothing = label_smoothing
         self.gamma_beta_ratio = gamma_beta_ratio
         self.loss_type = loss_type
         self.device = device
+        self.aux_ctx_weight = aux_ctx_weight
+
 
     def forward(
         self,
         policy_chosen_logps: torch.FloatTensor,
         policy_rejected_logps: torch.FloatTensor,
+        policy_chosen_ctx_logps: torch.FloatTensor,
+        policy_rejected_ctx_logps: torch.FloatTensor,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
         """Compute the SimPO loss for a batch of policy model log probabilities.
 
@@ -175,8 +179,13 @@ class SimPOLoss(nn.Module):
             The chosen_rewards and rejected_rewards tensors contain the rewards for the chosen and rejected responses, respectively.
         """
         pi_logratios = policy_chosen_logps.to(self.device) - policy_rejected_logps.to(self.device)
-
+        if policy_chosen_ctx_logps and policy_rejected_ctx_logps:
+            pi_logratios_ctx = policy_chosen_ctx_logps.to(self.device) - policy_rejected_ctx_logps.to(self.device)
+        
         logits = pi_logratios - self.gamma_beta_ratio
+        
+        if self.aux_ctx_weight > 0:
+            logits = logits + self.aux_ctx_weight * pi_logratios_ctx
 
         if self.loss_type == "sigmoid":
             losses = (
@@ -192,8 +201,14 @@ class SimPOLoss(nn.Module):
 
         chosen_rewards = self.beta * policy_chosen_logps.to(self.device).detach()
         rejected_rewards = self.beta * policy_rejected_logps.to(self.device).detach()
-
-        return losses, chosen_rewards, rejected_rewards
+        
+        if policy_chosen_ctx_logps and policy_rejected_ctx_logps:
+            chosen_ctx_rewards = self.beta * policy_chosen_ctx_logps.to(self.device).detach()
+            rejected_ctx_rewards = self.beta * policy_rejected_ctx_logps.to(self.device).detach()
+        else:
+            chosen_ctx_rewards, rejected_ctx_rewards = None, None
+            
+        return losses, chosen_rewards, rejected_rewards, chosen_ctx_rewards, rejected_ctx_rewards
 
 
 # Adapted from https://github.com/ContextualAI/HALOs/blob/ca9b7e3eeea220c0944ad8095d641da33f907a7e/trainers.py#L742
