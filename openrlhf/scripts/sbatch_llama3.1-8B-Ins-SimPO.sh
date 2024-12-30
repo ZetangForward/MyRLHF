@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=Llama3.1-8B-SimPO-Train
+#SBATCH --job-name=SimPO-Llama3.1-8B-Train
 #SBATCH --nodes=1                         
 #SBATCH --ntasks-per-node=8 
 #SBATCH --cpus-per-task=16        # 添加CPU配置
