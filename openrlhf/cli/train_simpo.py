@@ -36,6 +36,7 @@ def train(args):
         is_dpo=True,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
+        search_clue_seg=True,
     )
     eval_dataset = RewardDataset(
         eval_data,
@@ -46,7 +47,10 @@ def train(args):
         is_dpo=True,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
+        search_clue_seg=True,
     )
+
+    print(f"original dataset size: {len(train_data)}\nAfter processing, remaining dataset size: {len(train_dataset)}")
 
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
@@ -94,6 +98,7 @@ def train(args):
     
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size
+
     max_steps = math.ceil(args.max_epochs * num_update_steps_per_epoch)
 
     scheduler = get_scheduler(
@@ -212,14 +217,12 @@ if __name__ == "__main__":
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")
     parser.add_argument("--num_processors", type=int, default=1, help="number of processors for dataset preprocessing")
-    
+    parser.add_argument("--search_clue_seg", action="store_true", default=False)
     parser.add_argument("--prompt_key", type=str, default=None)
     parser.add_argument("--chosen_key", type=str, default="chosen")
     parser.add_argument("--rejected_key", type=str, default="rejected")
     parser.add_argument("--input_template", type=str, default=None)
-    parser.add_argument(
-        "--apply_chat_template", action="store_true", default=False, help="Use HF tokenizer chat template"
-    )
+    parser.add_argument("--apply_chat_template", action="store_true", default=False, help="Use HF tokenizer chat template")
     parser.add_argument("--max_samples", type=int, default=1e8, help="Max number of samples")
     parser.add_argument("--max_len", type=int, default=512)
 

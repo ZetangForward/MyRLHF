@@ -110,7 +110,7 @@ class SimPOTrainer(ABC):
         if args.save_steps == -1:
             args.save_steps = float("inf")  # do not save ckpt
 
-        # Restore step and start_epoch
+         # Restore step and start_epoch
         step = consumed_samples // args.train_batch_size * self.strategy.accumulated_gradient + 1
         start_epoch = consumed_samples // args.train_batch_size // num_update_steps_per_epoch
         consumed_samples = consumed_samples % (num_update_steps_per_epoch * args.train_batch_size)
@@ -153,6 +153,9 @@ class SimPOTrainer(ABC):
 
                 else:
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss = data
+
+                    print(f"seg_poss is: {seg_poss}")
+
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
                     packed_attention_masks = packed_attention_masks.to(torch.cuda.current_device())
                     chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, nll_loss = self.packed_samples_forward(
@@ -283,12 +286,12 @@ class SimPOTrainer(ABC):
                             self.ref_model, chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
                         )
                 else:
-                    packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens = data
+                    packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss = data
                     packed_input_ids, packed_attention_masks = packed_input_ids.to(
                         torch.cuda.current_device()
                     ), packed_attention_masks.to(torch.cuda.current_device())
                     chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, _ = self.packed_samples_forward(
-                        self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens
+                        self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss
                     )
 
                 preference_loss, chosen_reward, reject_reward, chosen_ctx_reward, rejected_ctx_reward = self.loss_fn(

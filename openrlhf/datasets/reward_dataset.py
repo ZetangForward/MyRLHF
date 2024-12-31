@@ -137,9 +137,11 @@ class RewardDataset(Dataset):
                 assert len(clue_list) > 0, "clue_list should not be empty if search_clue_seg is True"
                 matches = []
                 prompt_len = prompt_token.input_ids.size(-1)
+                # print(f"prompt_token.input_ids shape {prompt_token.input_ids.shape}")
                 for clue in clue_list:
                     clue_ids = self.tokenizer(clue, return_tensors="pt", add_special_tokens=False)["input_ids"]
                     clue_ids = clue_ids[0, 1:-1]  # 去掉开头和结尾的token做匹配
+                    # print(f"clue_ids shape: {clue_ids.shape}")
                     clue_len = clue_ids.size(-1)
                     for i in range(prompt_len - clue_len + 1):
                         if torch.equal(prompt_token.input_ids[0, i : i + clue_len], clue_ids):
@@ -148,11 +150,12 @@ class RewardDataset(Dataset):
             else:
                 matches = []
             # Filter the sample whose length is greater than max_length (2 for answer length)
-            
+
             if prompt_ids_len >= self.max_length - 2:
                 prompt = None
 
             if len(matches) != len(clue_list):
+                print(f"length of matches {len(matches)}, length of clue_list {len(clue_list)})")
                 prompt = None
 
         return {
