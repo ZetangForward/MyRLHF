@@ -153,9 +153,6 @@ class SimPOTrainer(ABC):
 
                 else:
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss = data
-
-                    print(f"seg_poss is: {seg_poss}")
-
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
                     packed_attention_masks = packed_attention_masks.to(torch.cuda.current_device())
                     chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, nll_loss = self.packed_samples_forward(
@@ -425,7 +422,7 @@ class SimPOTrainer(ABC):
             prompt_id_lens * 2,
             packed_seq_lens,
             average_log_prob=True,
-            seg_poss=seg_poss,
+            seg_poss=seg_poss * 2,
         )
         chosen_logps = all_logps[: len(packed_seq_lens) // 2]
         rejected_logps = all_logps[len(packed_seq_lens) // 2 :]
@@ -488,6 +485,8 @@ class SimPOTrainer(ABC):
         logprobs_means = []
         clue_logprobs_means = []
         index = 0
+        # print(f"packed_seq_lens: {packed_seq_lens}")
+        # print(f"seg_poss: {seg_poss}")
         for i, seq_len in enumerate(packed_seq_lens):
             seq = per_token_logps[0, index : index + seq_len - 1]
             mask = loss_masks[0, index : index + seq_len - 1]
@@ -497,11 +496,11 @@ class SimPOTrainer(ABC):
 
             if seg_poss is not None:  # 在计算完结果的loss之后，再对中间的evidence进行计算
                 seg_logprobs_means = []
-                for seg_pos in seg_poss:
+                for seg_pos in seg_poss[i]:
                     st, ed = seg_pos 
                     seg_logprobs_means.append(seq[st: ed].sum() / (ed - st))
                 clue_logprobs_means.append(sum(seg_logprobs_means) / len(seg_logprobs_means))
         
         if average_log_prob:
-            return torch.stack(logprobs_means)
+            return torch.stack(logprobs_means), clue_logprobs_means
         return torch.stack(logprobs_sums), clue_logprobs_means
