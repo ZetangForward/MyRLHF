@@ -77,6 +77,7 @@ def process_data_item(args):
         [{"role": "user", "content": partial_evi_prompt}],
         add_generation_prompt=True, tokenize=False,
     )
+    length = len(input_data[0])
 
     meta_data = copy.deepcopy(item)
     meta_data.pop('concat_content')
@@ -84,6 +85,7 @@ def process_data_item(args):
     meta_data.pop('answer')
     return {
         "prompt": full_evi_prompt,
+        "length": length,
         "message": input_data,
         "answer": answer,
         "meta_data": meta_data, 
@@ -102,6 +104,24 @@ def process_data(content, tokenizer, drop_num=1, num_workers=24):
         all_inference_content = list(tqdm(pool.imap(process_data_item, args), total=len(content)))
 
     return all_inference_content
+
+
+def distribute_queries(input_queries, num_buckets):
+    # 首先，按照长度从大到小排序
+    sorted_queries = sorted(input_queries, key=lambda x: x['length'], reverse=True)
+    
+    # 初始化 buckets
+    buckets = [[] for _ in range(num_buckets)]
+    bucket_lengths = [0] * num_buckets  # 这将跟踪每个 bucket 的总长度
+    
+    # 贪心算法分配 queries
+    for query in sorted_queries:
+        # 找到当前总长度最小的 bucket
+        min_length_idx = bucket_lengths.index(min(bucket_lengths))
+        buckets[min_length_idx].append(query)
+        bucket_lengths[min_length_idx] += query['length']
+    
+    return buckets, bucket_lengths
 
 
 class Args:
@@ -149,12 +169,22 @@ def main(args):
         logger.info(f"length of content {len(content)}, begin to preprocess")
         # content = content[:24]  # FIXME: debug
         input_queries = process_data(content, tokenizer, drop_num=drop_num, num_workers=64)
-        
-        chunk_num = args.num_gpus // args.tp_size
-        chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
-        prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
-        all_length = sum([len(chunk) for chunk in prompts_chunks])
-        logger.info(f"length of input_queries {all_length}")
+        input_queries = sorted(input_queries, key=lambda x: x['length'], reverse=True)
+
+        # 假设 input_queries 已经准备好，并且 num_buckets 已经根据你的 GPU 和 tp_size 计算得出
+        num_buckets = args.num_gpus // args.tp_size
+        buckets, bucket_lengths = distribute_queries(input_queries, num_buckets)
+
+        # 打印每个 bucket 的信息以验证分配
+        for i, bucket in enumerate(buckets):
+            logger.info(f"Bucket {i+1}: Number of queries = {len(bucket)}, Total length = {bucket_lengths[i]}")
+
+
+        # chunk_num = args.num_gpus // args.tp_size
+        # chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
+        # prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
+        # all_length = sum([len(chunk) for chunk in prompts_chunks])
+        # logger.info(f"length of input_queries {all_length}")
 
         manager = mp.Manager()
         return_list = manager.list()
@@ -181,7 +211,7 @@ def main(args):
         # 使用 tqdm 显示总进度
         logger.info(f"Start to generate")
         for chunk_id, gpu_ids in enumerate(gpu_id_lst):
-            p = mp.Process(target=worker, args=(gpu_ids, prompts_chunks[chunk_id], args.model_path, args.model_args, args.inference_args, return_list))
+            p = mp.Process(target=worker, args=(gpu_ids, buckets[chunk_id], args.model_path, args.model_args, args.inference_args, return_list))
             p.start()
             processes.append(p)
 
