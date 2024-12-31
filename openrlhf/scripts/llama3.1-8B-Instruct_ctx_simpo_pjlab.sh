@@ -8,7 +8,7 @@ SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 deepspeed --include localhost:0,1,2,3 cli/train_simpo.py \
    --max_len 96000 \
    --dataset '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop/train_llama_data/merge_v1_w_clues_dev' \
-   --train_batch_size 4 \
+   --train_batch_size 32 \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
    --apply_chat_template \
