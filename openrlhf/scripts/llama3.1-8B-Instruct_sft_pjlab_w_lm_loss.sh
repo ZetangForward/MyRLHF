@@ -11,8 +11,8 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/sft \
-   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/sft \
+   --save_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/sft_ctx_loss \
+   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/sft_ctx_loss \
    --save_steps 50 \
    --logging_steps 1 \
    --eval_steps 50 \
@@ -25,9 +25,10 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --num_processors 16 \
    --learning_rate 1e-6 \
    --flash_attn \
+   --pretrain_mode \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project 'merge_v1_fix' \
-   --wandb_run_name 'Llama-3.1-8B-Instruct-sft' \
+   --wandb_run_name 'Llama-3.1-8B-Instruct-sft-with-ctx_loss' \
    --ring_attn_size 2;

@@ -23,11 +23,14 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
             prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
             response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
     else:
-        prompt = data[input_key]
-        if input_template:
-            prompt = input_template.format(prompt)
-        # output_key is None for continue pretrain
-        response = data[output_key] if output_key else ""
+        ## zecheng_note: 这里只想加入ctx的部分，不是实际的pretrain
+        # prompt = data[input_key]
+        # if input_template:
+        #     prompt = input_template.format(prompt)
+        # # output_key is None for continue pretrain
+        # response = data[output_key] if output_key else ""
+        prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
+        response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
     return prompt, response
 
 
@@ -76,7 +79,7 @@ class SFTDataset(Dataset):
             self.process_data, remove_columns=dataset.column_names, num_proc=num_processors, 
             load_from_cache_file=False, cache_file_name=None  # 禁用缓存
         )
-        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
+        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None, cache_file_name=None)
 
         # Store the processed data in class attributes
         self.prompts = processed_dataset["prompt"]
@@ -84,12 +87,19 @@ class SFTDataset(Dataset):
         self.prompt_ids_lens = processed_dataset["prompt_ids_len"]
 
     def process_data(self, data):
+        # prompt, response = preprocess_data(
+        #     data,
+        #     None if self.pretrain_mode else self.input_template,
+        #     self.input_key,
+        #     self.output_key,
+        #     apply_chat_template=None if self.pretrain_mode else self.apply_chat_template,
+        # )
         prompt, response = preprocess_data(
             data,
-            None if self.pretrain_mode else self.input_template,
+            None,
             self.input_key,
             self.output_key,
-            apply_chat_template=None if self.pretrain_mode else self.apply_chat_template,
+            self.apply_chat_template,
         )
         if not self.pretrain_mode:
             prompt_token = self.tokenizer(
@@ -124,7 +134,11 @@ class SFTDataset(Dataset):
             if not text.endswith(self.tokenizer.eos_token):
                 text += " " + self.tokenizer.eos_token
         else:
-            text = prompt
+            # text = prompt
+            ## zecheng_note: 这里想加入ctx的部分，不是实际的pretrain
+            text = (prompt + response).rstrip("\n")
+            if not text.endswith(self.tokenizer.eos_token):
+                text += " " + self.tokenizer.eos_token
 
         input_token = self.tokenizer(
             text,
@@ -135,10 +149,10 @@ class SFTDataset(Dataset):
             add_special_tokens=False,
         )
 
-        if not self.pretrain_mode:
-            # to avoid EOS_token truncation
-            input_token["input_ids"][0][-1] = self.tokenizer.eos_token_id
-            input_token["attention_mask"][0][-1] = True
+        # if not self.pretrain_mode:  # TODO: 如果要复原，要去重新看源代码了
+        # to avoid EOS_token truncation
+        input_token["input_ids"][0][-1] = self.tokenizer.eos_token_id
+        input_token["attention_mask"][0][-1] = True
         info = {"input": prompt, "output": response, "input_length": input_token["attention_mask"].int().sum().item()}
 
         return prompt_ids_len, input_token["input_ids"], input_token["attention_mask"], info
