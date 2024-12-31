@@ -1,11 +1,13 @@
 import os
 from abc import ABC
+
 import torch
 import torch.distributed as dist
 from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
 from torch.nn import functional as F
 from tqdm import tqdm
+
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
@@ -227,6 +229,7 @@ class SFTTrainer(ABC):
             # )
             self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
 
+
     def evaluate(self, eval_dataloader, steps=0):
         times = 0
         self.model.eval()
@@ -291,3 +294,4 @@ class SFTTrainer(ABC):
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
         self.model.train()  # reset model state
+        

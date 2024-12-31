@@ -96,7 +96,6 @@ class RewardDataset(Dataset):
         # Filter out None values if necessary
         processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None, cache_file_name=None)
 
-            
         # Store the processed data in class attributes
         self.prompts = processed_dataset["prompt"]
         self.chosens = processed_dataset["chosen"]
