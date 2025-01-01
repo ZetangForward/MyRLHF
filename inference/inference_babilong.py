@@ -65,17 +65,18 @@ def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
                     prompt_cfg['instruction'], prompt_cfg['post_prompt'],
                     template=prompt_cfg['template']
                 )
-                if inference_scaling:
-                    model_inputs = tokenizer.apply_chat_template(
-                        [{'role': 'system', 'content': BABILONG_SYSTEM_PROMPT},
-                        {'role': 'user', 'content': input_text}], 
-                        add_generation_prompt=True, tokenize=True, return_tensors="pt"
-                    )
-                else:
-                    model_inputs = tokenizer.apply_chat_template(
-                        [{'role': 'user', 'content': input_text}], 
-                        add_generation_prompt=True, tokenize=True, return_tensors="pt"
-                    )
+                model_inputs = tokenizer(input_text, return_tensors="pt").input_ids
+                # if inference_scaling:
+                #     model_inputs = tokenizer.apply_chat_template(
+                #         [{'role': 'system', 'content': BABILONG_SYSTEM_PROMPT},
+                #         {'role': 'user', 'content': input_text}], 
+                #         add_generation_prompt=True, tokenize=True, return_tensors="pt"
+                #     )
+                # else:
+                #     model_inputs = tokenizer.apply_chat_template(
+                #         [{'role': 'user', 'content': input_text}], 
+                #         add_generation_prompt=True, tokenize=True, return_tensors="pt"
+                #     )
                 all_input_texts.append({"message": model_inputs, "golden": target, "task": task, "ctx_length": split_name, 'question': question})
     return all_input_texts             
 
@@ -124,9 +125,10 @@ def main():
     
     input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
     if args.adapter_path:
-        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{os.path.basename(args.adapter_path)}.jsonl")
+        suffix_tag = f"{args.adapter_path.split('/')[-2]}-{args.adapter_path.split('/')[-2]}"
+        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{suffix_tag}_no_template.jsonl")
     else:
-        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla.jsonl")
+        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
 
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
