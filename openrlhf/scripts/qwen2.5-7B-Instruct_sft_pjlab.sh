@@ -1,5 +1,6 @@
 # export NCCL_SOCKET_IFNAME=eth0
 # export NCCL_DEBUG=INFO
+export HF_DATASETS_CACHE=/dev/null
 
 SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 
