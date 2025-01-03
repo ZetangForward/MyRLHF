@@ -10,7 +10,7 @@ from peft.tuners.lora import LoraLayer
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, PreTrainedModel
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
 
-from .ring_attn_utils import convert_ring_attn_params
+from .ring_attn_utils import convert_ring_attn_params, convert_ring_attn_params_embedding
 from .utils import log_probs_from_logits, reset_position_ids
 
 
@@ -196,6 +196,55 @@ class Actor(nn.Module):
         position_ids.masked_fill_(attention_mask == 0, 1)
 
         output = self.model(sequences, attention_mask=attention_mask, position_ids=position_ids)
+
+        if num_actions is None:
+            assert return_output
+            return output
+
+        log_probs = log_probs_from_logits(output["logits"][:, :-1, :], sequences[:, 1:])
+
+        if not self.packing_samples:
+            action_log_probs = log_probs[:, -num_actions:]
+        else:
+            assert isinstance(num_actions, list) and len(num_actions) == len(packed_seq_lens)
+            action_log_probs = []
+            offset = 0
+            for num_action, seq_len in zip(num_actions, packed_seq_lens):
+                start, end = max(0, offset + seq_len - num_action - 1), offset + seq_len - 1
+                action_log_probs.append(log_probs[:, start:end])
+                offset += seq_len
+            action_log_probs = torch.cat(action_log_probs, dim=1)
+
+        if return_output:
+            return (action_log_probs, output)
+        else:
+            return action_log_probs
+
+    def forward_embedding(
+        self,
+        sequences,
+        inputs_embeds,  # b x l x d
+        num_actions: Optional[Union[int, list[int]]] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        return_output=False,
+        ring_attn_group: Optional[dist.ProcessGroup] = None,
+        packed_seq_lens: Optional[list[int]] = None,
+    ) -> torch.Tensor:
+        """Returns action log probs"""
+        if not self.packing_samples:
+            # https://github.com/OpenRLHF/OpenRLHF/issues/217
+            position_ids = attention_mask.long().cumsum(-1) - 1
+        else:
+            if ring_attn_group is not None:
+                sequences, inputs_embeds, attention_mask, position_ids = convert_ring_attn_params_embedding(
+                    sequences, inputs_embeds, attention_mask, packed_seq_lens, ring_attn_group
+                )
+            else:
+                # reset the positions for packed samples
+                position_ids = reset_position_ids(attention_mask)
+        position_ids.masked_fill_(attention_mask == 0, 1)
+
+        output = self.model(inputs_embeds=inputs_embeds, attention_mask=attention_mask, position_ids=position_ids)
 
         if num_actions is None:
             assert return_output

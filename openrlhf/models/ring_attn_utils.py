@@ -72,3 +72,19 @@ def convert_ring_attn_params(sequences, attention_mask, packed_seq_lens, ring_at
     position_ids = reset_ring_attn_position_ids(start, end, packed_seq_lens)
     update_ring_attn_params(packed_seq_lens, total_seq_len)
     return sequences, attention_mask, position_ids
+
+
+
+def convert_ring_attn_params_embedding(sequences, embeddings, attention_mask, packed_seq_lens, ring_attn_group):
+    # embeddings: b x l x d, sequences: b x l
+    # each rank within the ring group will process sequences[start:end]
+    ring_attn_rank = dist.get_rank(group=ring_attn_group)
+    ring_attn_size = dist.get_world_size(group=ring_attn_group)
+    total_seq_len = sequences.size(0) * sequences.size(1)
+    local_seq_len = total_seq_len // ring_attn_size
+    start, end = ring_attn_rank * local_seq_len, (ring_attn_rank + 1) * local_seq_len
+    sequences, embeddings = sequences[:, start:end], embeddings[:, start:end, :]
+    attention_mask = attention_mask[:, start:end]
+    position_ids = reset_ring_attn_position_ids(start, end, packed_seq_lens)
+    update_ring_attn_params(packed_seq_lens, total_seq_len)
+    return sequences, embeddings, attention_mask, position_ids
