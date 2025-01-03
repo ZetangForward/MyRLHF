@@ -11,6 +11,11 @@ from modelzipper.tutils import *
 from peft import PeftModelForCausalLM
 from datasets import load_dataset
 from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+import pynvml
+
+# Initialize NVML (NVIDIA Management Library)
+pynvml.nvmlInit()
+
 
 BABILONG_SYSTEM_PROMPT = """You are an AI assistant that explains your reasoning step by step, incorporating dynamic Chain of Thought (CoT). Follow these instructions:\n\n1. Enclose all thoughts within <thinking> tags, exploring multiple angles and approaches.\n2. Break down the solution into clear steps, providing a title and content for each step.\n3. After each step, decide if you need another step or if you're ready to give the final answer.\n4. Explore multiple solutions individually if possible, comparing approaches in your reflections.\n5. Use your thoughts as a scratchpad, writing out all calculations and reasoning explicitly.\n\nYour goal is to demonstrate a thorough, adaptive, and self-reflective problem-solving process, emphasizing dynamic thinking and learning from your own reasoning."""
 
@@ -35,6 +40,55 @@ inference_args = dict(
         seed = 42,
     )
 )
+
+
+def get_available_gpus(max_memory_usage=200):
+    """
+    Detect available GPUs with memory usage less than the specified threshold.
+    
+    Args:
+        max_memory_usage (int): Maximum memory usage (in MB) to consider a GPU as available.
+
+    Returns:
+        list: List of GPU IDs that are available.
+    """
+    available_gpus = []
+    gpu_count = pynvml.nvmlDeviceGetCount()
+    
+    for i in range(gpu_count):
+        handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+        mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+        used_memory_mb = mem_info.used / (1024 * 1024)  # Convert bytes to MB
+        
+        if used_memory_mb < max_memory_usage:
+            available_gpus.append(i)
+    
+    return available_gpus
+
+# Construct gpu_ids list
+def construct_gpu_ids(args):
+    """
+    Construct GPU IDs list based on tensor parallel size and available GPUs.
+
+    Args:
+        args: Namespace containing `tp_size` and `num_gpus` attributes.
+
+    Returns:
+        list: List of GPU ID strings.
+    """
+    # Detect available GPUs
+    available_gpus = get_available_gpus()
+    
+    if args.tp_size == 1:
+        gpu_id_lst = [str(i) for i in available_gpus]
+    else:
+        gpu_id_lst = []
+        for i in range(0, len(available_gpus), args.tp_size):
+            tmp = available_gpus[i:i + args.tp_size]
+            gpu_id_lst.append(", ".join([str(gpu) for gpu in tmp]))
+    
+    return gpu_id_lst
+
 
 def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
     tasks = ['qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7']
@@ -125,7 +179,7 @@ def main():
     
     input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
     if args.adapter_path:
-        suffix_tag = f"{args.adapter_path.split('/')[-2]}-{args.adapter_path.split('/')[-2]}"
+        suffix_tag = f"{args.adapter_path.split('/')[-2]}-{args.adapter_path.split('/')[-1]}"
         out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{suffix_tag}_no_template.jsonl")
     else:
         out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
@@ -138,16 +192,18 @@ def main():
     return_list = manager.list()
     processes = []
 
-    # construct gpu_ids list
-    if args.tp_size == 1:
-        gpu_id_lst = [str(i) for i in range(args.num_gpus)]
-    else:
-        gpu_id_lst = []
+    # # construct gpu_ids list
+    # if args.tp_size == 1:
+    #     gpu_id_lst = [str(i) for i in range(args.num_gpus)]
+    # else:
+    #     gpu_id_lst = []
 
-        for i in range(0, args.num_gpus, args.tp_size):
-            tmp = list(range(i, i + args.tp_size))
-            gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-    
+    #     for i in range(0, args.num_gpus, args.tp_size):
+    #         tmp = list(range(i, i + args.tp_size))
+    #         gpu_id_lst.append(", ".join([str(i) for i in tmp]))
+    gpu_id_lst = construct_gpu_ids(args)
+    logger.info(gpu_id_lst)
+    gpu_id_lst = ["0", "1", "2", "5", "6", "7"]
     # worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
 
     # 使用 tqdm 显示总进度

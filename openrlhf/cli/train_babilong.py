@@ -30,6 +30,9 @@ def train(args):
         all_samples = []
         for subset_name, subset_data in split_data.items(): # 从每个子集抽取 1k 条数据
             sampled_data = subset_data.select(range(500))  # TODO: 500
+            sampled_data = sampled_data.map(
+                lambda x: {"task": subset_name}, 
+            )
             all_samples.append(sampled_data) 
         final_dataset = concatenate_datasets(all_samples)
 

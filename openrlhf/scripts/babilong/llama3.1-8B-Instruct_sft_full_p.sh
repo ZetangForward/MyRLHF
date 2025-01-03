@@ -7,11 +7,10 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_babilong.py \
    --dataset 'RMT-team/babilong-train-5k-samples' \
    --train_batch_size 32 \
    --micro_train_batch_size 1 \
-   --lora_rank 32 \
    --apply_chat_template \
    --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/babilong/Llama-3.1-8B-Instruct/sft \
-   --ckpt_path ${SAVE_DIR}/babilong/Llama-3.1-8B-Instruct/sft \
+   --save_path ${SAVE_DIR}/babilong/Llama-3.1-8B-Instruct/sft_full \
+   --ckpt_path ${SAVE_DIR}/babilong/Llama-3.1-8B-Instruct/sft_full \
    --save_steps 100 \
    --logging_steps 1 \
    --eval_steps 50 \
@@ -28,4 +27,5 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_babilong.py \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project 'babilong' \
-   --wandb_run_name 'Llama-3.1-8B-babilong-sft';
+   --wandb_run_name 'Llama-3.1-8B-babilong-sft_full' \
+   --ring_attn_size 2;

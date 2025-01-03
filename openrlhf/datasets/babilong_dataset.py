@@ -11,13 +11,26 @@ sys.path.insert(0, "/mnt/petrelfs/tangzecheng/MyRLHF/inference/utils/babilong")
 from prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
 
 def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None):
+    task = data['task']
+    prompt_cfg = {
+        'instruction': DEFAULT_PROMPTS[task]['instruction'],
+        'examples': DEFAULT_PROMPTS[task]['examples'],
+        'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'],
+        'template': DEFAULT_TEMPLATE,
+        'chat_template': True,
+    }
+    prompt = get_formatted_input(
+        data['input'], data['question'], prompt_cfg['examples'],
+        prompt_cfg['instruction'], prompt_cfg['post_prompt'],
+        template=prompt_cfg['template']
+    )
 
-    prompt_message = f"Given the context: {data['input']}\n\nPlease provide a concise response based on the context.\nDo not include any explanations.\nJust answer the question as briefly as possible.\n\nQustion: {data['question']}"
-    prompt_message = [{"role": "user", "content": prompt_message}]
-    response_message = [{"role": "assistant", "content": data['target']}]
-    prompt = apply_chat_template(prompt_message, tokenize=False, add_generation_prompt=True)
-    response = apply_chat_template(prompt_message + response_message, tokenize=False)[len(prompt) :]
-    return prompt, response
+    # prompt_message = f"Given the context: {}\n\nPlease provide a concise response based on the context.\nDo not include any explanations.\nJust answer the question as briefly as possible.\n\nQustion: {}"
+    # prompt_message = [{"role": "user", "content": prompt_message}]
+    # response_message = [{"role": "assistant", "content": data['target']}]
+    # prompt = apply_chat_template(prompt_message, tokenize=False, add_generation_prompt=True)
+    # response = apply_chat_template(prompt_message + response_message, tokenize=False)[len(prompt) :]
+    return prompt, data['target']
 
 
 class SFTDataset(Dataset):
