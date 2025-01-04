@@ -90,9 +90,13 @@ def construct_gpu_ids(args):
     return gpu_id_lst
 
 
-def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False):
-    tasks = ['qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7']
-    split_names = ['0k', '1k', '2k', '4k', '8k', '16k', '32k', '64k']
+def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False, test_full=False):
+    if not test_full:
+        tasks = ['qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7']
+        split_names = ['0k', '1k', '2k', '4k', '8k', '16k', '32k', '64k']
+    else:
+        tasks = ['qa1', 'qa2', 'qa3', 'qa4', 'qa5', 'qa6', 'qa7', 'qa8', 'qa9', 'qa10']
+        split_names = ['0k', '1k', '2k', '4k', '8k', '16k', '32k', '64k', '128k']
     # tasks = ['qa2']
     # split_names = ['64k']
     all_input_texts = []
@@ -165,9 +169,16 @@ def main():
     parser.add_argument('--adapter_path', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
     parser.add_argument('--tag', type=str, default=None, help='tag for the output file')
+    parser.add_argument('--test_full', action='store_true', help='whether to test full dataset')
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
     parser.add_argument('--k', type=int, default=1, help='Number of generations per prompt')
     parser.add_argument('--num_gpus', type=int, default=8, help='Number of GPUs to use')
+    parser.add_argument(
+        "--gpu_ids",
+        type=str,
+        default=None,
+        help="Comma-separated list of GPU IDs (e.g., '0,1,2,7')",
+    )
     parser.add_argument('--tp_size', type=int, default=1, help='Tensor parallel size')
     args = parser.parse_args()
 
@@ -178,7 +189,7 @@ def main():
     torch.cuda.manual_seed_all(args.seed)
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
-    input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
+    input_queries = prepare_babilong_data(args.dataset_name, tokenizer, test_full=args.test_full)
     if args.tag:
         out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{args.tag}.jsonl")
     else:
@@ -205,9 +216,12 @@ def main():
     #     for i in range(0, args.num_gpus, args.tp_size):
     #         tmp = list(range(i, i + args.tp_size))
     #         gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-    gpu_id_lst = construct_gpu_ids(args)
+    if args.gpu_ids:
+        gpu_id_lst = args.gpu_ids
+    else:
+        gpu_id_lst = construct_gpu_ids(args)
     logger.info(gpu_id_lst)
-    gpu_id_lst = ["0", "1", "2", "7"]
+    # gpu_id_lst = ["0", "1", "2", "7"]
     # worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
 
     # 使用 tqdm 显示总进度
