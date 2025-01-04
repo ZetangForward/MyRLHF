@@ -1,9 +1,10 @@
 python inference_babilong.py \
     --dataset_name "RMT-team/babilong" \
-    --model_path 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-    --adapter_path '/mnt/petrelfs/tangzecheng/local_ckpt/babilong/Llama-3.1-8B-Instruct/sft/global_step200' \
-    --save_path '/mnt/petrelfs/tangzecheng/MyRLHF/inference/babilong/merge_v1_fix/Llama-3.1-8B-Instruct/' \
-    --num_gpus 6 \
+    --model_path '/mnt/petrelfs/tangzecheng/local_ckpt/babilong/Llama-3.1-8B-Instruct/gan/convert_step200' \
+    --tag global_step200 \
+    --adapter_path '' \
+    --save_path '/mnt/petrelfs/tangzecheng/MyRLHF/inference/babilong/gan/Llama-3.1-8B-Instruct/' \
+    --num_gpus 4 \
     --tp_size 1 \
 
 

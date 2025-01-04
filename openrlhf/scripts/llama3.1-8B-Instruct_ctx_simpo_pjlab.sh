@@ -33,7 +33,7 @@ deepspeed --include localhost:0,1,2,3 cli/train_simpo.py \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb='f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project='merge_v1_dev' \
+   --wandb_project='merge_v1' \
    --wandb_run_name='Llama-3.1-8B-Instruct-SimPO-beta-10-gamma_beta_ratio-0.3-nll_loss_coef-0.1' \
    --search_clue_seg \
    --ring_attn_size 4

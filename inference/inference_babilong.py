@@ -164,6 +164,7 @@ def main():
     parser.add_argument('--model_path', type=str, default=None, help='Path to the model')
     parser.add_argument('--adapter_path', type=str, default=None, help='Path to the PEFT model')
     parser.add_argument('--save_path', type=str, default=None, help='Path to save the output')
+    parser.add_argument('--tag', type=str, default=None, help='tag for the output file')
     parser.add_argument('--seed', type=int, default=27, help='Default seed value')
     parser.add_argument('--k', type=int, default=1, help='Number of generations per prompt')
     parser.add_argument('--num_gpus', type=int, default=8, help='Number of GPUs to use')
@@ -178,11 +179,14 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     
     input_queries = prepare_babilong_data(args.dataset_name, tokenizer)
-    if args.adapter_path:
-        suffix_tag = f"{args.adapter_path.split('/')[-2]}-{args.adapter_path.split('/')[-1]}"
-        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{suffix_tag}_no_template.jsonl")
+    if args.tag:
+        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{args.tag}.jsonl")
     else:
-        out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
+        if args.adapter_path:
+            suffix_tag = f"{args.adapter_path.split('/')[-2]}-{args.adapter_path.split('/')[-1]}"
+            out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_{suffix_tag}_no_template.jsonl")
+        else:
+            out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
 
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
@@ -203,7 +207,7 @@ def main():
     #         gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     gpu_id_lst = construct_gpu_ids(args)
     logger.info(gpu_id_lst)
-    gpu_id_lst = ["0", "1", "2", "5", "6", "7"]
+    gpu_id_lst = ["0", "1", "2", "7"]
     # worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
 
     # 使用 tqdm 显示总进度

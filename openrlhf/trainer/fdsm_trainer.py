@@ -153,8 +153,14 @@ class FDSMTrainer(ABC):
                     embeddings = embedding_layer(inputs)
 
                     # 生成对抗扰动
+                    # 冻结模型参数
+                    for param in self.model.model.parameters():
+                        param.requires_grad = False
                     adv_embeddings = embeddings.clone().detach().to(torch.cuda.current_device())
                     adv_embeddings.requires_grad = True
+
+                    # print(f"adv_embeddings shape: {adv_embeddings.shape}")
+                    # print(f"inputs shape: {inputs.shape}")
 
                     adv_output = self.model.forward_embedding(
                         inputs,
@@ -189,14 +195,29 @@ class FDSMTrainer(ABC):
 
                 gpt_loss = self.loss_fn(output.logits, labels)
 
+                ###============= 对抗学习逻辑 =============###
+                # 冻结模型参数
+                # print("adv_output.logits shape:", adv_output.logits.shape)
                 adv_loss = self.loss_fn(adv_output.logits, labels)
-                self.optimizer.zero_grad()
+               
                 adv_loss.backward()
+               
                 epsilon = 0.01  # 扰动幅度
                 adv_embeddings = adv_embeddings + epsilon * adv_embeddings.grad.sign()
 
+                # 可选：裁剪对抗样本的范围
+                # adv_embeddings = torch.clamp(adv_embeddings, min=0, max=1)
+
+                # 清除 adv_embeddings 的梯度
+                adv_embeddings.grad = None
+
+                # 恢复模型参数的梯度计算
+                for param in self.model.model.parameters():
+                    param.requires_grad = True
+                ###============= 对抗学习逻辑 =============###
                 # 对抗样本过模型
-                real_adv_output = self.model(
+                real_adv_output = self.model.forward_embedding(
+                    inputs,
                     inputs_embeds=adv_embeddings, 
                     attention_mask=attention_mask, 
                     return_output=True,
@@ -213,6 +234,7 @@ class FDSMTrainer(ABC):
                 logs_dict = {
                     "gpt_loss": gpt_loss.item(),
                     "loss_mean": loss_mean,
+                    "adv_gpt_loss": adv_gpt_loss.item(),
                     "lr": self.scheduler.get_last_lr()[0],
                 }
                 if self.aux_loss:
@@ -227,6 +249,8 @@ class FDSMTrainer(ABC):
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
+
+                torch.cuda.empty_cache()
 
                 step += 1
 
@@ -258,10 +282,10 @@ class FDSMTrainer(ABC):
         # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
-            # self.strategy.save_ckpt(
-            #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
-            # )
-            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
+            self.strategy.save_ckpt(
+                self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
+            )
+            # self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
 
 
     def evaluate(self, eval_dataloader, steps=0):
