@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from .utils import zero_pad_sequences
 
 
-def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None):
+def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None, meta_key=None):
     if apply_chat_template:
         if output_key:
             prompt_message = data[input_key]
@@ -22,6 +22,14 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
         else:
             prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
             response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
+            if meta_key: # FIXME: 这里应该数据集传入的时候就有对应的question和answer，但是我没有处理好，后面的数据要自带question和clues，不用再手动处理了
+                question = data[input_key][0]['content'].split("\n")[-2]
+                content_key = 'Passage {pi}:\n'
+                # with CoT
+                instruction_format = 'Answer the question based on the given passages.\n\nThe following are given passages.\n{concat_content}\n\nAnswer the question based on the given passages and provide a complete reasoning process.\nQuestion:{q}\nAnswer:'
+                concat_content = '\n'.join([content_key.format(pi=di+1)+doc for di, doc in enumerate(data[meta_key])])
+                clue_prompt = instruction_format.format(concat_content=concat_content, q=question)
+                clue_prompt = apply_chat_template([{"role": "user", "content": clue_prompt}], tokenize=False)
     else:
         ## zecheng_note: 这里只想加入ctx的部分，不是实际的pretrain
         # prompt = data[input_key]
@@ -31,7 +39,9 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
         # response = data[output_key] if output_key else ""
         prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
         response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
-    return prompt, response
+    if meta_key:
+        return prompt, response, clue_prompt
+    return prompt, response, None
 
 
 class SFTDataset(Dataset):
@@ -54,6 +64,7 @@ class SFTDataset(Dataset):
         pretrain_mode=False,
         num_processors=8,  # Specify the number of processors you want to use
         multiple_of=1,
+        search_clue_seg=False,
     ) -> None:
         super().__init__()
         self.tokenizer = tokenizer
@@ -61,6 +72,7 @@ class SFTDataset(Dataset):
         self.pretrain_mode = pretrain_mode
         self.max_length = max_length
         self.multiple_of = multiple_of
+        self.search_clue_seg = search_clue_seg
 
         # chat template
         self.input_template = input_template
@@ -85,21 +97,25 @@ class SFTDataset(Dataset):
         self.prompts = processed_dataset["prompt"]
         self.responses = processed_dataset["response"]
         self.prompt_ids_lens = processed_dataset["prompt_ids_len"]
+        if self.search_clue_seg:
+            self.clue_prompts = processed_dataset["clue_prompt"]
+            self.clue_prompt_ids_lens = processed_dataset["clue_prompt_ids_len"]
+        else:
+            self.clue_prompts = None
+            self.clue_prompt_ids_lens = None
 
     def process_data(self, data):
-        # prompt, response = preprocess_data(
-        #     data,
-        #     None if self.pretrain_mode else self.input_template,
-        #     self.input_key,
-        #     self.output_key,
-        #     apply_chat_template=None if self.pretrain_mode else self.apply_chat_template,
-        # )
-        prompt, response = preprocess_data(
+        if self.search_clue_seg:
+            meta_key = "meta_info"  # zecheng note： 这里先这么规定
+        else:
+            meta_key = None
+        prompt, response, clue_prompt = preprocess_data(
             data,
             None,
             self.input_key,
             self.output_key,
             self.apply_chat_template,
+            meta_key=meta_key,
         )
         if not self.pretrain_mode:
             prompt_token = self.tokenizer(
@@ -112,13 +128,27 @@ class SFTDataset(Dataset):
             )
             prompt_ids_len = prompt_token["attention_mask"].int().sum().item()
 
+            if self.search_clue_seg:
+                clue_prompt_token = self.tokenizer(
+                    clue_prompt,
+                    max_length=self.max_length,
+                    padding=False,
+                    truncation=True,
+                    return_tensors="pt",
+                    add_special_tokens=False,
+                )
+
+                clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
+
             # filter the sample whose length is greater than max_length (2 for answer length)
             if not prompt or not response or prompt_ids_len >= self.max_length - 2:
                 prompt = None
         else:
             prompt_ids_len = 0
 
-        return {"prompt": prompt, "response": response, "prompt_ids_len": prompt_ids_len}
+        if self.search_clue_seg:
+            return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len}
+        return {"prompt": prompt, "clue_prompt": None, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": None}
 
     def __len__(self):
         length = len(self.prompts)
@@ -129,10 +159,21 @@ class SFTDataset(Dataset):
         prompt = self.prompts[idx]
         response = self.responses[idx]
 
+        if self.clue_prompts:
+            clue_prompt = self.clue_prompts[idx]
+            clue_prompt_ids_len = self.clue_prompt_ids_lens[idx]
+        else:
+            clue_prompt = None
+            clue_prompt_ids_len = None
+
         if not self.pretrain_mode:
             text = (prompt + response).rstrip("\n")
+            if clue_prompt: 
+                clue_text = (clue_prompt + response).rstrip("\n")
             if not text.endswith(self.tokenizer.eos_token):
                 text += " " + self.tokenizer.eos_token
+                if clue_prompt:
+                    clue_text += " " + self.tokenizer.eos_token
         else:
             # text = prompt
             ## zecheng_note: 这里想加入ctx的部分，不是实际的pretrain
@@ -149,13 +190,29 @@ class SFTDataset(Dataset):
             add_special_tokens=False,
         )
 
-        # if not self.pretrain_mode:  # TODO: 如果要复原，要去重新看源代码了
-        # to avoid EOS_token truncation
+        if clue_prompt:
+            clue_input_token = self.tokenizer(
+                clue_text,
+                max_length=self.max_length,
+                padding=False,
+                truncation=True,
+                return_tensors="pt",
+                add_special_tokens=False,
+            )
+
+            clue_input_token["input_ids"][0][-1] = self.tokenizer.eos_token_id
+            clue_input_token["attention_mask"][0][-1] = True
+            extra_info = {"clue_input": clue_text, "clue_input_length": clue_input_token["attention_mask"].int().sum().item()}
+        else:
+            clue_input_token = None
+            extra_info = None
         input_token["input_ids"][0][-1] = self.tokenizer.eos_token_id
         input_token["attention_mask"][0][-1] = True
         info = {"input": prompt, "output": response, "input_length": input_token["attention_mask"].int().sum().item()}
-
-        return prompt_ids_len, input_token["input_ids"], input_token["attention_mask"], info
+        if extra_info:
+            info.update(extra_info)
+            return prompt_ids_len, input_token["input_ids"], input_token["attention_mask"], info, clue_prompt_ids_len, clue_input_token["input_ids"], clue_input_token["attention_mask"]
+        return prompt_ids_len, input_token["input_ids"], input_token["attention_mask"], info, None, None, None
 
     def collate_fn(self, item_list):
         prompt_ids_lens = []
@@ -176,20 +233,33 @@ class SFTDataset(Dataset):
 
     def packing_collate_fn(self, item_list):
         packed_input_ids = []
+        packed_clue_input_ids = []
         packed_attention_masks = []
+        packed_clue_attention_masks = []
         prompt_ids_lens = []
-        infos = {"input_length": []}
+        clue_prompt_ids_lens = []
+        infos = {"input_length": [], "clue_input_length": []}
 
         index = 1
-        for prompt_ids_len, input_id, attention_mask, info in item_list:
+        for prompt_ids_len, input_id, attention_mask, info, pack_prompt_ids_len, clue_input_id, _ in item_list:
             packed_input_ids.append(input_id.flatten())
+            packed_clue_input_ids.append(clue_input_id.flatten())
             packed_attention_masks.append(torch.full_like(input_id.flatten(), index))
+            packed_clue_attention_masks.append(torch.full_like(clue_input_id.flatten(), index))
             prompt_ids_lens.append(prompt_ids_len)
+            clue_prompt_ids_lens.append(pack_prompt_ids_len)
             infos["input_length"].append(info["input_length"])
+            if "clue_input_length" in info:
+                infos["clue_input_length"].append(info["clue_input_length"])
             index += 1
 
         packed_input_ids = torch.cat(packed_input_ids, dim=0).unsqueeze(0)
         packed_attention_masks = torch.cat(packed_attention_masks, dim=0).unsqueeze(0)
+
+        # if packed_clue_input_ids[0] is not None:  #确保里面都是有实际数值的
+        packed_clue_input_ids = torch.cat(packed_clue_input_ids, dim=0).unsqueeze(0)
+        packed_clue_attention_masks = torch.cat(packed_clue_attention_masks, dim=0).unsqueeze(0)
+
 
         if (
             self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0
@@ -197,5 +267,12 @@ class SFTDataset(Dataset):
             padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
             packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
-
-        return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos
+        
+        if (
+            self.multiple_of > 1 and packed_clue_input_ids.numel() % self.multiple_of != 0
+        ):  # not divisible by multiple_of; here we align for grouping
+            padding_len = self.multiple_of - (packed_clue_input_ids.numel() % self.multiple_of)
+            packed_clue_input_ids = F.pad(packed_clue_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
+            packed_clue_attention_masks = F.pad(packed_clue_attention_masks, (0, padding_len), value=0)
+            
+        return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos, clue_prompt_ids_lens, packed_clue_input_ids, packed_clue_attention_masks

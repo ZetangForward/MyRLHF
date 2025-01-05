@@ -199,6 +199,7 @@ def main():
         else:
             out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
 
+
     chunk_num = args.num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
@@ -217,7 +218,7 @@ def main():
     #         tmp = list(range(i, i + args.tp_size))
     #         gpu_id_lst.append(", ".join([str(i) for i in tmp]))
     if args.gpu_ids:
-        gpu_id_lst = args.gpu_ids
+        gpu_id_lst = [str(gpu_id) for gpu_id in args.gpu_ids.split(",")]
     else:
         gpu_id_lst = construct_gpu_ids(args)
     logger.info(gpu_id_lst)

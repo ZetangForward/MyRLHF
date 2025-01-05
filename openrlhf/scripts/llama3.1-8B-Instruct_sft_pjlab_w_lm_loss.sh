@@ -5,7 +5,7 @@ SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --max_len 96000 \
-   --dataset '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop/train_llama_data/merge_v1_w_clues' \
+   --dataset '/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop/train_llama_data/merge_v1_w_clues_dev' \
    --train_batch_size 32 \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
@@ -29,7 +29,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project 'merge_v1_fix' \
-   --wandb_run_name 'Llama-3.1-8B-Instruct-sft-with-ctx_loss' \
+   --wandb_project 'merge_v1_dev' \
+   --wandb_run_name 'Llama-3.1-8B-Instruct-sft-with-ctx_loss——de v' \
    --ring_attn_size 4 \
    --ring_head_stride 2;

@@ -126,11 +126,13 @@ class FDSMTrainer(ABC):
 
             # train
             self.model.train()
-            loss_mean = 0
-            for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:
+            loss_mean, short_ctx_loss_mean = 0, 0
+            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -231,9 +233,37 @@ class FDSMTrainer(ABC):
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
+
+                ### ============================= ###
+                # zecheng_note: 这里加上contextual 的labels，专门计算上下文的loss
+                with torch.no_grad():
+                    clue_output = self.model(
+                        clue_inputs, 
+                        attention_mask=clue_attention_mask, 
+                        return_output=True,
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=infos["clue_input_length"],
+                    )
+
+                    clue_labels = torch.where(
+                        clue_attention_mask.bool(),
+                        clue_inputs,
+                        self.loss_fn.IGNORE_INDEX,
+                    )
+
+                    index = 0
+                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                        index += input_length
+
+                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                    short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
+
                 logs_dict = {
+                    "short_gpt_loss": short_ctx_gpt_loss.item(),
                     "gpt_loss": gpt_loss.item(),
                     "loss_mean": loss_mean,
+                    "short_ctx_loss_mean": short_ctx_loss_mean,
                     "adv_gpt_loss": adv_gpt_loss.item(),
                     "lr": self.scheduler.get_last_lr()[0],
                 }
@@ -293,16 +323,19 @@ class FDSMTrainer(ABC):
         self.model.eval()
         with torch.no_grad():
             loss_sum = 0
+            short_ctx_loss_sum = 0
             step_bar = tqdm(
                 range(eval_dataloader.__len__()),
                 desc="Eval stage of steps %d" % steps,
                 disable=not self.strategy.is_rank_0(),
             )
 
-            for prompt_id_lens, inputs, attention_masks, infos in eval_dataloader:
+            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -317,7 +350,30 @@ class FDSMTrainer(ABC):
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=infos["input_length"],
                     )
+
+                    clue_output = self.model(
+                        clue_inputs, 
+                        attention_mask=clue_attention_mask, 
+                        return_output=True,
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=infos["clue_input_length"],
+                    )
+
+                    clue_labels = torch.where(
+                        clue_attention_mask.bool(),
+                        clue_inputs,
+                        self.loss_fn.IGNORE_INDEX,
+                    )
+
+                    index = 0
+                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                        index += input_length
+
+                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
                     
+                    short_ctx_loss_sum += short_ctx_gpt_loss.item()
+                
                 # loss function
                 labels = torch.where(
                     attention_mask.bool(),
@@ -339,7 +395,7 @@ class FDSMTrainer(ABC):
 
                 times += 1
                 loss_sum += loss.item()
-                bar_dict = {"eval gpt_loss": loss_sum / times}
+                bar_dict = {"eval gpt_loss": loss_sum / times, "eval short_ctx_gpt_loss": short_ctx_loss_sum / times}
                 step_bar.update()
                 logs = self.strategy.all_reduce(bar_dict)
                 step_bar.set_postfix(logs)

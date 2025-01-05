@@ -4,7 +4,8 @@ python inference_babilong.py \
     --tag global_step100 \
     --adapter_path '' \
     --save_path '/mnt/petrelfs/tangzecheng/MyRLHF/inference/babilong/gan/Llama-3.1-8B-Instruct/' \
-    --num_gpus 8 \
+    --gpu_id 0,1,2,7 \
+    --num_gpus 4 \
     --tp_size 1 \
 
 

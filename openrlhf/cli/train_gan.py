@@ -31,6 +31,7 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
+        search_clue_seg=True,
     )
     eval_dataset = SFTDataset(
         eval_data,
@@ -41,6 +42,7 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
+        search_clue_seg=True,
     )
 
     # prepare dataloader
