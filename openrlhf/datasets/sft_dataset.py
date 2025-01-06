@@ -1,9 +1,7 @@
 from typing import Callable
-
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
-
 from .utils import zero_pad_sequences
 
 
@@ -127,24 +125,24 @@ class SFTDataset(Dataset):
                 add_special_tokens=False,
             )
             prompt_ids_len = prompt_token["attention_mask"].int().sum().item()
-
-            if self.search_clue_seg:
-                clue_prompt_token = self.tokenizer(
-                    clue_prompt,
-                    max_length=self.max_length,
-                    padding=False,
-                    truncation=True,
-                    return_tensors="pt",
-                    add_special_tokens=False,
-                )
-
-                clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
-
-            # filter the sample whose length is greater than max_length (2 for answer length)
-            if not prompt or not response or prompt_ids_len >= self.max_length - 2:
-                prompt = None
         else:
             prompt_ids_len = 0
+
+        if self.search_clue_seg:
+            clue_prompt_token = self.tokenizer(
+                clue_prompt,
+                max_length=self.max_length,
+                padding=False,
+                truncation=True,
+                return_tensors="pt",
+                add_special_tokens=False,
+            )
+
+            clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
+
+        # filter the sample whose length is greater than max_length (2 for answer length)
+        if not prompt or not response or prompt_ids_len >= self.max_length - 2:
+            prompt = None
 
         if self.search_clue_seg:
             return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len}
@@ -180,6 +178,12 @@ class SFTDataset(Dataset):
             text = (prompt + response).rstrip("\n")
             if not text.endswith(self.tokenizer.eos_token):
                 text += " " + self.tokenizer.eos_token
+            if clue_prompt: 
+                clue_text = (clue_prompt + response).rstrip("\n")
+            if not text.endswith(self.tokenizer.eos_token):
+                text += " " + self.tokenizer.eos_token
+                if clue_prompt:
+                    clue_text += " " + self.tokenizer.eos_token
 
         input_token = self.tokenizer(
             text,
