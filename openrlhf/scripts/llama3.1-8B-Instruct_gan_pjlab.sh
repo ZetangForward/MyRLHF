@@ -1,7 +1,7 @@
 # export NCCL_SOCKET_IFNAME=eth0
 # export NCCL_DEBUG=INFO
 export HF_DATASETS_CACHE=/dev/null
-SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
+SAVE_DIR='/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --max_len 96000 \
@@ -14,7 +14,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/gan \
    --save_steps 25 \
    --logging_steps 1 \
-   --eval_steps 50 \
+   --eval_steps 25 \
    --zero_stage 2 \
    --max_ckpt_num 5 \
    --max_epochs 2 \
@@ -27,7 +27,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --gradient_checkpointing \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
-   --wandb_project 'merge_v1_fix' \
-   --wandb_run_name 'Llama-3.1-8B-Instruct-GAN' \
+   --wandb_project 'merge_v1_full_gan' \
+   --wandb_run_name 'Llama-3.1-8B-Instruct-0.005-adv_embedding-0.1-adv_scale' \
    --ring_attn_size 8 \
    --ring_head_stride 2;

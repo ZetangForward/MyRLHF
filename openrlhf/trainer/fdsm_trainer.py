@@ -204,10 +204,10 @@ class FDSMTrainer(ABC):
                
                 adv_loss.backward()
                
-                epsilon = 0.01  # 扰动幅度
+                epsilon = 0.005  # 扰动幅度
                 adv_embeddings = adv_embeddings + epsilon * adv_embeddings.grad.sign()
 
-                # 可选：裁剪对抗样本的范围
+                # TODO:可选：裁剪对抗样本的范围 (这里还是要修改), 针对context的不同位置加多少噪声上去
                 # adv_embeddings = torch.clamp(adv_embeddings, min=0, max=1)
 
                 # 清除 adv_embeddings 的梯度
@@ -228,7 +228,7 @@ class FDSMTrainer(ABC):
                 )
                 adv_gpt_loss = self.loss_fn(real_adv_output.logits, labels)
 
-                loss = gpt_loss + aux_loss * self.args.aux_loss_coef - 0.5 * adv_gpt_loss
+                loss = gpt_loss + aux_loss * self.args.aux_loss_coef - 0.1 * adv_gpt_loss
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
