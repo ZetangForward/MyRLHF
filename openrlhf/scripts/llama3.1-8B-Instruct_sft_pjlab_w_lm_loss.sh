@@ -30,6 +30,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.py \
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project 'merge_v1_dev' \
-   --wandb_run_name 'Llama-3.1-8B-Instruct-sft-with-ctx_loss——de v' \
+   --wandb_run_name 'Llama-3.1-8B-Instruct-sft-with-ctx_loss——dev' \
    --ring_attn_size 4 \
    --ring_head_stride 2;
