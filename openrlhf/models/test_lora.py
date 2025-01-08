@@ -1,25 +1,30 @@
-from cd_llama import LoraModel, LoraConfig, LlamaForCausalLM
+from cd_llama import LoraModel, LoraConfig, LlamaForCausalLM, PeftModel
 import torch
 
+
+
 model = LlamaForCausalLM.from_pretrained(
-    "/data/hf_models/Meta-Llama-3.1-8B-Instruct", 
+    "meta-llama/Meta-Llama-3.1-8B-Instruct", 
     trust_remote_code=True,
     attn_implementation="flash_attention_2",
     torch_dtype=torch.bfloat16
 ).cuda()
 
 
-lora_config = LoraConfig(
-    task_type="CAUSAL_LM",
-    r=32,
-    lora_alpha=16,
-    target_modules=["q_proj", "k_proj"],
-    lora_dropout=0.01,
-    bias="none",
-    use_dora=False,  # 先不使用lora
-)
+lora_model = PeftModel.from_pretrained(model, "/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt/merge_v1_fix/Llama-3.1-8B-Instruct/cd/global_step1")
 
-lora_model = LoraModel(model, lora_config, "default")
+
+# lora_config = LoraConfig(
+#     task_type="CAUSAL_LM",
+#     r=32,
+#     lora_alpha=16,
+#     target_modules=["q_proj", "k_proj"],
+#     lora_dropout=0.01,
+#     bias="none",
+#     use_dora=False,  # 先不使用lora
+# )
+
+# lora_model = LoraModel(model, lora_config, "default")
 
 # 伪造输入数据
 batch_size = 2  # 批量大小
@@ -44,8 +49,6 @@ print(f"Loss: {loss.item()}")
 
 outputs = lora_model(input_ids=input_ids, attention_mask=attention_mask, labels=labels, cd_noise_settings={"add_noise": False})
 
-
-lora_model.
 
 # 获取 loss
 loss = outputs.loss
