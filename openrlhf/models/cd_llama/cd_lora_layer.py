@@ -618,10 +618,10 @@ class Linear(nn.Module, LoraLayer):
 
                 if not self.use_dora[active_adapter]:
                     if add_noise:
-                        # print("目前执行的是增加噪声，是加法")  # 这里是为了merge lora之后，保持一致所以加噪声是减法，减噪声是加法
+                        print("目前执行的是增加噪声，是加法")  # 这里是为了merge lora之后，保持一致所以加噪声是减法，减噪声是加法
                         result = result - lora_B(lora_A(dropout(x))) * scaling
                     else:
-                        # print("目前执行的是减少噪声，是减法")
+                        print("目前执行的是减少噪声，是减法")
                         result = result + lora_B(lora_A(dropout(x))) * scaling
 
                 else:

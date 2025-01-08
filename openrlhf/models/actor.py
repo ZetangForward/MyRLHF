@@ -6,7 +6,7 @@ from peft import TaskType
 from peft.tuners.lora import LoraLayer
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, PreTrainedModel
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
-from .cd_llama import LoraModel, LoraConfig, LlamaForCausalLM
+from .cd_llama import PeftModel, LoraConfig, LlamaForCausalLM
 from .ring_attn_utils import convert_ring_attn_params, convert_ring_attn_params_embedding
 from .utils import log_probs_from_logits, reset_position_ids
 
@@ -80,7 +80,7 @@ class Actor(nn.Module):
                     bias="none",
                     use_dora=False,
                 )
-                self.model = LoraModel(self.model, lora_config, "default")
+                self.model = PeftModel(self.model, lora_config, "default")
 
                 if load_in_4bit:
                     for name, module in self.model.named_modules():

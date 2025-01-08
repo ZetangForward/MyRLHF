@@ -40,10 +40,10 @@ from transformers.utils import PushToHubMixin
 
 from peft.utils.constants import DUMMY_MODEL_CONFIG, PEFT_TYPE_TO_PREFIX_MAPPING
 from peft.utils.integrations import init_empty_weights
+from peft import __version__
+from peft.config import PeftConfig
 
-from . import __version__
-from .config import PeftConfig
-from .tuners import (
+from peft.tuners import (
     AdaLoraModel,
     AdaptionPromptModel,
     BOFTModel,
@@ -55,7 +55,6 @@ from .tuners import (
     LNTuningModel,
     LoHaModel,
     LoKrModel,
-    LoraModel,
     MultitaskPromptEmbedding,
     OFTModel,
     PolyModel,
@@ -67,8 +66,9 @@ from .tuners import (
     XLoraConfig,
     XLoraModel,
 )
-from .tuners.tuners_utils import BaseTuner, BaseTunerLayer
-from .utils import (
+from .cd_module import LoraModel
+from peft.tuners.tuners_utils import BaseTuner, BaseTunerLayer
+from peft.utils import (
     SAFETENSORS_WEIGHTS_NAME,
     TRANSFORMERS_MODELS_TO_PREFIX_TUNING_POSTPROCESS_MAPPING,
     WEIGHTS_NAME,
