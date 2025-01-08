@@ -16,7 +16,7 @@ from peft import PeftModel, get_peft_model_state_dict
 from torch import distributed as dist
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-
+from openrlhf.models.cd_llama import LoraModel
 from openrlhf.models import Actor
 from openrlhf.models.ring_attn_utils import get_ring_attn_group, set_ring_attn_group
 from openrlhf.utils.distributed_sampler import DistributedSampler
@@ -335,7 +335,8 @@ class DeepspeedStrategy(ABC):
             ), f"mismatch keys {output_state_dict_keys.symmetric_difference(state_dict_keys)}"
 
             # only save peft weights https://github.com/microsoft/DeepSpeed/issues/4295
-            if isinstance(model_to_save, PeftModel):
+            if isinstance(model_to_save, PeftModel) or isinstance(model_to_save, LoraModel):
+                print("!!!!!!!save_lora_model~~~~!!!!!!!!")
                 model_to_save.save_pretrained(output_dir, **kwargs)
                 if self.stage == 3:
                     torch.save(

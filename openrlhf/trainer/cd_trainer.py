@@ -143,7 +143,7 @@ class CDTrainer(ABC):
                 clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
                 clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                # print(f"inputs shape is {inputs.shape}")  # FIXME
+                # print(f"\ninputs shape is {inputs.shape}")  # FIXME
                 # print(f"neg_inputs shape is {neg_inputs.shape}")  # FIXME
 
                 pos_output = self.model(
@@ -155,6 +155,20 @@ class CDTrainer(ABC):
                     cd_noise_settings={"add_noise": False},
                 )
 
+                
+                # loss function
+                pos_labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+                # print(f"real input length of pos_labels: {attention_mask.sum()}")
+                
+                if not self.pretrain_mode:
+                    index = 0
+                    for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                        pos_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                        index += input_length
+
+                pos_loss = self.loss_fn(pos_output.logits, pos_labels)
+                self.strategy.backward(pos_loss, self.model, self.optimizer)
+                
                 neg_output = self.model(
                     neg_inputs, 
                     attention_mask=neg_attention_masks, 
@@ -164,25 +178,21 @@ class CDTrainer(ABC):
                     cd_noise_settings={"add_noise": True},
                 )
 
-                # loss function
-                pos_labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
                 neg_labels = torch.where(neg_attention_masks.bool(), neg_inputs, self.loss_fn.IGNORE_INDEX)
+                # print(f"real input length of neg_labels: {neg_attention_masks.sum()}")
 
                 if not self.pretrain_mode:
-                    index = 0
-                    for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
-                        pos_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
                     index = 0
                     for input_length, source_len in zip(infos["neg_input_length"], prompt_id_lens):
                         neg_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
                         index += input_length
 
-                pos_loss = self.loss_fn(pos_output.logits, pos_labels)
-                neg_loss = self.loss_fn(neg_output.logits, neg_labels)
-                total_loss = pos_loss + self.neg_loss_weight * neg_loss
+                neg_loss = self.neg_loss_weight * self.loss_fn(neg_output.logits, neg_labels)
+                # total_loss = pos_loss + self.neg_loss_weight * neg_loss
 
-                self.strategy.backward(total_loss, self.model, self.optimizer)
+                # print(f"pos_loss: {pos_loss}, neg_loss: {neg_loss}")
+
+                self.strategy.backward(neg_loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
                 pos_loss_mean = pos_loss_mean * 0.9 + 0.1 * pos_loss.item()
@@ -278,80 +288,88 @@ class CDTrainer(ABC):
         with torch.no_grad():
             loss_sum = 0
             short_ctx_loss_sum = 0
+            neg_loss_sum = 0
             step_bar = tqdm(
                 range(eval_dataloader.__len__()),
                 desc="Eval stage of steps %d" % steps,
                 disable=not self.strategy.is_rank_0(),
             )
  
-            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in eval_dataloader:
-                if self.packing_samples:
-                    inputs = inputs.to(torch.cuda.current_device())
-                    attention_mask = attention_masks.to(torch.cuda.current_device())
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
-                else:
-                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
+            for data in eval_dataloader:
+                prompt_id_lens, inputs, attention_masks, neg_inputs, neg_attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
 
-                if self.strategy.ring_attn_group is None:
-                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                else:
-                    output = self.model(
-                        inputs, 
-                        attention_mask=attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["input_length"],
-                        cd_noise_settings={"add_noise": False}
-                    )
 
-                    clue_output = self.model(
-                        clue_inputs, 
-                        attention_mask=clue_attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["clue_input_length"],
-                        cd_noise_settings={"add_noise": False}
-                    )
+                inputs = inputs.to(torch.cuda.current_device())
+                attention_mask = attention_masks.to(torch.cuda.current_device())
+                neg_inputs = neg_inputs.to(torch.cuda.current_device())
+                neg_attention_masks = neg_attention_masks.to(torch.cuda.current_device())
+                clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                    clue_labels = torch.where(
-                        clue_attention_mask.bool(),
-                        clue_inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
 
-                    index = 0
-                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
-
-                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                    
-                    short_ctx_loss_sum += short_ctx_gpt_loss.item()
-                
-                # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
+                output = self.model(
+                    inputs, 
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                    cd_noise_settings={"add_noise": False}
                 )
 
-                if not self.pretrain_mode:
-                    if self.packing_samples:
-                        index = 0
-                        for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
-                            labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                            index += input_length
-                    else:
-                        for label, source_len in zip(labels, prompt_id_lens):
-                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+                neg_output = self.model(
+                    neg_inputs, 
+                    attention_mask=neg_attention_masks, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["neg_input_length"],
+                    cd_noise_settings={"add_noise": False}
+                )
+
+                clue_output = self.model(
+                    clue_inputs, 
+                    attention_mask=clue_attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["clue_input_length"],
+                    cd_noise_settings={"add_noise": False}
+                )
+
+                clue_labels = torch.where(clue_attention_mask.bool(), clue_inputs, self.loss_fn.IGNORE_INDEX)
+                neg_labels = torch.where(neg_attention_masks.bool(), neg_inputs, self.loss_fn.IGNORE_INDEX)
+                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
+
+                index = 0
+                for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                    clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                    index += input_length
+                
+                index = 0
+                for input_length, source_len in zip(infos["neg_input_length"], prompt_id_lens):
+                    neg_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                    index += input_length
+
+                index = 0
+                for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                    labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                    index += input_length
+
+                short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                short_ctx_loss_sum += short_ctx_gpt_loss.item()
 
                 loss = self.loss_fn(output.logits, labels)
+                loss_sum += loss.item()
+                
+                neg_loss = self.loss_fn(neg_output.logits, neg_labels)
+                neg_loss_sum += neg_loss.item()
 
                 times += 1
-                loss_sum += loss.item()
-                bar_dict = {"eval gpt_loss": loss_sum / times, "eval short_ctx_gpt_loss": short_ctx_loss_sum / times}
+                
+                bar_dict = {
+                    "eval gpt_loss": loss_sum / times, 
+                    "eval neg_loss": neg_loss_sum / times,
+                    "eval short_ctx_gpt_loss": short_ctx_loss_sum / times
+                }
+
                 step_bar.update()
                 logs = self.strategy.all_reduce(bar_dict)
                 step_bar.set_postfix(logs)

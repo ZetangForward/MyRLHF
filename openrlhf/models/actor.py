@@ -1,18 +1,14 @@
 from typing import Optional, Tuple, Union
-
-import deepspeed
 import torch
 import torch.distributed as dist
 import torch.nn as nn
-import torch.nn.functional as F
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import TaskType
 from peft.tuners.lora import LoraLayer
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, PreTrainedModel
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
-
+from .cd_llama import LoraModel, LoraConfig, LlamaForCausalLM
 from .ring_attn_utils import convert_ring_attn_params, convert_ring_attn_params_embedding
 from .utils import log_probs_from_logits, reset_position_ids
-
 
 class Actor(nn.Module):
     """
@@ -62,7 +58,7 @@ class Actor(nn.Module):
             else:
                 nf4_config = None
 
-            self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = LlamaForCausalLM.from_pretrained(
                 pretrain_or_model,
                 trust_remote_code=True,
                 attn_implementation=attn_implementation,
@@ -82,8 +78,9 @@ class Actor(nn.Module):
                     target_modules=target_modules,
                     lora_dropout=lora_dropout,
                     bias="none",
+                    use_dora=False,
                 )
-                self.model = get_peft_model(self.model, lora_config)
+                self.model = LoraModel(self.model, lora_config, "default")
 
                 if load_in_4bit:
                     for name, module in self.model.named_modules():

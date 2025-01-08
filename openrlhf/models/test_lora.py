@@ -44,6 +44,9 @@ print(f"Loss: {loss.item()}")
 
 outputs = lora_model(input_ids=input_ids, attention_mask=attention_mask, labels=labels, cd_noise_settings={"add_noise": False})
 
+
+lora_model.
+
 # 获取 loss
 loss = outputs.loss
 print(f"Loss: {loss.item()}")
