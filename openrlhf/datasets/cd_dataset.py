@@ -44,6 +44,13 @@ def preprocess_data(data, input_template=None, input_key="input", neg_key="rejec
     return prompt, pos_response, neg_response, None
 
 
+def pad_to_multiple(tensor, mask, multiple, pad_value):
+    if multiple > 1 and tensor.numel() % multiple != 0:
+        padding_len = multiple - (tensor.numel() % multiple)
+        tensor = F.pad(tensor, (0, padding_len), value=pad_value)
+        mask = F.pad(mask, (0, padding_len), value=0)
+    return tensor, mask
+
 class CDDataset(Dataset):
     """
     Dataset for SFT model
@@ -324,27 +331,34 @@ class CDDataset(Dataset):
         packed_clue_input_ids = torch.cat(packed_clue_input_ids, dim=0).unsqueeze(0)
         packed_clue_attention_masks = torch.cat(packed_clue_attention_masks, dim=0).unsqueeze(0)
 
+        # 计算最大长度
+        max_length = max(packed_input_ids.numel(), packed_neg_input_ids.numel())
 
-        if (
-            self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0
-        ):  # not divisible by multiple_of; here we align for grouping
-            padding_len = self.multiple_of - (packed_input_ids.numel() % self.multiple_of)
+        # 确保 packed_input_ids 和 packed_neg_input_ids 长度一致
+        max_length = max(packed_input_ids.numel(), packed_neg_input_ids.numel())
+        
+        if packed_input_ids.numel() < max_length:
+            padding_len = max_length - packed_input_ids.numel()
             packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
         
-        if (
-            self.multiple_of > 1 and packed_neg_input_ids.numel() % self.multiple_of != 0
-        ):  # not divisible by multiple_of; here we align for grouping
-            padding_len = self.multiple_of - (packed_neg_input_ids.numel() % self.multiple_of)
+        if packed_neg_input_ids.numel() < max_length:
+            padding_len = max_length - packed_neg_input_ids.numel()
             packed_neg_input_ids = F.pad(packed_neg_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_neg_attention_masks = F.pad(packed_neg_attention_masks, (0, padding_len), value=0)
 
-        if (
-            self.multiple_of > 1 and packed_clue_input_ids.numel() % self.multiple_of != 0
-        ):  # not divisible by multiple_of; here we align for grouping
-            padding_len = self.multiple_of - (packed_clue_input_ids.numel() % self.multiple_of)
-            packed_clue_input_ids = F.pad(packed_clue_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
-            packed_clue_attention_masks = F.pad(packed_clue_attention_masks, (0, padding_len), value=0)
+        # 现在 packed_input_ids 和 packed_neg_input_ids 长度一致，进行进一步的填充
+        packed_input_ids, packed_attention_masks = pad_to_multiple(
+            packed_input_ids, packed_attention_masks, self.multiple_of, self.tokenizer.pad_token_id
+        )
+        packed_neg_input_ids, packed_neg_attention_masks = pad_to_multiple(
+            packed_neg_input_ids, packed_neg_attention_masks, self.multiple_of, self.tokenizer.pad_token_id
+        )
+
+        packed_clue_input_ids, packed_clue_attention_masks = pad_to_multiple(
+            packed_clue_input_ids, packed_clue_attention_masks, self.multiple_of, self.tokenizer.pad_token_id
+        )
+
             
         return (
             prompt_ids_lens, 
@@ -357,3 +371,5 @@ class CDDataset(Dataset):
             packed_clue_input_ids, 
             packed_clue_attention_masks
         )
+    
+

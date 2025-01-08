@@ -102,9 +102,9 @@ if __name__ == "__main__":
     # dataset_path = "/data/zecheng/data/LongMIT-128K"
     # save_path = "/data/zecheng/data/processed_multi_hop"
 
-    model_path = "/nvme/big_models/Llama-3.3-70B-Instruct"
-    dataset_path = "/data/pub_data/LongMIT-128K"
-    save_path = "/data/pub_data/processed_multi_hop/filter_en_for_eval"
+    model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    dataset_path = "donmaclean/LongMIT-128K"
+    save_path = "/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/data/processed_multi_hop/filter_en_for_eval"
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    process_longmit_datasets(dataset_name=dataset_path, length=16000, max_length=96000, save_dir=save_path, tokenizer=tokenizer, total_num=32000)
+    process_longmit_datasets(dataset_name=dataset_path, length=8000, max_length=64000, save_dir=save_path, tokenizer=tokenizer, total_num=32000)
