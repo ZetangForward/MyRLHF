@@ -435,7 +435,9 @@ class LlamaFlashAttention2(LlamaAttention):
         bsz, q_len, _ = hidden_states.size()
         if cd_noise_settings is not None:  # zecheng_note: 这里采用cdnoising:
             add_noise = cd_noise_settings.get("add_noise", False)
-        
+        else:
+            add_noise = False
+            
         if isinstance(self.q_proj, nn.Linear):
             query_states = self.q_proj(hidden_states)
             key_states = self.k_proj(hidden_states)
