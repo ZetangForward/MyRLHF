@@ -1,3 +1,3 @@
-from cd_llama_modeling import LoraModel, LoraConfig
-from cd_lora_layer import LoraLayer
-from cd_llama_modeling import LlamaModel, LlamaForCausalLM, LlamaConfig
+from .cd_module import LoraModel, LoraConfig
+from .cd_lora_layer import LoraLayer
+from .cd_llama_modeling import LlamaModel, LlamaForCausalLM, LlamaConfig

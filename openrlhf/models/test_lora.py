@@ -16,6 +16,7 @@ lora_config = LoraConfig(
     target_modules=["q_proj", "k_proj"],
     lora_dropout=0.01,
     bias="none",
+    use_dora=False,  # 先不使用lora
 )
 
 

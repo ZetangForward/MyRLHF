@@ -439,11 +439,11 @@ class LlamaFlashAttention2(LlamaAttention):
         if isinstance(self.q_proj, nn.Linear):
             query_states = self.q_proj(hidden_states)
             key_states = self.k_proj(hidden_states)
-            value_states = self.v_proj(hidden_states)
         else:
             query_states = self.q_proj(hidden_states, add_noise)
             key_states = self.k_proj(hidden_states, add_noise)
-            value_states = self.v_proj(hidden_states, add_noise)
+        
+        value_states = self.v_proj(hidden_states)
 
         # Flash attention requires the input to have the shape
         # batch_size x seq_length x head_dim x hidden_dim
