@@ -33,8 +33,8 @@ def train(args):
         tokenizer,
         args.max_len,
         strategy,
+        pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
-        is_dpo=True,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
         search_clue_seg=True,
@@ -44,8 +44,8 @@ def train(args):
         tokenizer,
         args.max_len,
         strategy,
+        pretrain_mode=args.pretrain_mode,
         input_template=args.input_template,
-        is_dpo=True,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
         search_clue_seg=True,
@@ -61,7 +61,6 @@ def train(args):
         True,
         train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
     )
-
     eval_dataloader = strategy.setup_dataloader(
         eval_dataset,
         args.micro_train_batch_size,
@@ -73,6 +72,7 @@ def train(args):
     # configure model
     # load huggingface model
     # zecheng_note：这里加载Lora训练，原始的模型被freeze住
+    print(args.target_modules)
     model = Actor(
         args.pretrain,
         use_flash_attention_2=args.flash_attn,
@@ -80,8 +80,8 @@ def train(args):
         load_in_4bit=args.load_in_4bit,
         lora_rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout,
         target_modules=args.target_modules,
+        lora_dropout=args.lora_dropout,
         ds_config=strategy.get_ds_train_config(is_actor=True),
         packing_samples=args.packing_samples,
     )

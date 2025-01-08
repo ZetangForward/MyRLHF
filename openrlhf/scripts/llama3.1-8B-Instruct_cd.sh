@@ -21,6 +21,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_cd.py \
    --input_key "chosen" \
    --packing_samples \
    --bf16 \
+   --target_modules "q_proj" "k_proj" \
    --num_processors 16 \
    --learning_rate 1e-6 \
    --flash_attn \

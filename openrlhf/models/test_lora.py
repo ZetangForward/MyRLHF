@@ -19,7 +19,6 @@ lora_config = LoraConfig(
     use_dora=False,  # 先不使用lora
 )
 
-
 lora_model = LoraModel(model, lora_config, "default")
 
 # 伪造输入数据

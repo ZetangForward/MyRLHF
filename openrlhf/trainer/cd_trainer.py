@@ -57,7 +57,7 @@ class CDTrainer(ABC):
         self.model = model
         self.tokenizer = tokenizer
         self.optimizer = optim
-        self.neg_loss_weight = self.neg_loss_weight
+        self.neg_loss_weight = neg_loss_weight
         self.args = strategy.args
         
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
