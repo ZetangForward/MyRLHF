@@ -180,6 +180,7 @@ class Actor(nn.Module):
         return_output=False,
         ring_attn_group: Optional[dist.ProcessGroup] = None,
         packed_seq_lens: Optional[list[int]] = None,
+        cd_noise_settings: dict = None,
     ) -> torch.Tensor:
         """Returns action log probs"""
         if not self.packing_samples:
@@ -195,7 +196,7 @@ class Actor(nn.Module):
                 position_ids = reset_position_ids(attention_mask)
         position_ids.masked_fill_(attention_mask == 0, 1)
 
-        output = self.model(sequences, attention_mask=attention_mask, position_ids=position_ids)
+        output = self.model(sequences, attention_mask=attention_mask, position_ids=position_ids, cd_noise_settings=cd_noise_settings)
 
         if num_actions is None:
             assert return_output
