@@ -592,7 +592,7 @@ class Linear(nn.Module, LoraLayer):
 
         return output_tensor
 
-    def forward(self, x: torch.Tensor, *args: Any, **kwargs: Any) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, add_noise: bool = False, *args: Any, **kwargs: Any) -> torch.Tensor:
         self._check_forward_args(x, *args, **kwargs)
         adapter_names = kwargs.pop("adapter_names", None)
 
@@ -604,7 +604,7 @@ class Linear(nn.Module, LoraLayer):
             result = self._mixed_batch_forward(x, *args, adapter_names=adapter_names, **kwargs)
         elif self.merged:
             result = self.base_layer(x, *args, **kwargs)
-        else:
+        else:  # zecheng_note: 修改这里，成为去除噪声模块
             result = self.base_layer(x, *args, **kwargs)
             torch_result_dtype = result.dtype
             for active_adapter in self.active_adapters:
@@ -625,14 +625,27 @@ class Linear(nn.Module, LoraLayer):
                         x = dropout(x)
                         base_result = None
 
-                    result = result + self.lora_magnitude_vector[active_adapter](
-                        x,
-                        lora_A=lora_A,
-                        lora_B=lora_B,
-                        scaling=scaling,
-                        base_layer=self.get_base_layer(),
-                        base_result=base_result,
-                    )
+                    if add_noise:
+                        print("目前执行的是增加噪声，是加法")
+                        result = result + self.lora_magnitude_vector[active_adapter](
+                            x,
+                            lora_A=lora_A,
+                            lora_B=lora_B,
+                            scaling=scaling,
+                            base_layer=self.get_base_layer(),
+                            base_result=base_result,
+                        )
+
+                    else:
+                        print("目前执行的是减少噪声，是减法")
+                        result = result - self.lora_magnitude_vector[active_adapter](
+                            x,
+                            lora_A=lora_A,
+                            lora_B=lora_B,
+                            scaling=scaling,
+                            base_layer=self.get_base_layer(),
+                            base_result=base_result,
+                        )
 
             result = result.to(torch_result_dtype)
 

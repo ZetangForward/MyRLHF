@@ -37,7 +37,7 @@ from peft.tuners.lora.config import LoraConfig
 from peft.tuners.lora.eetq import dispatch_eetq
 from peft.tuners.lora.gptq import dispatch_gptq
 from peft.tuners.lora.hqq import dispatch_hqq
-from peft.tuners.lora.layer import Conv2d, LoraLayer, dispatch_default
+from openrlhf.models.cd_llama.cd_lora_layer import LoraLayer, Conv2d, dispatch_default
 from peft.tuners.lora.torchao import dispatch_torchao
 from peft.tuners.lora.tp_layer import dispatch_megatron
 
@@ -313,12 +313,12 @@ class LoraModel(BaseTuner):
 
         # avoid eager bnb import
         if is_bnb_available():
-            from .bnb import dispatch_bnb_8bit
+            from peft.tuners.lora.bnb import dispatch_bnb_8bit
 
             dispatchers.append(dispatch_bnb_8bit)
 
         if is_bnb_4bit_available():
-            from .bnb import dispatch_bnb_4bit
+            from peft.tuners.lora.bnb import dispatch_bnb_4bit
 
             dispatchers.append(dispatch_bnb_4bit)
 
