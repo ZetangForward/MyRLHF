@@ -14,6 +14,8 @@ model = LlamaForCausalLM.from_pretrained(
 lora_model = PeftModelForCausalLM.from_pretrained(model, "/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt/merge_v1_fix/Llama-3.1-8B-Instruct/context_denoise/global_step300")
 
 
+import pdb; pdb.set_trace()
+
 # lora_config = LoraConfig(
 #     task_type="CAUSAL_LM",
 #     r=32,

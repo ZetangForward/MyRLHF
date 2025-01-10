@@ -127,85 +127,65 @@ class FDSMTrainer(ABC):
             # train
             self.model.train()
             loss_mean, short_ctx_loss_mean = 0, 0
-            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in self.train_dataloader:
-                if self.packing_samples:
-                    inputs = inputs.to(torch.cuda.current_device())
-                    attention_mask = attention_masks.to(torch.cuda.current_device())
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
-                else:
-                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
+            for data in self.train_dataloader:
+                prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
+                inputs = inputs.to(torch.cuda.current_device())
+                attention_mask = attention_masks.to(torch.cuda.current_device())
+                clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                if self.strategy.ring_attn_group is None:
-                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                else:
-                    output = self.model(
-                        inputs, 
-                        attention_mask=attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["input_length"],
-                    )
-
-                    # 生成input_ids 扰动：
-                    embedding_layer = self.model.model.get_input_embeddings()
-
-                    # 将 input_ids 转换为嵌入表示
-                    embeddings = embedding_layer(inputs)
-
-                    # 生成对抗扰动
-                    # 冻结模型参数
-                    for param in self.model.model.parameters():
-                        param.requires_grad = False
-                    adv_embeddings = embeddings.clone().detach().to(torch.cuda.current_device())
-                    adv_embeddings.requires_grad = True
-
-                    # print(f"adv_embeddings shape: {adv_embeddings.shape}")
-                    # print(f"inputs shape: {inputs.shape}")
-
-                    adv_output = self.model.forward_embedding(
-                        inputs,
-                        inputs_embeds=adv_embeddings,
-                        attention_mask=attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["input_length"],
-                    )
+                output = self.model(
+                    inputs, 
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                )
 
                 # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
-                )
-                # mixtral
-                if self.aux_loss:
-                    aux_loss = output.aux_loss
-                else:
-                    aux_loss = 0
+                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                 if not self.pretrain_mode:
-                    if self.packing_samples:
-                        index = 0
-                        for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
-                            labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                            index += input_length
-                    else:
-                        for label, source_len in zip(labels, prompt_id_lens):
-                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+                    index = 0
+                    for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                        labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                        index += input_length
 
                 gpt_loss = self.loss_fn(output.logits, labels)
 
                 ###============= 对抗学习逻辑 =============###
+                # 生成input_ids 扰动, 这里用peft model的原始model生成绕容，意图克服之前的loss存在的问题
+                embedding_layer = self.model.model.base_model.get_input_embeddings()
+                embeddings = embedding_layer(inputs)
+                
+                # 生成对抗扰动, 原始的模型的weight是冻结住的，只有embedding能学到参数
+                adv_embeddings = embeddings.clone().detach().to(torch.cuda.current_device())
+                adv_embeddings.requires_grad = True
+
+                # 恢复模型参数的梯度计算
+                self.model.model.base_model.disable_adapter_layers()
+                for param in self.model.model.parameters():
+                    param.requires_grad = False
+
+                adv_output = self.model.forward_base_model_embedding(
+                    inputs,
+                    inputs_embeds=adv_embeddings,
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                )
+
                 # 冻结模型参数
-                # print("adv_output.logits shape:", adv_output.logits.shape)
+                print("adv_output.logits shape:", adv_output.logits.shape)
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                
                 adv_loss.backward()
                
                 epsilon = 0.005  # 扰动幅度
                 adv_embeddings = adv_embeddings + epsilon * adv_embeddings.grad.sign()
+                print(f"adv_embeddings.grad.sign() shape is {adv_embeddings.grad.sign().shape}")
+                print(f"adv_embeddings.grad.sign() is {adv_embeddings.grad.sign()}")
 
                 # TODO:可选：裁剪对抗样本的范围 (这里还是要修改), 针对context的不同位置加多少噪声上去
                 # adv_embeddings = torch.clamp(adv_embeddings, min=0, max=1)
@@ -214,11 +194,12 @@ class FDSMTrainer(ABC):
                 adv_embeddings.grad = None
 
                 # 恢复模型参数的梯度计算
+                self.model.model.base_model.enable_adapter_layers()
                 for param in self.model.model.parameters():
                     param.requires_grad = True
                 ###============= 对抗学习逻辑 =============###
                 # 对抗样本过模型
-                real_adv_output = self.model.forward_embedding(
+                real_adv_output = self.model.forward_peft_model_embedding(
                     inputs,
                     inputs_embeds=adv_embeddings, 
                     attention_mask=attention_mask, 
@@ -228,7 +209,7 @@ class FDSMTrainer(ABC):
                 )
                 adv_gpt_loss = self.loss_fn(real_adv_output.logits, labels)
 
-                loss = gpt_loss + aux_loss * self.args.aux_loss_coef - 0.1 * adv_gpt_loss
+                loss = gpt_loss - 0.1 * adv_gpt_loss
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
