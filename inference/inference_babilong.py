@@ -199,31 +199,17 @@ def main():
         else:
             out_file_path = os.path.join(args.save_path, f"preds_{os.path.basename(args.dataset_name)}_vanilla_no_template.jsonl")
 
+    gpu_id_lst = [str(gpu_id) for gpu_id in args.gpu_ids.split(",")]
+    num_gpus = len(gpu_id_lst)
+    logger.info(gpu_id_lst)
 
-    chunk_num = args.num_gpus // args.tp_size
+    chunk_num = num_gpus // args.tp_size
     chunk_size = (len(input_queries) + chunk_num - 1) // chunk_num
     prompts_chunks = [input_queries[i*chunk_size:(i+1)*chunk_size] for i in range(chunk_num)]
   
     manager = mp.Manager()
     return_list = manager.list()
     processes = []
-
-    # # construct gpu_ids list
-    # if args.tp_size == 1:
-    #     gpu_id_lst = [str(i) for i in range(args.num_gpus)]
-    # else:
-    #     gpu_id_lst = []
-
-    #     for i in range(0, args.num_gpus, args.tp_size):
-    #         tmp = list(range(i, i + args.tp_size))
-    #         gpu_id_lst.append(", ".join([str(i) for i in tmp]))
-    if args.gpu_ids:
-        gpu_id_lst = [str(gpu_id) for gpu_id in args.gpu_ids.split(",")]
-    else:
-        gpu_id_lst = construct_gpu_ids(args)
-    logger.info(gpu_id_lst)
-    # gpu_id_lst = ["0", "1", "2", "7"]
-    # worker(gpu_id_lst[0], args.adapter_path, prompts_chunks[0], args.model_path, inference_args['top_p'], return_list)  # FIXME: Debug
 
     # 使用 tqdm 显示总进度
     for chunk_id, gpu_ids in enumerate(gpu_id_lst):

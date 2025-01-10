@@ -33,6 +33,7 @@ class Actor(nn.Module):
         ds_config=None,
         device_map=None,
         packing_samples=False,
+        use_dora=False,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -78,7 +79,7 @@ class Actor(nn.Module):
                     target_modules=target_modules,
                     lora_dropout=lora_dropout,
                     bias="none",
-                    use_dora=False,
+                    use_dora=use_dora,
                 )
                 self.model = PeftModel(self.model, lora_config, "default")
 

@@ -1,7 +1,7 @@
-from cd_llama import LoraModel, LoraConfig, LlamaForCausalLM, PeftModel
+from cd_llama import LoraModel, LoraConfig, PeftModel
 import torch
-
-
+from peft import PeftModelForCausalLM
+from transformers import LlamaForCausalLM
 
 model = LlamaForCausalLM.from_pretrained(
     "meta-llama/Meta-Llama-3.1-8B-Instruct", 
@@ -11,7 +11,7 @@ model = LlamaForCausalLM.from_pretrained(
 ).cuda()
 
 
-lora_model = PeftModel.from_pretrained(model, "/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt/merge_v1_fix/Llama-3.1-8B-Instruct/cd/global_step1")
+lora_model = PeftModelForCausalLM.from_pretrained(model, "/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt/merge_v1_fix/Llama-3.1-8B-Instruct/context_denoise/global_step300")
 
 
 # lora_config = LoraConfig(

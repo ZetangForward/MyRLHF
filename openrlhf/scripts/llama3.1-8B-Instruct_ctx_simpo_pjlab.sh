@@ -1,7 +1,7 @@
 # export NCCL_SOCKET_IFNAME=eth0
 # export NCCL_DEBUG=INFO
-export MASTER_ADDR="10.140.24.59"
-export MASTER_PORT="29540"
+# export MASTER_ADDR="10.140.24.59"
+# export MASTER_PORT="29540"
 
 SAVE_DIR='/mnt/petrelfs/tangzecheng/local_ckpt'
 
