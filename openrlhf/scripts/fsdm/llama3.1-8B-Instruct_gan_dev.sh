@@ -2,7 +2,7 @@
 # export NCCL_DEBUG=INFO
 export HF_DATASETS_CACHE=/dev/null
 SAVE_DIR='/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt'
-DATA_DIR='/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/data'
+DATA_DIR='/mnt/petrelfs/tangzecheng/local_data'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --max_len 96000 \
