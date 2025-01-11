@@ -246,7 +246,7 @@ class SFTDataset(Dataset):
         packed_clue_attention_masks = []
         prompt_ids_lens = []
         clue_prompt_ids_lens = []
-        infos = {"input_length": [], "clue_input_length": [], "clue_pos": []}
+        infos = {"input_length": [], "clue_input_length": [], "clue_poss": []}
 
         index = 1
         for prompt_ids_len, input_id, attention_mask, info, pack_prompt_ids_len, clue_input_id, _ in item_list:
@@ -260,7 +260,7 @@ class SFTDataset(Dataset):
             if "clue_input_length" in info:
                 infos["clue_input_length"].append(info["clue_input_length"])
             if "clue_pos" in info:
-                infos["clue_pos"].append(info["clue_pos"])
+                infos["clue_poss"].append(info["clue_pos"])
             index += 1
 
         packed_input_ids = torch.cat(packed_input_ids, dim=0).unsqueeze(0)

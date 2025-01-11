@@ -41,6 +41,9 @@ class FDSMTrainer(ABC):
         batch_size: int = 1,
         max_epochs: int = 2,
         tokenizer=None,
+        adv_epsilon: float = 0.1,
+        adv_weight: float = 0.5,
+        adv_judge_ratio: float = 0.1, 
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -55,6 +58,9 @@ class FDSMTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
+        self.adv_epsilon = adv_epsilon 
+        self.adv_weight = adv_weight
+        self.adv_judge_ratio = adv_judge_ratio
 
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
 
@@ -153,7 +159,7 @@ class FDSMTrainer(ABC):
 
                 gpt_loss = self.loss_fn(output.logits, labels)
 
-                ###============= 对抗学习逻辑 =============###
+                ### ============= 对抗学习逻辑 ============= ###
                 # 生成input_ids 扰动, 这里用peft model的原始model生成绕容，意图克服之前的loss存在的问题
                 embedding_layer = self.model.model.base_model.get_input_embeddings()
                 embeddings = embedding_layer(inputs)
@@ -162,9 +168,6 @@ class FDSMTrainer(ABC):
                 adv_embeddings = embeddings.clone().detach().to(torch.cuda.current_device())
                 adv_embeddings.requires_grad = True
 
-                print(f"11 adv_embeddings shape is {adv_embeddings.shape}")
-               
-                # 恢复模型参数的梯度计算
                 self.model.model.base_model.disable_adapter_layers()
                 for param in self.model.model.parameters():
                     param.requires_grad = False
@@ -178,53 +181,65 @@ class FDSMTrainer(ABC):
                     packed_seq_lens=infos["input_length"],
                 )
 
-                # 冻结模型参数
-                print("adv_output.logits shape:", adv_output.logits.shape)
                 adv_loss = self.loss_fn(adv_output.logits, labels)
-               
                 adv_loss.backward()
-
-                print(f"22 adv_embeddings shape is {adv_embeddings.shape}")
-                print(f"22 adv_embeddings.grad is {adv_embeddings.grad}")
-                print(f"22 adv_embeddings.grad max is {adv_embeddings.grad.max()}")
-                print(f"22 adv_embeddings.grad min is {adv_embeddings.grad.min()}")
-                print(f"22 adv_embeddings.grad.sign() is {adv_embeddings.grad.sign()}")
-                # 对 d 维度求绝对值的和，得到每个 (b, l) 的是否有梯度的标记
+                
+                clue_poss = infos["clue_poss"]
                 non_zero_mask = adv_embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
-
-                # 打印结果
-                print("Non-zero gradient positions (b, l):")
+                batch_size, seq_len, embed_dim = adv_embeddings.size()
+                grad_mask = torch.zeros(batch_size, seq_len, device=adv_embeddings.device)
+                
                 for batch_idx in range(adv_embeddings.size(0)):
                     non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
-                    print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
-                
+                    cur_clue_pos = clue_poss[batch_idx]
+                    clue_positions_set = set()
+                    for start, end in cur_clue_pos:
+                        clue_positions_set.update(range(start, end + 1))  # 包括结束位置
+                        grad_mask[batch_idx, start:end + 1] = 1  # 包括结束位置
+                    non_zero_positions_set = set(non_zero_positions)
+                    overlap = clue_positions_set & non_zero_positions_set
+                    overlap_count = len(overlap)
+                    total_clue_positions = len(clue_positions_set)
+                    overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
+                    # print(f"cur_clue_pos is {cur_clue_pos}")
+                    # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
+                    # print(f"total_clue_positions is {total_clue_positions}")
+                    # print(f"overlap_count is {overlap_count}")
+                    # print(f"overlap_ratio is {overlap_ratio}")
 
-                epsilon = 0.005  # 扰动幅度
-                adv_embeddings = adv_embeddings + epsilon * adv_embeddings.grad.sign()
+                context_grad = adv_embeddings.grad.clone()
+                context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
+                context_adv_embeddings = adv_embeddings + self.adv_epsilon * context_grad.sign()
 
-                # TODO:可选：裁剪对抗样本的范围 (这里还是要修改), 针对context的不同位置加多少噪声上去
-                # adv_embeddings = torch.clamp(adv_embeddings, min=0, max=1)
+                clue_grad = adv_embeddings.grad.clone()
+                clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
+                clue_adv_embeddings = adv_embeddings + self.adv_epsilon * clue_grad.sign()
 
                 # 清除 adv_embeddings 的梯度
-                adv_embeddings.grad = None
+                context_adv_embeddings.grad = None
+                clue_adv_embeddings.grad = None
 
                 # 恢复模型参数的梯度计算
                 self.model.model.base_model.enable_adapter_layers()
                 for param in self.model.model.parameters():
                     param.requires_grad = True
-                ###============= 对抗学习逻辑 =============###
-                # 对抗样本过模型
-                real_adv_output = self.model.forward_peft_model_embedding(
-                    inputs,
-                    inputs_embeds=adv_embeddings, 
-                    attention_mask=attention_mask, 
-                    return_output=True,
-                    ring_attn_group=self.strategy.ring_attn_group,
-                    packed_seq_lens=infos["input_length"],
-                )
-                adv_gpt_loss = self.loss_fn(real_adv_output.logits, labels)
 
-                loss = gpt_loss - 0.1 * adv_gpt_loss
+                chosen_logps, rejected_logps = self.concatenated_forward(
+                    self.model, 
+                    inputs, attention_mask, context_adv_embeddings, 
+                    inputs, attention_mask, clue_adv_embeddings, 
+                    infos["input_length"]
+                )
+                # 对抗样本过模型
+                
+                print()
+
+                
+
+                if overlap_ratio > self.adv_judge_ratio: # 大部分的clue都被修改了:
+                    loss = gpt_loss - self.adv_weight * adv_gpt_loss
+                else: # 只有少部分的样本被攻击，
+                    loss = gpt_loss + self.adv_weight * adv_gpt_loss
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
@@ -404,4 +419,75 @@ class FDSMTrainer(ABC):
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
         self.model.train()  # reset model state
+    
+    def concatenated_forward(self, model, chosen_ids, c_mask, c_embeddings, reject_ids, r_mask, r_embeddings, prompt_id_lens):
+        """Run the given model on the given batch of inputs, concatenating the chosen and rejected inputs together.
+
+        We do this to avoid doing two forward passes, because it's faster for FSDP.
+        """
+        concat_inputs = torch.cat([chosen_ids, reject_ids], dim=0)
+        concat_embeddings = torch.cat([c_embeddings, r_embeddings], dim=0)
+        concat_attention_mask = torch.cat([c_mask, r_mask], dim=0)
+        concat_prompt_id_lens = prompt_id_lens * 2
         
+        print(f"concat_inputs shape: {concat_inputs.shape}")
+        print(f"concat_embeddings shape: {concat_embeddings.shape}")
+        print(f"concat_attention_mask shape: {concat_attention_mask.shape}")
+        print(f"concat_prompt_id_lens: {concat_prompt_id_lens}")
+
+        output = model.forward_embedding(
+            concat_inputs,
+            inputs_embeds=concat_embeddings, 
+            attention_mask=concat_attention_mask, 
+            return_output=True,
+            ring_attn_group=self.strategy.ring_attn_group,
+            packed_seq_lens=concat_prompt_id_lens,
+        )
+
+        all_logits = output["logits"]
+        print(f"all_logps shape: {all_logits.shape}")
+        all_logps = self._get_batch_logps(
+            all_logits, concat_inputs, concat_attention_mask, concat_prompt_id_lens, average_log_prob=True
+        )
+        chosen_logps = all_logps[: chosen_ids.shape[0]]
+        rejected_logps = all_logps[chosen_ids.shape[0] :]
+        
+        return chosen_logps, rejected_logps
+
+    def _get_batch_logps(
+        self,
+        logits: torch.FloatTensor,
+        labels: torch.LongTensor,
+        attention_mask,
+        prompt_id_lens,
+        average_log_prob: bool = False,
+    ) -> torch.FloatTensor:
+        """Compute the log probabilities of the given labels under the given logits.
+
+        Args:
+            logits: Logits of the model (unnormalized). Shape: (batch_size, sequence_length, vocab_size)
+            labels: Labels for which to compute the log probabilities. Label tokens with a value of -100 are ignored. Shape: (batch_size, sequence_length)
+            average_log_prob: If True, return the average log probability per (non-masked) token. Otherwise, return the sum of the log probabilities of the (non-masked) tokens.
+
+        Returns:
+            A tensor of shape (batch_size,) containing the average/sum log probabilities of the given labels under the given logits.
+        """
+        assert logits.shape[:-1] == labels.shape
+
+        labels = labels[:, 1:].clone()
+        logits = logits[:, :-1, :]
+
+        loss_masks = attention_mask.clone().bool()
+        # mask prompts
+        for mask, source_len in zip(loss_masks, prompt_id_lens):
+            mask[:source_len] = False
+        loss_masks = loss_masks[:, 1:]
+
+        # dummy token; we'll ignore the losses on these tokens later
+        labels[loss_masks == False] = 0
+        per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
+
+        logprobs_sums = (per_token_logps * loss_masks).sum(-1)
+        if average_log_prob:
+            return logprobs_sums / loss_masks.sum(-1) 
+        return logprobs_sums

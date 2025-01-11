@@ -326,6 +326,10 @@ class SimPOTrainer(ABC):
         input_ids, att_masks, prompt_id_lens = self.concatenated_inputs(
             chosen_ids, c_mask, reject_ids, r_mask, prompt_id_lens
         )
+
+        print(f"input_ids shape is {input_ids.shape}")
+        print(f"att_masks shape is {att_masks.shape}")
+        
         output = model(input_ids, attention_mask=att_masks, return_output=True)
         all_logits = output["logits"]
         all_logps = self._get_batch_logps(

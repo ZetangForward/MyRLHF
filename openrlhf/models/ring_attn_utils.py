@@ -86,5 +86,6 @@ def convert_ring_attn_params_embedding(sequences, embeddings, attention_mask, pa
     sequences, embeddings = sequences[:, start:end], embeddings[:, start:end, :]
     attention_mask = attention_mask[:, start:end]
     position_ids = reset_ring_attn_position_ids(start, end, packed_seq_lens)
+    position_ids = position_ids.expand(sequences.size(0), -1)
     update_ring_attn_params(packed_seq_lens, total_seq_len)
     return sequences, embeddings, attention_mask, position_ids
