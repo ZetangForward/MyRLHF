@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from .utils import zero_pad_sequences
 
 
-def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None, meta_key=None):
+def preprocess_data(data, input_key="input", output_key=None, apply_chat_template=None, meta_key=None):
     if apply_chat_template:
         if output_key:
             prompt_message = data[input_key]
@@ -38,8 +38,8 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
         prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
         response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
     if meta_key:
-        return prompt, response, clue_prompt
-    return prompt, response, None
+        return prompt, response, clue_prompt, data[meta_key]
+    return prompt, response, None, None
 
 
 class SFTDataset(Dataset):
@@ -98,18 +98,19 @@ class SFTDataset(Dataset):
         if self.search_clue_seg:
             self.clue_prompts = processed_dataset["clue_prompt"]
             self.clue_prompt_ids_lens = processed_dataset["clue_prompt_ids_len"]
+            self.clue_poss = processed_dataset["clue_pos"]
         else:
             self.clue_prompts = None
             self.clue_prompt_ids_lens = None
+            self.clue_poss = None
 
     def process_data(self, data):
         if self.search_clue_seg:
             meta_key = "meta_info"  # zecheng note： 这里先这么规定
         else:
             meta_key = None
-        prompt, response, clue_prompt = preprocess_data(
+        prompt, response, clue_prompt, clue_list = preprocess_data(
             data,
-            None,
             self.input_key,
             self.output_key,
             self.apply_chat_template,
@@ -137,16 +138,30 @@ class SFTDataset(Dataset):
                 return_tensors="pt",
                 add_special_tokens=False,
             )
+            # zecheng_note: 这里要定位出关键信息的位置
+            assert len(clue_list) > 0, "clue_list should not be empty if search_clue_seg is True"
+            clue_pos = []
+            prompt_len = prompt_token.input_ids.size(-1)
+            # print(f"prompt_token.input_ids shape {prompt_token.input_ids.shape}")
+            for clue in clue_list:
+                clue_ids = self.tokenizer(clue, return_tensors="pt", add_special_tokens=False)["input_ids"]
+                clue_ids = clue_ids[0, 1:-1]  # 去掉开头和结尾的token做匹配
+                # print(f"clue_ids shape: {clue_ids.shape}")
+                clue_len = clue_ids.size(-1)
+                for i in range(prompt_len - clue_len + 1):
+                    if torch.equal(prompt_token.input_ids[0, i : i + clue_len], clue_ids):
+                        clue_pos.append((i, i + clue_len - 1))
+                        break 
 
             clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
 
         # filter the sample whose length is greater than max_length (2 for answer length)
-        if not prompt or not response or prompt_ids_len >= self.max_length - 2:
+        if not prompt or not response or prompt_ids_len >= self.max_length - 2 or len(clue_pos) != len(clue_list):
             prompt = None
 
         if self.search_clue_seg:
-            return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len}
-        return {"prompt": prompt, "clue_prompt": None, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": None}
+            return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len, "clue_pos": clue_pos}
+        return {"prompt": prompt, "clue_prompt": None, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": None, "clue_pos": None}
 
     def __len__(self):
         length = len(self.prompts)
@@ -160,30 +175,19 @@ class SFTDataset(Dataset):
         if self.clue_prompts:
             clue_prompt = self.clue_prompts[idx]
             clue_prompt_ids_len = self.clue_prompt_ids_lens[idx]
+            clue_pos = self.clue_poss[idx]
         else:
             clue_prompt = None
             clue_prompt_ids_len = None
+            clue_pos = None
 
-        if not self.pretrain_mode:
-            text = (prompt + response).rstrip("\n")
-            if clue_prompt: 
-                clue_text = (clue_prompt + response).rstrip("\n")
-            if not text.endswith(self.tokenizer.eos_token):
-                text += " " + self.tokenizer.eos_token
-                if clue_prompt:
-                    clue_text += " " + self.tokenizer.eos_token
-        else:
-            # text = prompt
-            ## zecheng_note: 这里想加入ctx的部分，不是实际的pretrain
-            text = (prompt + response).rstrip("\n")
-            if not text.endswith(self.tokenizer.eos_token):
-                text += " " + self.tokenizer.eos_token
-            if clue_prompt: 
-                clue_text = (clue_prompt + response).rstrip("\n")
-            if not text.endswith(self.tokenizer.eos_token):
-                text += " " + self.tokenizer.eos_token
-                if clue_prompt:
-                    clue_text += " " + self.tokenizer.eos_token
+        text = (prompt + response).rstrip("\n")
+        if clue_prompt: 
+            clue_text = (clue_prompt + response).rstrip("\n")
+        if not text.endswith(self.tokenizer.eos_token):
+            text += " " + self.tokenizer.eos_token
+            if clue_prompt:
+                clue_text += " " + self.tokenizer.eos_token
 
         input_token = self.tokenizer(
             text,
@@ -206,7 +210,7 @@ class SFTDataset(Dataset):
 
             clue_input_token["input_ids"][0][-1] = self.tokenizer.eos_token_id
             clue_input_token["attention_mask"][0][-1] = True
-            extra_info = {"clue_input": clue_text, "clue_input_length": clue_input_token["attention_mask"].int().sum().item()}
+            extra_info = {"clue_input": clue_text, "clue_input_length": clue_input_token["attention_mask"].int().sum().item(), "clue_pos": clue_pos}
         else:
             clue_input_token = None
             extra_info = None
@@ -242,7 +246,7 @@ class SFTDataset(Dataset):
         packed_clue_attention_masks = []
         prompt_ids_lens = []
         clue_prompt_ids_lens = []
-        infos = {"input_length": [], "clue_input_length": []}
+        infos = {"input_length": [], "clue_input_length": [], "clue_pos": []}
 
         index = 1
         for prompt_ids_len, input_id, attention_mask, info, pack_prompt_ids_len, clue_input_id, _ in item_list:
@@ -255,6 +259,8 @@ class SFTDataset(Dataset):
             infos["input_length"].append(info["input_length"])
             if "clue_input_length" in info:
                 infos["clue_input_length"].append(info["clue_input_length"])
+            if "clue_pos" in info:
+                infos["clue_pos"].append(info["clue_pos"])
             index += 1
 
         packed_input_ids = torch.cat(packed_input_ids, dim=0).unsqueeze(0)
@@ -263,7 +269,6 @@ class SFTDataset(Dataset):
         # if packed_clue_input_ids[0] is not None:  #确保里面都是有实际数值的
         packed_clue_input_ids = torch.cat(packed_clue_input_ids, dim=0).unsqueeze(0)
         packed_clue_attention_masks = torch.cat(packed_clue_attention_masks, dim=0).unsqueeze(0)
-
 
         if (
             self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0

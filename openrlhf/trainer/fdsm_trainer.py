@@ -162,6 +162,8 @@ class FDSMTrainer(ABC):
                 adv_embeddings = embeddings.clone().detach().to(torch.cuda.current_device())
                 adv_embeddings.requires_grad = True
 
+                print(f"11 adv_embeddings shape is {adv_embeddings.shape}")
+               
                 # 恢复模型参数的梯度计算
                 self.model.model.base_model.disable_adapter_layers()
                 for param in self.model.model.parameters():
@@ -181,11 +183,24 @@ class FDSMTrainer(ABC):
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                
                 adv_loss.backward()
-               
+
+                print(f"22 adv_embeddings shape is {adv_embeddings.shape}")
+                print(f"22 adv_embeddings.grad is {adv_embeddings.grad}")
+                print(f"22 adv_embeddings.grad max is {adv_embeddings.grad.max()}")
+                print(f"22 adv_embeddings.grad min is {adv_embeddings.grad.min()}")
+                print(f"22 adv_embeddings.grad.sign() is {adv_embeddings.grad.sign()}")
+                # 对 d 维度求绝对值的和，得到每个 (b, l) 的是否有梯度的标记
+                non_zero_mask = adv_embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
+
+                # 打印结果
+                print("Non-zero gradient positions (b, l):")
+                for batch_idx in range(adv_embeddings.size(0)):
+                    non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
+                    print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
+                
+
                 epsilon = 0.005  # 扰动幅度
                 adv_embeddings = adv_embeddings + epsilon * adv_embeddings.grad.sign()
-                print(f"adv_embeddings.grad.sign() shape is {adv_embeddings.grad.sign().shape}")
-                print(f"adv_embeddings.grad.sign() is {adv_embeddings.grad.sign()}")
 
                 # TODO:可选：裁剪对抗样本的范围 (这里还是要修改), 针对context的不同位置加多少噪声上去
                 # adv_embeddings = torch.clamp(adv_embeddings, min=0, max=1)
