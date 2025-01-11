@@ -191,8 +191,8 @@ class SimPOLoss(nn.Module):
         self,
         policy_chosen_logps: torch.FloatTensor,
         policy_rejected_logps: torch.FloatTensor,
-        policy_chosen_ctx_logps: torch.FloatTensor,
-        policy_rejected_ctx_logps: torch.FloatTensor,
+        policy_chosen_ctx_logps = None,
+        policy_rejected_ctx_logps = None,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor, torch.FloatTensor]:
         """Compute the SimPO loss for a batch of policy model log probabilities.
 

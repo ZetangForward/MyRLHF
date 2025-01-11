@@ -6,7 +6,9 @@ from peft import TaskType
 from peft.tuners.lora import LoraLayer
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig, PreTrainedModel
 from transformers.integrations.deepspeed import HfDeepSpeedConfig
-from .cd_llama import PeftModel, LoraConfig, LlamaForCausalLM
+from peft import PeftModel, PeftModelForCausalLM, PeftConfig, LoraConfig
+from transformers import LlamaForCausalLM
+# from .cd_llama import PeftModel, LoraConfig, LlamaForCausalLM
 from .ring_attn_utils import convert_ring_attn_params, convert_ring_attn_params_embedding
 from .utils import log_probs_from_logits, reset_position_ids
 
@@ -192,6 +194,10 @@ class Actor(nn.Module):
             else:
                 # reset the positions for packed samples
                 position_ids = reset_position_ids(attention_mask)
+        
+        print(f"position_ids.shape is {position_ids.shape}")
+        print(f"attention_mask.shape is {attention_mask.shape}")
+
         position_ids.masked_fill_(attention_mask == 0, 1)
 
         output = self.model(sequences, attention_mask=attention_mask, position_ids=position_ids, cd_noise_settings=cd_noise_settings)
@@ -241,6 +247,8 @@ class Actor(nn.Module):
             else:
                 # reset the positions for packed samples
                 position_ids = reset_position_ids(attention_mask)
+
+        print(f"rank: {dist.get_rank(group=ring_attn_group)}, position_ids shape: {position_ids.shape}, attention_mask.shape: {attention_mask.shape}")
         position_ids.masked_fill_(attention_mask == 0, 1)
 
         with self.model.disable_adapter():
@@ -297,7 +305,7 @@ class Actor(nn.Module):
                 position_ids = reset_position_ids(attention_mask)
         position_ids.masked_fill_(attention_mask == 0, 1)
 
-        output = self.model.base_model(
+        output = self.model(
             inputs_embeds=inputs_embeds, 
             attention_mask=attention_mask, 
             position_ids=position_ids,

@@ -23,6 +23,10 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --input_key "chosen" \
    --packing_samples \
    --bf16 \
+   --adv_epsilon 0.05 \
+   --sft_weight 0.5 \
+   --beta 10 \
+   --gamma_beta_ratio 0.3 \
    --num_processors 16 \
    --learning_rate 8e-7 \
    --flash_attn \

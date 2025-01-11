@@ -406,7 +406,7 @@ class DPOTrainer(ABC):
             packed_seq_lens,
             average_log_prob=False,
         )
-        import ipdb; ipdb.set_trace()
+
         chosen_logps = all_logps_sum[: len(packed_seq_lens) // 2]
         rejected_logps = all_logps_sum[len(packed_seq_lens) // 2 :]
         aux_loss = output.aux_loss if "aux_loss" in output else []

@@ -153,20 +153,21 @@ class SimPOTrainer(ABC):
 
                 else:
                     packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss = data
+                    # zecheng_note: 这里是为了debug
+                    print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
+                    print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
+                    print(f"packed_seq_lens -> {packed_seq_lens}")
+                    print(f"prompt_id_lens -> {prompt_id_lens}")
+                    print(f"chosen_logps.shape -> {chosen_logps.shape}")
+                    print(f"rejected_logps.shape -> {rejected_logps.shape}")
+                    print(f"aux_loss -> {aux_loss}")
+                    print(f"nll_loss -> {nll_loss}")
+                    
                     packed_input_ids = packed_input_ids.to(torch.cuda.current_device())
                     packed_attention_masks = packed_attention_masks.to(torch.cuda.current_device())
                     chosen_logps, rejected_logps, chosen_clue_logps, rejected_clue_logps, aux_loss, nll_loss = self.packed_samples_forward(
                         self.model, packed_input_ids, packed_attention_masks, packed_seq_lens, prompt_id_lens, seg_poss
                     )
-                    # zecheng_note: 这里是为了debug
-                    # print(f"packed_input_ids.shape -> {packed_input_ids.shape}")
-                    # print(f"packed_attention_masks.shape -> {packed_attention_masks.shape}")
-                    # print(f"packed_seq_lens -> {packed_seq_lens}")
-                    # print(f"prompt_id_lens -> {prompt_id_lens}")
-                    # print(f"chosen_logps.shape -> {chosen_logps.shape}")
-                    # print(f"rejected_logps.shape -> {rejected_logps.shape}")
-                    # print(f"aux_loss -> {aux_loss}")
-                    # print(f"nll_loss -> {nll_loss}")
 
                 # loss function
                 losses, chosen_reward, reject_reward, chosen_ctx_reward, rejected_ctx_reward = self.loss_fn(
@@ -329,7 +330,7 @@ class SimPOTrainer(ABC):
 
         print(f"input_ids shape is {input_ids.shape}")
         print(f"att_masks shape is {att_masks.shape}")
-        
+
         output = model(input_ids, attention_mask=att_masks, return_output=True)
         all_logits = output["logits"]
         all_logps = self._get_batch_logps(
