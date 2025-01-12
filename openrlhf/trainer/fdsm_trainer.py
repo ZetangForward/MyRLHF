@@ -456,7 +456,7 @@ class FDSMTrainer(ABC):
             concat_inputs, 
             concat_attention_mask, 
             prompt_id_lens * 2, 
-            packed_seq_lens,
+            packed_seq_lens * 2,
             average_log_prob=True
         )
 
@@ -505,7 +505,7 @@ class FDSMTrainer(ABC):
         logprobs_sums = []
         logprobs_means = []
         index = 0
-        # print(f"packed_seq_lens: {packed_seq_lens}")
+        print(f"packed_seq_lens: {packed_seq_lens}")
         # print(f"seg_poss: {seg_poss}")
         for i, seq_len in enumerate(packed_seq_lens):
             seq = per_token_logps[0, index : index + seq_len - 1]
