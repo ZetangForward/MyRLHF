@@ -210,7 +210,7 @@ class FDSMTrainer(ABC):
                 context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
                 context_adv_embeddings = embeddings + self.adv_epsilon * context_grad.sign()
 
-                clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(0.5, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
+                clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(1, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
                 clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
                 clue_adv_embeddings = embeddings + self.adv_epsilon * clue_grad.sign()
 
@@ -225,8 +225,8 @@ class FDSMTrainer(ABC):
                     infos["input_length"], prompt_id_lens
                 )
 
-                # print(f"chosen_logps: {chosen_logps}")
-                # print(f"rejected_logps: {rejected_logps}")
+                print(f"chosen_logps: {chosen_logps}")
+                print(f"rejected_logps: {rejected_logps}")
 
                 losses, chosen_reward, reject_reward, _, _ = self.simpo_loss_fn(chosen_logps, rejected_logps)
 
@@ -448,7 +448,9 @@ class FDSMTrainer(ABC):
         )
 
         all_logits = output["logits"]
-        # print(f"all_logps shape: {all_logits.shape}")
+        print(f"max logits: {all_logits.max()}")
+        print(f"min logits: {all_logits.min()}")
+
         all_logps = self._packed_get_batch_logps(
             all_logits, 
             concat_inputs, 
@@ -457,6 +459,9 @@ class FDSMTrainer(ABC):
             packed_seq_lens,
             average_log_prob=True
         )
+
+        print(f"all_logps: {all_logps}")
+
         chosen_logps = all_logps[: chosen_ids.shape[0]//2]
         rejected_logps = all_logps[chosen_ids.shape[0]//2 :]
         

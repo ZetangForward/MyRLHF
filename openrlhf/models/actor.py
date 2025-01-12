@@ -195,8 +195,8 @@ class Actor(nn.Module):
                 # reset the positions for packed samples
                 position_ids = reset_position_ids(attention_mask)
         
-        print(f"position_ids.shape is {position_ids.shape}")
-        print(f"attention_mask.shape is {attention_mask.shape}")
+        # print(f"position_ids.shape is {position_ids.shape}")
+        # print(f"attention_mask.shape is {attention_mask.shape}")
 
         position_ids.masked_fill_(attention_mask == 0, 1)
 
@@ -248,7 +248,7 @@ class Actor(nn.Module):
                 # reset the positions for packed samples
                 position_ids = reset_position_ids(attention_mask)
 
-        print(f"rank: {dist.get_rank(group=ring_attn_group)}, position_ids shape: {position_ids.shape}, attention_mask.shape: {attention_mask.shape}")
+        # print(f"rank: {dist.get_rank(group=ring_attn_group)}, position_ids shape: {position_ids.shape}, attention_mask.shape: {attention_mask.shape}")
         position_ids.masked_fill_(attention_mask == 0, 1)
 
         output = self.model(
