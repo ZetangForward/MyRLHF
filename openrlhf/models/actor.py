@@ -251,12 +251,11 @@ class Actor(nn.Module):
         print(f"rank: {dist.get_rank(group=ring_attn_group)}, position_ids shape: {position_ids.shape}, attention_mask.shape: {attention_mask.shape}")
         position_ids.masked_fill_(attention_mask == 0, 1)
 
-        with self.model.disable_adapter():
-            output = self.model(
-                inputs_embeds=inputs_embeds, 
-                attention_mask=attention_mask, 
-                position_ids=position_ids,
-            )
+        output = self.model(
+            inputs_embeds=inputs_embeds, 
+            attention_mask=attention_mask, 
+            position_ids=position_ids,
+        )
 
         if num_actions is None:
             assert return_output
