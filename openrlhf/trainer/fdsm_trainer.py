@@ -462,8 +462,8 @@ class FDSMTrainer(ABC):
 
         print(f"all_logps: {all_logps}")
 
-        chosen_logps = all_logps[: chosen_ids.shape[0]//2]
-        rejected_logps = all_logps[chosen_ids.shape[0]//2 :]
+        chosen_logps = all_logps[: 1]  # 这里默认的mini-bsz是2
+        rejected_logps = all_logps[1 :] # 这里默认的mini-bsz是2
         
         return chosen_logps, rejected_logps, -all_logps[: len(packed_seq_lens) // 2].mean()
 
