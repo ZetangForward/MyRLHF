@@ -138,13 +138,16 @@ class Args:
         self.out_file_path = "/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix"
 
 def main(args):
-    for drop_num in [3]:
+    for drop_num in [1]:
         tokenizer = AutoTokenizer.from_pretrained(args.model_path)
         all_file_names = auto_read_dir(args.dataset_path)
         content = []
         for file_name in all_file_names:
             content.extend(auto_read_data(os.path.join(args.dataset_path, file_name)))
         logger.info(f"length of content {len(content)}, begin to preprocess")
+        print(f"before filtering, length of content {len(content)}")
+        content = list(filter(lambda x: len(x['clue_docs']) > 1, content))
+        print(f"after filtering, length of content {len(content)}")
         # content = content[:24]  # FIXME: debug
         input_queries = process_data(content, tokenizer, drop_num=drop_num, num_workers=16)
         
@@ -196,12 +199,14 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct",  help="model name or path")
-    parser.add_argument('--out_file_path', type=str, default="/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_fix",  help="save path for inference results")
+    parser.add_argument('--dataset_path', type=str, default="/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/data/processed_multi_hop/LongMIT-processed-v2",  help="save path for inference results")
+    parser.add_argument('--out_file_path', type=str, default="/mnt/petrelfs/tangzecheng/local_data/processed_multi_hop/random_drop_v2",  help="save path for inference results")
     parser.add_argument('--num_gpus', type=int, default=8,  help="number of gpus")
     
     extra_args = parser.parse_args()
 
     args = Args("pjlab")
+    args.dataset_path = extra_args.dataset_path
     args.model_path = extra_args.model_path
     args.out_file_path = extra_args.out_file_path
     args.num_gpus = extra_args.num_gpus

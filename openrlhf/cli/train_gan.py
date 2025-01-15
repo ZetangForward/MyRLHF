@@ -76,14 +76,14 @@ def train(args):
         packing_samples=args.packing_samples,
     )
 
-    ref_model = Actor(
-        args.pretrain,
-        use_flash_attention_2=args.flash_attn,
-        bf16=args.bf16,
-        load_in_4bit=args.load_in_4bit,
-        ds_config=strategy.get_ds_eval_config(offload=args.ref_offload),
-        packing_samples=args.packing_samples,
-    )
+    # ref_model = Actor(
+    #     args.pretrain,
+    #     use_flash_attention_2=args.flash_attn,
+    #     bf16=args.bf16,
+    #     load_in_4bit=args.load_in_4bit,
+    #     ds_config=strategy.get_ds_eval_config(offload=args.ref_offload),
+    #     packing_samples=args.packing_samples,
+    # )
     # configure tokenizer
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
@@ -110,7 +110,8 @@ def train(args):
     )
 
     # prepare models
-    ((model, optim, scheduler), ref_model) = strategy.prepare((model, optim, scheduler), ref_model)
+    # ((model, optim, scheduler), ref_model) = strategy.prepare((model, optim, scheduler), ref_model)
+    (model, optim, scheduler) = strategy.prepare((model, optim, scheduler))
 
     # load checkpoint
     consumed_samples = 0
@@ -124,7 +125,7 @@ def train(args):
     # configure Trainer
     trainer = FDSMTrainer(
         model=model,
-        ref_model=ref_model,
+        # ref_model=ref_model,
         strategy=strategy,
         optim=optim,
         train_dataloader=train_dataloader,
@@ -137,9 +138,11 @@ def train(args):
         tokenizer=tokenizer,
         adv_epsilon=args.adv_epsilon,
         sft_weight=args.sft_weight,
+        gan_weight=args.gan_weight,
         beta=args.beta,
         gamma_beta_ratio=args.gamma_beta_ratio,
         label_smoothing=args.label_smoothing,
+        construct_with_lora=args.construct_with_lora
     )
 
     trainer.fit(args, consumed_samples, num_update_steps_per_epoch)
@@ -191,8 +194,10 @@ if __name__ == "__main__":
     parser.add_argument("--label_smoothing", type=float, default=0.0)
     parser.add_argument("--beta", type=float, default=0.1)
     parser.add_argument("--sft_weight", type=float, default=0.1)
+    parser.add_argument("--gan_weight", type=float, default=1)
     parser.add_argument("--adv_epsilon", type=float, default=0.1)
     parser.add_argument("--ref_offload", action="store_true", default=False)
+    parser.add_argument("--construct_with_lora", action="store_true", default=False)
     
     # ring-attention
     parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")

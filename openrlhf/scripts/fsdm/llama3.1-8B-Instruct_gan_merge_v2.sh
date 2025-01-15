@@ -6,7 +6,7 @@ DATA_DIR='/mnt/petrelfs/tangzecheng/local_data'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --max_len 96000 \
-   --dataset ${DATA_DIR}/processed_multi_hop/random_drop/train_llama_data/merge_v1_w_clues \
+   --dataset ${DATA_DIR}/processed_multi_hop/random_drop_v2 \
    --train_batch_size 32 \
    --micro_train_batch_size 1 \
    --lora_rank 32 \
