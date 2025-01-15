@@ -7,7 +7,7 @@ from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
 from torch.nn import functional as F
 from tqdm import tqdm
-from openrlhf.models import GPTLMLoss, SimPOLoss
+from openrlhf.models.loss import GPTLMLoss, AsymmetricInfoNCE
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
@@ -44,9 +44,7 @@ class FDSMTrainer(ABC):
         tokenizer=None,
         adv_epsilon: float = 0.1,
         sft_weight: float = 0.5,
-        beta: float = 0.01,
-        gamma_beta_ratio: float = 0.5,
-        label_smoothing: float = 0.0,
+        nce_weight: float = 0.5,
 
     ) -> None:
         super().__init__()
@@ -64,9 +62,10 @@ class FDSMTrainer(ABC):
         self.args = strategy.args
         self.adv_epsilon = adv_epsilon 
         self.sft_weight = sft_weight
+        self.nce_weight = nce_weight
 
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
-        self.simpo_loss_fn = SimPOLoss(beta, torch.cuda.current_device(), label_smoothing, gamma_beta_ratio)
+        self.a_infonce_loss = AsymmetricInfoNCE(torch.cuda.current_device())
         # Mixtral 8*7b
         self.aux_loss = self.args.aux_loss_coef > 1e-8
 
@@ -135,34 +134,25 @@ class FDSMTrainer(ABC):
 
             # train
             self.model.train()
-            loss_mean, short_ctx_loss_mean, acc_mean = 0, 0, 0
+            loss_mean, nce_mean, adv_loss_mean = 0, 0, 0
             for data in self.train_dataloader:
                 prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
                 inputs = inputs.to(torch.cuda.current_device())
                 attention_mask = attention_masks.to(torch.cuda.current_device())
-                clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
 
-                # output = self.model(
-                #     inputs, 
-                #     attention_mask=attention_mask, 
-                #     return_output=True,
-                #     ring_attn_group=self.strategy.ring_attn_group,
-                #     packed_seq_lens=infos["input_length"],
-                # )
-
-                # loss function
                 labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                 ### ============= 对抗学习逻辑 ============= ###
-                # 生成input_ids 扰动, 这里用peft model的原始model生成绕容，意图克服之前的loss存在的问题
                 for param in self.model.model.parameters():
                     param.requires_grad = False
 
                 embedding_layer = self.model.model.base_model.model.get_input_embeddings()
                 embeddings = embedding_layer(inputs)
                 embeddings.requires_grad = True
+                
+
                 self.model.model.base_model.disable_adapter_layers()
+                
                 adv_output = self.model.forward_embedding(
                     inputs,
                     inputs_embeds=embeddings,
@@ -171,33 +161,29 @@ class FDSMTrainer(ABC):
                     ring_attn_group=self.strategy.ring_attn_group,
                     packed_seq_lens=infos["input_length"],
                 )
-
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                 adv_loss.backward()
+                
+
                 self.model.model.base_model.enable_adapter_layers()
                 
                 clue_poss = infos["clue_poss"]
                 non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
-                batch_size, seq_len, embed_dim = embeddings.size()
+                batch_size, seq_len, _ = embeddings.size()
                 grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
                 
-                for batch_idx in range(embeddings.size(0)):
+                for batch_idx in range(batch_size):
                     non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
                     cur_clue_pos = clue_poss[batch_idx]
                     clue_positions_set = set()
                     for start, end in cur_clue_pos:
-                        clue_positions_set.update(range(start, end + 1))  # 包括结束位置
-                        grad_mask[batch_idx, start:end + 1] = 1  # 包括结束位置
+                        clue_positions_set.update(range(start, end))
+                        grad_mask[batch_idx, start: end] = 1
                     non_zero_positions_set = set(non_zero_positions)
                     overlap = clue_positions_set & non_zero_positions_set
                     overlap_count = len(overlap)
                     total_clue_positions = len(clue_positions_set)
                     overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
-                    # print(f"cur_clue_pos is {cur_clue_pos}")
-                    # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
-                    # print(f"total_clue_positions is {total_clue_positions}")
-                    # print(f"overlap_count is {overlap_count}")
-                    # print(f"overlap_ratio is {overlap_ratio}")
 
                 context_grad = embeddings.grad.clone().detach()
                 clue_grad = embeddings.grad.clone().detach()
@@ -213,59 +199,52 @@ class FDSMTrainer(ABC):
                 context_adv_embeddings = context_adv_embeddings.detach().requires_grad_(True)
                 clue_adv_embeddings = clue_adv_embeddings.detach().requires_grad_(True)
 
+                torch.cuda.empty_cache()
+
                 chosen_logps, rejected_logps, gpt_loss = self.concatenated_forward(
                     self.model,
                     inputs, attention_mask, context_adv_embeddings, 
                     inputs, attention_mask, clue_adv_embeddings, 
                     infos["input_length"], prompt_id_lens
                 )
-                torch.cuda.empty_cache()
-                # print(f"chosen_logps: {chosen_logps}")
-                # print(f"rejected_logps: {rejected_logps}")
 
-                losses, chosen_reward, reject_reward, _, _ = self.simpo_loss_fn(chosen_logps, rejected_logps)
+                nce_loss = self.a_infonce_loss(chosen_logps, rejected_logps)
 
-                preference_loss = losses.mean()
-
-                loss = preference_loss + gpt_loss * self.sft_weight
+                loss = self.nce_weight * nce_loss + gpt_loss * self.sft_weight
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
-                acc = (chosen_reward > reject_reward).float().mean().item()
-                acc_mean = acc_mean * 0.9 + 0.1 * acc
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
-
-                ### ============================= ###
-                # zecheng_note: 这里加上contextual 的labels，专门计算上下文的loss
-                # short_ctx_gpt_loss = self.compute_short_ctx_loss(
-                #     clue_inputs, clue_attention_mask, infos, clue_prompt_id_lens
-                # )
-                    
-                # short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
-
-                logs_dict = {
-                    "gpt_loss": gpt_loss.item(),
-                    "acc_mean": acc_mean,
-                    "chosen_reward": chosen_reward.mean().item(),
-                    "reject_reward": reject_reward.mean().item(),
-                    "loss_mean": loss_mean,
-                    "overlap_ratio": overlap_ratio,
+                nce_mean = nce_mean * 0.9 + 0.1 * nce_loss.item()
+                adv_loss_mean = adv_loss_mean * 0.9 + 0.1 * adv_loss.item()
+                step_log_dict = {
+                    "total_loss": loss.item(),
+                    "overlap_ratio": overlap_ratio * dist.get_world_size(self.strategy.ring_attn_group),
+                    "nce_loss": nce_loss.item(),
                     "adv_loss": adv_loss.item(),
-                    "lr": self.scheduler.get_last_lr()[0],
                 }
 
                 # step bar
-                logs_dict = self.strategy.all_reduce(logs_dict)
-                step_bar.set_postfix(logs_dict)
+                step_log_dict = self.strategy.all_reduce(step_log_dict)
+                if self._wandb is not None and self.strategy.is_rank_0():
+                    logs = {"step_log/%s" % k: v for k, v in {**step_log_dict, "mini_batch_step": step}.items()}
+                    self._wandb.log(logs)
+                
+                step_bar.set_postfix(step_log_dict)
                 step_bar.update()
 
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
+                    logs_dict = {
+                        "nce_mean": nce_mean,
+                        "total_loss": loss_mean,
+                        "lr": self.scheduler.get_last_lr()[0],
+                    }
+                    # step bar
+                    logs_dict = self.strategy.all_reduce(logs_dict)
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-
-                torch.cuda.empty_cache()
 
                 step += 1
 

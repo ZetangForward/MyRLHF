@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from modelzipper.tutils import *
 from peft import PeftModelForCausalLM
 from datasets import load_dataset
-from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input
+from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_formatted_input, LongMIT_DEFAULT_TEMPLATE
 import pynvml
 
 # Initialize NVML (NVIDIA Management Library)
@@ -107,7 +107,7 @@ def prepare_babilong_data(data_dir, tokenizer, inference_scaling=False, test_ful
             'instruction': DEFAULT_PROMPTS[task]['instruction'],
             'examples': DEFAULT_PROMPTS[task]['examples'],
             'post_prompt': DEFAULT_PROMPTS[task]['post_prompt'],
-            'template': DEFAULT_TEMPLATE,
+            'template': LongMIT_DEFAULT_TEMPLATE,
             'chat_template': True,
         }
         prompt_name = [f'{k}_yes' if prompt_cfg[k] else f'{k}_no' for k in prompt_cfg if k != 'template']

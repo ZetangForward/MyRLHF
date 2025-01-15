@@ -172,6 +172,39 @@ class DPOLoss(nn.Module):
         return loss, chosen_rewards, rejected_rewards
 
 
+
+class AsymmetricInfoNCE(nn.Module):
+    def __init__(self, device: torch.device, temperature=0.1, negative_weight=0.5):
+        """
+        初始化非对称InfoNCE损失
+        :param temperature: 温度参数
+        :param negative_weight: 负样本的权重
+        """
+        super(AsymmetricInfoNCE, self).__init__()
+        self.temperature = temperature
+        self.negative_weight = negative_weight
+        self.device = device
+
+    def forward(self, chosen_logps, rejected_logps):
+        """
+        计算非对称InfoNCE损失
+        :param chosen_logps: 正样本的对数概率，形状为 (batch_size,)
+        :param rejected_logps: 负样本的对数概率，形状为 (batch_size,)
+        :return: 非对称InfoNCE损失
+        """
+        # 计算正样本对的得分
+        pos_score = chosen_logps / self.temperature  # 形状: (batch_size,)
+
+        # 计算负样本对的得分，并引入非对称权重
+        neg_score = self.negative_weight * (rejected_logps / self.temperature)  # 形状: (batch_size,)
+
+        # 计算损失
+        logits = torch.cat([pos_score.unsqueeze(1), neg_score.unsqueeze(1)], dim=1)  # 形状: (batch_size, 2)
+        labels = torch.zeros_like(pos_score, dtype=torch.long, device=self.device)  # 正样本对的标签为0，形状: (batch_size,)
+        loss = F.cross_entropy(logits, labels)
+        return loss
+
+
 class SimPOLoss(nn.Module):
     """
     SimPO Loss

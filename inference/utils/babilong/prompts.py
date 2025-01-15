@@ -1,7 +1,14 @@
+
+
+
 TASK_TEMPLATE = '{instruction}\n\n{examples}\n\n{post_prompt}'
 # USER_TEMPLATE = '<context>\n{context}\n</context>\n\nQuestion: {question}'
 USER_TEMPLATE = 'Question: {question}\n\n<context>\n{context}\n</context>'
 DEFAULT_TEMPLATE = f'{TASK_TEMPLATE}\n\n{USER_TEMPLATE}'
+
+
+LongMIT_USER_TEMPLATE = 'Answer the question based on the given passages.\n\nThe following are given passages.\n{context}\n\nAnswer the question based on the given passages and provide a complete reasoning process.\nQuestion:{question}\nAnswer:'
+LongMIT_DEFAULT_TEMPLATE = f'Answer the question based on the given passages.\n\n{TASK_TEMPLATE}\n\n{LongMIT_USER_TEMPLATE}'
 
 CUSTOM_SYSTEM_PROMPTS = {
     # https://github.com/dvlab-research/LongLoRA/blob/2345c6d030f61ac3a031906386a103a5b05e0e6f/inference.py#L18
@@ -20,8 +27,13 @@ def get_formatted_input(context, question, examples, instruction, post_prompt, t
     # post_prompt - any additional instructions after examples
     # context - text to use for qa
     # question - question to answer based on context
-    formatted_input = template.format(instruction=instruction, examples=examples, post_prompt=post_prompt,
-                                      context=context.strip(), question=question)
+    formatted_input = template.format(
+        instruction=instruction, 
+        examples=examples, 
+        post_prompt=post_prompt,
+        context=context.strip(), 
+        question=question
+    )
     return formatted_input.strip()
 
 
