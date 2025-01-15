@@ -12,8 +12,8 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/train_gan.py \
    --lora_rank 32 \
    --apply_chat_template \
    --pretrain 'meta-llama/Meta-Llama-3.1-8B-Instruct' \
-   --save_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/gan \
-   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/gan \
+   --save_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/gan_data_v2 \
+   --ckpt_path ${SAVE_DIR}/merge_v1_fix/Llama-3.1-8B-Instruct/gan_data_v2 \
    --save_steps 25 \
    --logging_steps 1 \
    --eval_steps 25 \
