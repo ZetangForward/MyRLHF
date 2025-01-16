@@ -16,11 +16,16 @@ from utils.babilong.prompts import DEFAULT_PROMPTS, DEFAULT_TEMPLATE, get_format
 from multiprocessingtools.evalmanager import LLMEvalGPUManager
 import pdb
 
-BABILONG_DATA_PATH="/data/zecheng/Ms-PoE/babilong/"
+BABILONG_DATA_PATH="/data/pub_data/babilong/"
 RESULTS_DIR="/data/zecheng/acl2025/MyRLHF/evaluation/babilong/babilong_evals_ms_poe/"
-TASKS=['qa1','qa2','qa3','qa4', 'qa5','qa6', 'qa7', 'qa8', 'qa9', 'qa10'
+TASKS=[
+    # 'qa1',
+       'qa2','qa3','qa4', 'qa5','qa6', 'qa7', 
+    #    'qa8', 'qa9', 'qa10'
        ]
-SPLIT_NAMES=['0k','1k','2k',#'4k','8k', '16k', '32k', '64k','128k'
+SPLIT_NAMES=[
+    '0k','1k','2k','4k','8k',
+             # '16k', '32k', '64k',#'128k'
              ]
 use_chat_template = True
 use_instruction = True
@@ -149,7 +154,7 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
-    args.saved_model_name = args.model_name + "_saved"
+    args.saved_model_name = args.model_name + "_draft_vanilla"
     args.model_name = "/data/hf_models/" + args.model_name
     
 
@@ -187,11 +192,13 @@ if __name__=="__main__":
 
 
     with BabilongManager(
-        tp_size=1/2,
+        tp_size=1,
         gpu_list=[
-            # 0,
+            0,
                   1,
-                #   2,3,4,5,6,7
+                  2,3,
+                  #4,
+                # 5,6,7
                   ],
         
         task_info_list=task_info_list,
