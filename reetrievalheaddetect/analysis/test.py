@@ -221,6 +221,7 @@ def hack_attn_mistral(
 
     return attn_output, attn_weights, past_key_value
 
+
 def hack_attn_llama(
     self,
     hidden_states: torch.Tensor,

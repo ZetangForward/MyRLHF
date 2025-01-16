@@ -239,6 +239,7 @@ class SFTDataset(Dataset):
         attention_masks = zero_pad_sequences(attention_masks, "right")
         return prompt_ids_lens, input_ids, attention_masks, infos
 
+
     def packing_collate_fn(self, item_list):
         packed_input_ids = []
         packed_clue_input_ids = []
