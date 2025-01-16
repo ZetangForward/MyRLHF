@@ -156,11 +156,16 @@ class SFTDataset(Dataset):
             clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
 
         # filter the sample whose length is greater than max_length (2 for answer length)
-        if not prompt or not response or prompt_ids_len >= self.max_length - 2 or len(clue_pos) != len(clue_list):
+        if not prompt or not response or prompt_ids_len >= self.max_length - 2:
             prompt = None
+
+        if self.search_clue_seg and (len(clue_pos) != len(clue_list)):
+            prompt = None
+
 
         if self.search_clue_seg:
             return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len, "clue_pos": clue_pos}
+        
         return {"prompt": prompt, "clue_prompt": None, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": None, "clue_pos": None}
 
     def __len__(self):
@@ -228,7 +233,7 @@ class SFTDataset(Dataset):
         attention_masks = []
         infos = {"input": [], "output": []}
 
-        for prompt_ids_len, input_id, attention_mask, info in item_list:
+        for prompt_ids_len, input_id, attention_mask, info, _, _, _ in item_list:
             prompt_ids_lens.append(prompt_ids_len)
             input_ids.append(input_id)
             attention_masks.append(attention_mask)
@@ -237,7 +242,7 @@ class SFTDataset(Dataset):
 
         input_ids = zero_pad_sequences(input_ids, "right", self.tokenizer.pad_token_id)
         attention_masks = zero_pad_sequences(attention_masks, "right")
-        return prompt_ids_lens, input_ids, attention_masks, infos
+        return prompt_ids_lens, input_ids, attention_masks, infos, None, None, None
 
 
     def packing_collate_fn(self, item_list):

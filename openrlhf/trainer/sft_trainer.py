@@ -184,34 +184,34 @@ class SFTTrainer(ABC):
                 
                 ### ============================= ###
                 # zecheng_note: 这里加上contextual 的labels，专门计算上下文的loss
-                with torch.no_grad():
-                    clue_output = self.model(
-                        clue_inputs, 
-                        attention_mask=clue_attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["clue_input_length"],
-                    )
+                # with torch.no_grad():
+                #     clue_output = self.model(
+                #         clue_inputs, 
+                #         attention_mask=clue_attention_mask, 
+                #         return_output=True,
+                #         ring_attn_group=self.strategy.ring_attn_group,
+                #         packed_seq_lens=infos["clue_input_length"],
+                #     )
 
-                    clue_labels = torch.where(
-                        clue_attention_mask.bool(),
-                        clue_inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
+                #     clue_labels = torch.where(
+                #         clue_attention_mask.bool(),
+                #         clue_inputs,
+                #         self.loss_fn.IGNORE_INDEX,
+                #     )
 
-                    index = 0
-                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
+                #     index = 0
+                #     for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                #         clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                #         index += input_length
 
-                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                    short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
+                #     short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                #     short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
                 
                 logs_dict = {
-                    "short_gpt_loss": short_ctx_gpt_loss.item(),
+                    # "short_gpt_loss": short_ctx_gpt_loss.item(),
                     "gpt_loss": gpt_loss.item(),
                     "loss_mean": loss_mean,
-                    "short_ctx_loss_mean": short_ctx_loss_mean,
+                    # "short_ctx_loss_mean": short_ctx_loss_mean,
                     "lr": self.scheduler.get_last_lr()[0],
                 }
                 if self.aux_loss:
