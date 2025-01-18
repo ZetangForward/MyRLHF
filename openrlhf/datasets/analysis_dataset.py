@@ -64,14 +64,13 @@ class AnalysisDataset(Dataset):
             if tokenizer_chat_template:
                 self.tokenizer.chat_template = tokenizer_chat_template
         
-        dataset = dataset.filter(lambda x: len(x['attack_clues']) > 0, load_from_cache_file=False, cache_file_name=None)
+        dataset = dataset.filter(lambda x: len(x['attack_clues']) > 0)
 
         # Parallel loading datasets
         processed_dataset = dataset.map(
             self.process_data, remove_columns=dataset.column_names, num_proc=num_processors, 
-            load_from_cache_file=False, cache_file_name=None  # 禁用缓存
         )
-        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None, cache_file_name=None)
+        processed_dataset = processed_dataset.filter(lambda x: x["prompt"] is not None)
 
         # Store the processed data in class attributes
         self.prompts = processed_dataset["prompt"]
@@ -175,7 +174,7 @@ class AnalysisDataset(Dataset):
         infos = {"input_length": [], "clue_input_length": [], "clue_poss": [], "attack_poss": []}
 
         index = 1
-        for prompt_ids_len, input_id, attention_mask, info, pack_prompt_ids_len, clue_input_id, _ in item_list:
+        for prompt_ids_len, input_id, attention_mask, info in item_list:
             packed_input_ids.append(input_id.flatten())
             packed_attention_masks.append(torch.full_like(input_id.flatten(), index))
             prompt_ids_lens.append(prompt_ids_len)

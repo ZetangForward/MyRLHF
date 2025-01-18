@@ -303,7 +303,7 @@ class Actor(nn.Module):
                 position_ids = reset_position_ids(attention_mask)
         position_ids.masked_fill_(attention_mask == 0, 1)
 
-        embedding = self.model.get_input_embeddings()(sequences)
+        embedding = self.model.base_model.model.get_input_embeddings()(sequences)
 
         output = self.model(
             inputs_embeds=embedding, 

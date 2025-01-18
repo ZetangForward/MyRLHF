@@ -175,7 +175,10 @@ class AnalysisTrainer(ABC):
 
                 # 计算梯度的 L2 范数
                 grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
-
+                print(f"grad_l2_norm: {grad_l2_norm}")
+                print(f"grad_l2_norm.size(): {grad_l2_norm.size()}")
+                print(f"grad_l2_norm.max(): {grad_l2_norm.max()}")
+                print(f"grad_l2_norm.min(): {grad_l2_norm.min()}")
                 # 排除梯度为零的位置，计算有效位置的平均值
                 non_zero_grad_l2_norm = grad_l2_norm * non_zero_mask
                 grad_mean = (non_zero_grad_l2_norm.sum(dim=1) / non_zero_mask.sum(dim=1).clamp(min=1)).unsqueeze(1)  # (b, 1)
@@ -183,12 +186,15 @@ class AnalysisTrainer(ABC):
                 # 标记梯度大于平均值的位置
                 important_grad_mask = (grad_l2_norm > grad_mean) & non_zero_mask  # (b, l)
 
-                statistic_grad_res = []
+                print(f"grad_mean: {grad_mean}")
+                print(f"max grad: {grad_l2_norm.max()}")
 
+                statistic_grad_res = []
+                assert batch_size == 1
                 for batch_idx in range(batch_size): 
                     non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
                     important_positions = torch.where(important_grad_mask[batch_idx])[0].tolist()
-                    
+                    print(f"important_positions: {important_positions}")
                     cur_clue_pos, cur_attack_pos = clue_poss[batch_idx], attack_poss[batch_idx]
                     clue_positions_set, attack_position_set = set(), set()
                     for start, end in cur_clue_pos:
@@ -216,16 +222,16 @@ class AnalysisTrainer(ABC):
                     statistic_grad_res.append({
                         "clue_overlap_count": clue_overlap_count,  # length of clue positions with large gradient 
                         "clue_overlap_ratio": clue_overlap_ratio,  # overlap ratio of clue position with large gradient among all clue positions
-                        "clue_important_overlap_ratio": clue_overlap_count / important_grad_count,   # overlap ratio of import clue positions among all important positions
+                        "clue_important_overlap_ratio": clue_overlap_count / important_grad_count if important_grad_count != 0 else 0,   # overlap ratio of import clue positions among all important positions
                         "attack_overlap_count": attack_overlap_count,  # length of attack positions with large gradient
                         "attack_overlap_ratio": attack_overlap_ratio,  # overlap ratio of attack position with large gradient among all attack positions
-                        "attack_important_overlap_ratio": attack_overlap_count / important_grad_count,  # overlap ratio of import attack positions among all important positions
+                        "attack_important_overlap_ratio": attack_overlap_count / important_grad_count if important_grad_count != 0 else 0,  # overlap ratio of import attack positions among all important positions
                         "important_grad_count": important_grad_count,  # length of all positions with large gradient
                         "important_grad_ratio": important_grad_count / seq_len,  # ratio of positions with large gradient among all inputs
-                        "context_overlap_ratio": 1 - clue_overlap_count / important_grad_count - attack_overlap_count / important_grad_count,  # ratio of positions of remain positions
+                        "context_overlap_ratio": (1 - clue_overlap_count / important_grad_count - attack_overlap_count / important_grad_count) if important_grad_count != 0 else 0,  # ratio of positions of remain positions
                     })
-
-                statistic_grad_res = self.strategy.all_gather(statistic_grad_res)
+                statistic_grad_res = statistic_grad_res[0]
+                statistic_grad_res = self.strategy.all_reduce(statistic_grad_res, "sum")
                 if self._wandb is not None and self.strategy.is_rank_0():
                     logs = {"step_log/%s" % k: v for k, v in {**statistic_grad_res, "mini_batch_step": step}.items()}
                     self._wandb.log(logs)
