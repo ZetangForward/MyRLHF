@@ -1,28 +1,20 @@
-#import tiktoken
-import os 
-import glob
-import json
 from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM, AutoConfig
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'faiss_attn'))
-from source.modeling_llama import LlamaForCausalLM
-from source.modeling_qwen2 import Qwen2ForCausalLM
-from source.modeling_mixtral import MixtralForCausalLM
-from source.modeling_mistral import MistralForCausalLM
-from source.modeling_phi3 import Phi3ForCausalLM
+from faiss_attn.source.modeling_llama import LlamaForCausalLM
+from faiss_attn.source.modeling_qwen2 import Qwen2ForCausalLM
+from faiss_attn.source.modeling_mixtral import MixtralForCausalLM
+from faiss_attn.source.modeling_mistral import MistralForCausalLM
+from faiss_attn.source.modeling_phi3 import Phi3ForCausalLM
 import numpy as np
 import argparse
 import datasets
 import itertools
-from rouge_score import rouge_scorer
-from datetime import datetime, timezone
-from collections import defaultdict
-from typing import List, Tuple, Optional, Dict
-import time
 import nltk
 import torch
 import random
-from tqdm import tqdm, trange
+from rouge_score import rouge_scorer
+from collections import defaultdict
+from typing import List, Tuple, Optional, Dict
+from tqdm import tqdm
 from loguru import logger
 from modelzipper.tutils import *
 
@@ -106,16 +98,18 @@ class SentenceSampler:
 
 
 class LLMNeedleHaystackTester:
-    """
-    This class is used to test the LLM Needle Haystack.
-    """
     def __init__(
         self,
+        needle_path = None,
         context_lengths = None,
         model_name='',
         print_ongoing_status = True,
-        selected_idx = None
+        selected_idx = None,
+        combinations_number=1,
     ):
+        """
+         number of combinations, recommended to be larger since some positions may be failed to create
+        """
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
@@ -129,6 +123,8 @@ class LLMNeedleHaystackTester:
         else: 
             self.model_version = model_name
         self.context_lengths = context_lengths
+        self.combinations_number = combinations_number
+        self.needle_path = needle_path
 
         logger.info("loading from %s" % model_name)
         config = AutoConfig.from_pretrained(model_name)
@@ -254,7 +250,7 @@ class LLMNeedleHaystackTester:
                     break
         return all_evi_pos   
 
-    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name):
+    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer):
         
         if background_text is not None:
             depth_percent = [i / 10 for i in depth_percent]
@@ -302,8 +298,8 @@ class LLMNeedleHaystackTester:
         return True
 
 
-    def start_test(self, args):
-        needles_and_stacks = auto_read_data(args.needle_path)
+    def start_test(self):
+        needles_and_stacks = auto_read_data(self.needle_path)
         needle_list = [l["needle"] for l in needles_and_stacks]
         retrieval_question_list = [l["question"] for l in needles_and_stacks]
         evidence_list = [l["real_needle"] for l in needles_and_stacks]
@@ -314,7 +310,7 @@ class LLMNeedleHaystackTester:
             self.selected_idx = range(len(needle_list))
         
         for context_length in tqdm(self.context_lengths):
-            for task_tag in tqdm(["4-hop", "3-hop"]):
+            for task_tag in tqdm(["3-hop", "4-hop"]):
                 for s_id in self.selected_idx:
                     if tags[s_id] != task_tag:
                         continue
@@ -339,9 +335,10 @@ class LLMNeedleHaystackTester:
                         disturb_tok_needles = [i for i in needle if i not in evidence]
                         disturb_pos = None
 
-                    combinations_number = 20
+
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
-                    all_combinations = random.sample(all_combinations, combinations_number)
+                    import pdb; pdb.set_trace()
+                    all_combinations = random.sample(all_combinations, self.combinations_number)
 
                     logger.info(all_combinations)
 
@@ -350,32 +347,29 @@ class LLMNeedleHaystackTester:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
                             pbar.set_description(f"Processing length: {context_length} | task: {task_tag} | depth {depth_percent}")
-                            depth_tag = "-".join([str(i) for i in depth_percent])
-                            model_name = args.model_path.split("/")[-1]
-                            save_file_name = f"{model_name}/{context_length}/{task_tag}_{depth_tag}"
-                            res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name)
+                            res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer)
                             if res: analysis_sample_nums += 1
                             pbar.update(1)
 
             # after processing all the samples in different positions, average the attention scores
-            for head_layer_dict in self.succ_head_counter.values():
-                for pos_score_dict in head_layer_dict.values():
-                    for k, pos_scores in pos_score_dict.items():
-                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+            for pos_score_dict in self.succ_head_counter.values():
+                for k, pos_scores in pos_score_dict.items():
+                    pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
             
-            for head_layer_dict in self.fail_head_counter.values():
-                for pos_score_dict in head_layer_dict.values():
-                    for k, pos_scores in pos_score_dict.items():
-                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+            for pos_score_dict in self.fail_head_counter.values():
+                for k, pos_scores in pos_score_dict.items():
+                    pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
                     
             # after average all the scores for #all_combinations * self.selected_idx, 
             # which means one sequence length experiment is finished, then
             # save the results and refresh the 
             #   self.succ_head_counter = defaultdict(lambda: defaultdict(list))
             #   self.fail_head_counter = defaultdict(lambda: defaultdict(list))
-            save_dir = f"attention_analysis/attention_score/{task_tag}/{context_length}"
-            auto_save_data(self.succ_head_counter, os.path.join(save_dir, "success.pkl"))
-            auto_save_data(self.fail_head_counter, os.path.join(save_dir, "fail.pkl"))
+            merge_dict = {
+                "succ_head_counter": self.succ_head_counter,
+                "fail_head_counter": self.fail_head_counter,
+            }
+            auto_save_data(merge_dict, f"attention_analysis/attention_score/{task_tag}-{context_length}.json")
 
             # refresh the counter for the next task_tag
             self.succ_head_counter = defaultdict(lambda: defaultdict(list))
@@ -389,23 +383,19 @@ if __name__ == "__main__":
     parser.add_argument('--needle_ids', metavar='N', type=int, nargs='+', help='a list of numbers')
     parser.add_argument('--mask_topk', metavar='N', type=int, default=0, help='masking top K heads')
     parser.add_argument('--head_file', type=str, default=None, help='path to head file')
-    parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--model_name_suffix', type=str, default=None, help='name of model')
     parser.add_argument('--model_provider', type=str, default="LLaMA", help='which model to use')
     args = parser.parse_args()
-    
-    # zecheng note: 修改完的代码必须事先输入context lengths 区间，是
-    # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
-    args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3-8B-Instruct.json"
-    args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_new.jsonl"
-    model_name = args.model_path
 
     ht = LLMNeedleHaystackTester(
-        model_name = model_name, 
-        context_lengths=[1900, 3900, 7900, 11900],
+        needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl",
+        model_name = "meta-llama/Meta-Llama-3-8B-Instruct", 
+        context_lengths=list(reversed([1900, 3900, 7900, 11900])),
+        # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
+        selected_idx=[0],
+        combinations_number=200,  # for debug
     )
 
-    ht.start_test(args)
+    ht.start_test()
