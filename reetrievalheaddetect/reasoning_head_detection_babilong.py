@@ -200,7 +200,6 @@ class LLMNeedleHaystackTester:
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
 
-
     def decode(self, q_outputs, inp, decode_len, search_pos, attack_pos, block_list=None):
         output = []
         retrieval_score = [
@@ -234,6 +233,7 @@ class LLMNeedleHaystackTester:
                 head_scores['attack_pos']['attention_score'] /= total_steps
                 head_scores['irrelevant_pos']['attention_score'] /= total_steps
         return output, retrieval_score
+
 
     def find_multi_needle_idx(self, input_ids, needles):
         all_evi_pos = []
@@ -290,7 +290,7 @@ class LLMNeedleHaystackTester:
 
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 10, search_pos, attack_pos)
+            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, search_pos, attack_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
         
         logger.info(f"model response: {response}")
@@ -349,7 +349,7 @@ class LLMNeedleHaystackTester:
                     with tqdm(total=len(all_combinations)) as pbar:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
-                            pbar.set_description(f"Processing lkength: {context_length} | task: {task_tag} | depth {depth_percent}")
+                            pbar.set_description(f"Processing length: {context_length} | task: {task_tag} | depth {depth_percent}")
                             depth_tag = "-".join([str(i) for i in depth_percent])
                             model_name = args.model_path.split("/")[-1]
                             save_file_name = f"{model_name}/{context_length}/{task_tag}_{depth_tag}"
