@@ -337,8 +337,10 @@ class LLMNeedleHaystackTester:
 
 
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
-                    import pdb; pdb.set_trace()
-                    all_combinations = random.sample(all_combinations, self.combinations_number)
+                    if self.combinations_number >= len(all_combinations):
+                        logger.info("combinations_number is larger than or equal to the number of all combinations, auto select all combinations")
+                    else:
+                        all_combinations = random.sample(all_combinations, self.combinations_number)
 
                     logger.info(all_combinations)
 
@@ -394,8 +396,8 @@ if __name__ == "__main__":
         context_lengths=list(reversed([1900, 3900, 7900, 11900])),
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
-        selected_idx=[0],
-        combinations_number=200,  # for debug
+        # selected_idx=[0],  # for debug
+        combinations_number=50,
     )
 
     ht.start_test()
