@@ -26,6 +26,23 @@ from tqdm import tqdm, trange
 from loguru import logger
 from modelzipper.tutils import *
 
+
+def random_combine(ref:list, att:list):
+
+    att_list =[[] for _ in range(len(ref) + 1)]
+    for p_att in att[:-1]:
+        att_list[random.randint(0,len(ref)-1)].append(p_att)
+    att_list[-1].append(att[-1])
+
+    results = [k for k in att_list[0]]
+
+    for r, patt in zip(ref,att_list[1:]):
+        results.append(r)
+        results.extend(patt)
+
+    return results
+
+
 class SentenceSampler:
     def __init__(self, dataset, tokenizer, min_sentence_len=10, max_sentence_len=None, shuffle=False, random_seed=42):
         self.sample_ind = 0
@@ -91,6 +108,8 @@ class SentenceSampler:
             return False
         return True
 
+
+
 class LLMNeedleHaystackTester:
     """
     This class is used to test the LLM Needle Haystack.
@@ -104,54 +123,25 @@ class LLMNeedleHaystackTester:
         print_ongoing_status = True,
         selected_idx = [0]
     ):
-        needles_and_stacks = [json.loads(l) for l in open(f"{haystack_dir}/reasoning_needle.jsonl")]
+
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-        self.golden_answer = [l["golden_answer"] for l in needles_and_stacks]
+
         haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
-        self.needle_list = [l["needle"] for l in needles_and_stacks]
-        self.retrieval_question_list = [l["question"] for l in needles_and_stacks]
-        self.real_ansers_list = [l["real_needle"] for l in needles_and_stacks]
-        self.tags = [l["tag"] for l in needles_and_stacks]
-        self.results_version = results_version
-        self.num_concurrent_requests = num_concurrent_requests
         self.save_results = save_results
-        self.final_context_length_buffer = final_context_length_buffer
         self.save_contexts = save_contexts
-        self.seconds_to_sleep_between_completions = seconds_to_sleep_between_completions
         self.print_ongoing_status = print_ongoing_status
-        self.model_provider = model_provider
-        self.tag = tag
         # zecheng_note: conduct attention mask
-        self.mask_topk = mask_topk
-        self.document_depth_percent_intervals = document_depth_percent_intervals
         self.testing_results = []
-        self.head_file = head_file
         self.head_counter = defaultdict(list)
         self.fail_head_counter = defaultdict(list)
         self.detected_tokens = list()
         self.selected_idx = selected_idx
         if("/" in model_name):
             self.model_version = model_name.split("/")[-1]
-        else: self.model_version = model_name
-        if(model_name_suffix is not None): self.model_version += "_" + model_name_suffix
-
+        else: 
+            self.model_version = model_name
         self.context_lengths = context_lengths
-
-        if document_depth_percents is None:
-            if document_depth_percent_min is None or document_depth_percent_max is None or document_depth_percent_intervals is None:
-                raise ValueError("Either document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals need to be filled out OR the document_depth_percents needs to be supplied.")
-            else:
-                if document_depth_percent_interval_type == 'linear':
-                    self.document_depth_percents = np.round(np.linspace(document_depth_percent_min, document_depth_percent_max, num=document_depth_percent_intervals, endpoint=True)).astype(int)
-                elif document_depth_percent_interval_type == 'sigmoid':
-                    self.document_depth_percents = [logistic(x) for x in np.linspace(document_depth_percent_min, document_depth_percent_max, document_depth_percent_intervals)]
-        else:
-            self.document_depth_percents = document_depth_percents
-
-        if document_depth_percent_interval_type not in [None, "linear", "sigmoid"]:
-            raise ValueError("document_depth_percent_interval_type must be either None, 'linear' or 'sigmoid'. If you'd like your own distribution give a list of ints in via document_depth_percent_intervals")
-        
         self.model_name = model_name
 
         print("loading from %s" % model_name)
@@ -178,10 +168,6 @@ class LLMNeedleHaystackTester:
         else:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
-            
-        if 'llama-2-7b-80k' in self.model_version:
-            scaling_factor = 10
-            reset_rope(self.model_to_test, model_max_train_len=81920, scaling_factor=scaling_factor)
             
         if "CUDA_VISIBLE_DEVICES" in os.environ:
             self.multi_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"]) > 1
@@ -219,8 +205,9 @@ class LLMNeedleHaystackTester:
 
         flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
         flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
-        assert len(flatten_search_pos & flatten_attack_pos) == 0, "search_pos and attack_pos should not overlap"
-        
+        assert len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0, "search_pos and attack_pos should not overlap"
+        print(flatten_search_pos)
+        print(flatten_attack_pos)
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
@@ -282,7 +269,7 @@ class LLMNeedleHaystackTester:
                 inp = outputs.logits[0, -1].argmax()
                 step_token = self.enc.decode(inp.item())
                 output.append(inp.item())
-                self.retrieval_calculate(outputs.attentions, retrieval_score, inp, step_token, search_pos, attack_pos, topk=1)
+                self.retrieval_calculate(outputs.attentions, retrieval_score, search_pos, attack_pos, topk=1)
                 if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
@@ -306,23 +293,27 @@ class LLMNeedleHaystackTester:
                 token_span = input_ids[j : j + span_len]
                 span_ids = set(token_span.tolist())
                 overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
-                if(overlap > 0.8):
+                if(overlap > 0.95):
                     all_evi_pos.append((j + 1, j + span_len))
                     logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
         return all_evi_pos   
 
-    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question):
-
-        depth_percent = [i / 10 for i in depth_percent]
-        updated_sample = [[] for _ in range(len(background_text) + 1)]
-        real_pos = [int(len(background_text) * i) for i in depth_percent]
-        for fact, pos in zip(evidence, real_pos):  # insert real needle
-            updated_sample[pos].append(fact)
-        for fact, pos in zip(disturb_tok_needles, disturb_pos):  # insert disturb needle
-            updated_sample[pos].append(fact)
-        for i, s in enumerate(background_text):  # insert irrevelent needle
-            updated_sample[i].append(s)
+    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name):
+        
+        if background_text is not None:
+            depth_percent = [i / 10 for i in depth_percent]
+            updated_sample = [[] for _ in range(len(background_text) + 1)]
+            real_pos = [int(len(background_text) * i) for i in depth_percent]
+            for fact, pos in zip(evidence, real_pos):  # insert real needle
+                updated_sample[pos].append(fact)
+            for fact, pos in zip(disturb_tok_needles, disturb_pos):  # insert disturb needle
+                updated_sample[pos].append(fact)
+            for i, s in enumerate(background_text):  # insert irrevelent needle
+                updated_sample[i].append(s)
+        else:
+            updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
+            updated_sample = [[k] for k in updated_sample]
 
         flat = [i for s in updated_sample for i in s]
         tokens = [i for s in flat for i in s]
@@ -339,8 +330,12 @@ class LLMNeedleHaystackTester:
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
             output, retrieval_score = self.decode(q_outputs, inp[:, -1], 10, search_pos, attack_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
-
-        score = 100 if ((self.golden_answer in response) and (self.golden_answer not in question)) else 0
+        
+        logger.info(f"model response: {response}")
+        logger.info(f"gloden label: {answer}")
+        logger.info(f"question: {question}")
+        
+        score = 100 if ((answer in response) and (answer not in question)) else 0
 
         self.retrieval_head_accumulate(retrieval_score, score==100)
         import pdb; pdb.set_trace()
@@ -502,42 +497,52 @@ class LLMNeedleHaystackTester:
         evidence_list = [l["real_needle"] for l in needles_and_stacks]
         golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
         tags = [l["tag"] for l in needles_and_stacks]
-        for context_length in [1900, 3900, 5900]:
-            for loss_type in ["label"]:
-                for s_id in self.selected_idx:
-                    logger.info(f"Selected idx: {s_id}")
-                    logger.info(f"Question: {retrieval_question_list[s_id]}")
-                    logger.info(f"Answer: {golden_answer_list[s_id]}")
-                    logger.info(f"Tag: {tags[s_id]}")
-                    logger.info(f"Needle: {needle_list[s_id]}")
-                    logger.info(f"Real Needle: {evidence_list[s_id]}")
-                    logger.info("=============================================")
 
-                    needle = [self.enc(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
-                    evidence = [self.enc(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
-                    question = retrieval_question_list[s_id]
-                    answer = golden_answer_list[s_id]
-                    tag = tags[s_id]
+        for pe,pn in zip(evidence_list, needle_list):
+            last_idx = pn.index(pe[-1])
+            assert last_idx > -1
+            pe += [pn[last_idx + 1]]
 
-                    # 初始化采样器
-                    background_text = self.noise_sampler_test.get_sample(context_length)  # zecheng_note: 我们设置了8K上下文长度
+        for context_length in [0, 1900, 3900, 7900, 11900]:
+            for s_id in self.selected_idx:
+                logger.info(f"Selected idx: {s_id}")
+                logger.info(f"Question: {retrieval_question_list[s_id]}")
+                logger.info(f"Answer: {golden_answer_list[s_id]}")
+                logger.info(f"Tag: {tags[s_id]}")
+                logger.info(f"Needle: {needle_list[s_id]}")
+                logger.info(f"Real Needle: {evidence_list[s_id]}")
+                logger.info("=============================================")
+
+                needle = [self.enc(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
+                evidence = [self.enc(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
+                question = retrieval_question_list[s_id]
+                answer = golden_answer_list[s_id]
+                tag = tags[s_id]
+
+                if context_length > 0:
+                    background_text = self.noise_sampler_test.get_sample(context_length)
                     disturb_tok_needles = [i for i in needle if i not in evidence]
                     disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+                else:
+                    background_text = None
+                    disturb_tok_needles = [i for i in needle if i not in evidence]
+                    disturb_pos = None
 
-                    all_combinations = list(itertools.combinations(list(range(0, 5)), len(evidence)))  # FIXME: 暂时只考虑了5个位置，这是一个超参数，需要修改， 这里需要和jbb那边同步对齐
+                combinations_number = 5
+                all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
+                all_combinations = random.sample(all_combinations, combinations_number)
 
-                    logger.info(all_combinations)
+                logger.info(all_combinations)
 
-                    with tqdm(total=len(all_combinations)) as pbar:
-                        for depth_percent in all_combinations:
-                            torch.cuda.empty_cache()
-                            pbar.set_description(f"Processing depth {depth_percent}")
-                            depth_tag = "-".join([str(i) for i in depth_percent])
-                            model_name = args.model_path.split("/")[-1]
-                            save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_{depth_tag}"
-
-                            begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter= True if args.adapter_path else False)
-                            pbar.update(1)
+                with tqdm(total=len(all_combinations)) as pbar:
+                    for depth_percent in all_combinations:
+                        torch.cuda.empty_cache()
+                        pbar.set_description(f"Processing depth {depth_percent}")
+                        depth_tag = "-".join([str(i) for i in depth_percent])
+                        model_name = args.model_path.split("/")[-1]
+                        save_file_name = f"{model_name}/{context_length}/{tag}_{depth_tag}"
+                        self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name)
+                        pbar.update(1)
 
         if not os.path.exists(f"head_score/{self.tag}"):
             os.makedirs(f"head_score/{self.tag}")
@@ -570,23 +575,16 @@ if __name__ == "__main__":
     # args.model_path = "/data/zecheng/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.model_path = "meta-llama/Meta-Llama-3-8B-Instruct"
     args.head_file = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/head_score/5-hop/success_Meta-Llama-3-8B-Instruct.json"
+    args.needle_path = "/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_new.jsonl"
     model_name = args.model_path
 
     ht = LLMNeedleHaystackTester(
-        model_name=model_name, 
-        # haystack_dir="/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect",
-        haystack_dir="/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/haystack_for_detect",
-        model_name_suffix=args.model_name_suffix,
-        model_provider=args.model_provider,
-        save_contexts=False,
+        model_name = model_name, 
+        context_lengths=None,
         save_results=True,
-        final_context_length_buffer=200,
-        document_depth_percents=np.array([0, 20, 40, 60, 80]),
-        needle_ids=args.needle_ids,
-        mask_topk=args.mask_topk,
-        head_file=args.head_file,
-        custom_block_list=args.custom_block_list,
-        # tag="q3_inf_diff_pos"
+        save_contexts = False,
+        print_ongoing_status = True,
+        selected_idx = [0]
     )
 
     ht.start_test(args)
