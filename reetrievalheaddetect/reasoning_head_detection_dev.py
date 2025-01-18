@@ -26,20 +26,15 @@ from tqdm import tqdm, trange
 from loguru import logger
 from modelzipper.tutils import *
 
-
 def random_combine(ref:list, att:list):
-
     att_list =[[] for _ in range(len(ref) + 1)]
     for p_att in att[:-1]:
         att_list[random.randint(0,len(ref)-1)].append(p_att)
     att_list[-1].append(att[-1])
-
     results = [k for k in att_list[0]]
-
     for r, patt in zip(ref,att_list[1:]):
         results.append(r)
         results.extend(patt)
-
     return results
 
 
@@ -118,37 +113,28 @@ class LLMNeedleHaystackTester:
         self,
         context_lengths = None,
         model_name='',
-        save_results = True,
-        save_contexts = False,
         print_ongoing_status = True,
-        selected_idx = [0]
+        selected_idx = None
     ):
-
         self.enc = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-
-        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")  # zecheng_note : 从pg 19预训练数据集里面加载数据作为上下文 /data/data/zecheng/data/pg19-test  ||| /mnt/petrelfs/tangzecheng/local_data/pg19-test
+        haystack = datasets.load_dataset("/mnt/petrelfs/tangzecheng/local_data/pg19-test", split="test")
         self.noise_sampler_test = SentenceSampler(haystack, tokenizer=self.enc, shuffle=False, random_seed=None)
-        self.save_results = save_results
-        self.save_contexts = save_contexts
         self.print_ongoing_status = print_ongoing_status
-        # zecheng_note: conduct attention mask
-        self.testing_results = []
-        self.head_counter = defaultdict(list)
-        self.fail_head_counter = defaultdict(list)
-        self.detected_tokens = list()
+        self.succ_head_counter = defaultdict(lambda: defaultdict(list))
+        self.fail_head_counter = defaultdict(lambda: defaultdict(list))
+
         self.selected_idx = selected_idx
         if("/" in model_name):
             self.model_version = model_name.split("/")[-1]
         else: 
             self.model_version = model_name
         self.context_lengths = context_lengths
-        self.model_name = model_name
 
-        print("loading from %s" % model_name)
+        logger.info("loading from %s" % model_name)
         config = AutoConfig.from_pretrained(model_name)
         self.layer_num, self.head_num = config.num_hidden_layers, config.num_attention_heads
 
-        print(f"layer number: {self.layer_num}, head number {self.head_num}")
+        logger.info(f"layer number: {self.layer_num}, head number {self.head_num}")
         if "qwen" in self.model_version.lower():  # balanced_low_0
             self.model_to_test = Qwen2ForCausalLM.from_pretrained(
                     model_name,torch_dtype="auto",device_map = "auto",use_flash_attention_2="flash_attention_2"
@@ -168,52 +154,18 @@ class LLMNeedleHaystackTester:
         else:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
-            
-        if "CUDA_VISIBLE_DEVICES" in os.environ:
-            self.multi_gpus = len(os.environ["CUDA_VISIBLE_DEVICES"]) > 1
-        else:
-            self.multi_gpus = True
-            
-        self.model_to_test_description = model_name
-        self.evaluation_model = None
-      
-        model_name = model_name.split('/')[-1]
-        
 
-    def run_test(self, args):
-        for context_length in self.context_lengths[::-1]:  # zecheng_note: 首先进行长的测试，然后进行短的测试 
-            if context_length < args.s_len or context_length > args.e_len: 
-                continue
-            all_combinations = list(itertools.combinations(list(range(0, self.document_depth_percent_intervals)), len(self.real_needle)))
-            for depth_percent in all_combinations:  # zecheng_note: 这里是fact插入的位置，不同的排列组合
-                depth_percent = np.array(depth_percent) / self.document_depth_percent_intervals
-                self.evaluate_and_log(context_length, depth_percent)
-
-    def construct_random_head(self, n):
-        results = []
-        seed_list = [i  for i in range(32)]
-        random.shuffle(seed_list)
-        while len(results) < n:
-            l, h = random.choices(seed_list, k=2)
-            if (l, h) in results or (l, h) in self.block_list:
-                continue
-            else:
-                results.append((l, h))
-        return results
-
-    def retrieval_calculate(self, attention_maxtrix, retrieval_score, search_pos, attack_pos, topk=1):
+    def retrieval_calculate(self, attention_maxtrix, retrieval_score, search_pos, attack_pos, step_token_id, topk=1):
 
         flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
         flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
         assert len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0, "search_pos and attack_pos should not overlap"
-        print(flatten_search_pos)
-        print(flatten_attack_pos)
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
-                self.check_if_attend_ref(idx, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos)
+                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos)
 
-    def check_if_attend_ref(self, attention_index: List, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int]):
+    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int]):
         """
         check if the attention index (where the model put attention at) 
         fall into the search_pos or attack_pos scope
@@ -221,28 +173,32 @@ class LLMNeedleHaystackTester:
 
         record rules:
         1. attention_score = number of attended times for each head
-        2. attention_pos = position of the attended token
+        2. attention_token_id = tokenized index of the attended token
         """
 
         for idx in attention_index:
             if idx in flatten_search_pos:
                 retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
-                retrieval_score[layer_idx][head_idx]['clue_pos']['attention_pos'].add(idx)
+                retrieval_score[layer_idx][head_idx]['clue_pos']['attention_token_id'].add(step_token_id)
             elif idx in flatten_attack_pos:
                 retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
-                retrieval_score[layer_idx][head_idx]['attack_pos']['attention_pos'].add(idx)
+                retrieval_score[layer_idx][head_idx]['attack_pos']['attention_token_id'].add(step_token_id)
             else:
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
-                retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_pos'].add(idx)
+                retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_token_id'].add(step_token_id)
 
 
     def retrieval_head_accumulate(self, retrieval_score, fail=False):
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 if fail:
-                    self.fail_head_counter[f"{layer_idx}-{head_idx}"].append(retrieval_score[layer_idx][head_idx][0])
+                    self.fail_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
+                    self.fail_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
+                    self.fail_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
                 else:
-                    self.head_counter[f"{layer_idx}-{head_idx}"].append(retrieval_score[layer_idx][head_idx][0])
+                    self.succ_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
+                    self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
+                    self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
 
 
     def decode(self, q_outputs, inp, decode_len, search_pos, attack_pos, block_list=None):
@@ -250,27 +206,26 @@ class LLMNeedleHaystackTester:
         retrieval_score = [
             [
                 {
-                    "clue_pos": {"attention_score": 0, "attention_pos": set()},
-                    "attack_pos": {"attention_score": 0, "attention_pos": set()},
-                    "irrelevant_pos": {"attention_score": 0, "attention_pos": set()},
+                    "clue_pos": {"attention_score": 0, "attention_token_id": set()},
+                    "attack_pos": {"attention_score": 0, "attention_token_id": set()},
+                    "irrelevant_pos": {"attention_score": 0, "attention_token_id": set()},
                 }    
             for _ in range(self.head_num)
             ] for _ in range(self.layer_num)
         ]
         past_kv = q_outputs.past_key_values
         total_steps = 0
-        with tqdm(total=decode_len) as pbar:
-            while total_steps < decode_len:
-                total_steps += 1
-                pbar.update(1)
-                inp = inp.view(1, 1)
-                outputs = self.model_to_test(input_ids=inp, past_key_values=past_kv, use_cache=True, output_attentions=True, attn_mode="torch")
-                past_kv = outputs.past_key_values
-                inp = outputs.logits[0, -1].argmax()
-                step_token = self.enc.decode(inp.item())
-                output.append(inp.item())
-                self.retrieval_calculate(outputs.attentions, retrieval_score, search_pos, attack_pos, topk=1)
-                if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
+
+        while total_steps < decode_len:
+            total_steps += 1
+            inp = inp.view(1, 1)
+            outputs = self.model_to_test(input_ids=inp, past_key_values=past_kv, use_cache=True, output_attentions=True, attn_mode="torch")
+            past_kv = outputs.past_key_values
+            inp = outputs.logits[0, -1].argmax()
+            step_token = self.enc.decode(inp.item())
+            output.append(inp.item())
+            self.retrieval_calculate(outputs.attentions, retrieval_score, search_pos, attack_pos, inp.item(), topk=1)
+            if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
         for layer_scores in retrieval_score:
@@ -291,9 +246,10 @@ class LLMNeedleHaystackTester:
             span_len = len(needle_ids)
             for j in range(len(input_ids)):
                 token_span = input_ids[j : j + span_len]
-                span_ids = set(token_span.tolist())
-                overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
-                if(overlap > 0.95):
+                if token_span.tolist()[1:] == needle_ids[1:]:
+                # span_ids = set(token_span.tolist())
+                # overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
+                # if(overlap > 0.98):
                     all_evi_pos.append((j + 1, j + span_len))
                     logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
@@ -320,10 +276,17 @@ class LLMNeedleHaystackTester:
 
         new_context = self.enc.decode(tokens)
         input_context = new_context + f"\nQuestion: {question}\nAnswer:"
-        inp = self.enc.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
+        inp = self.enc.apply_chat_template([{"role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
 
         search_pos = self.find_multi_needle_idx(inp[0], evidence)
         attack_pos = self.find_multi_needle_idx(inp[0], disturb_tok_needles)
+
+        if (len(search_pos) != len(evidence)) or (len(attack_pos) != len(disturb_tok_needles)):
+            logger.info("length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case")
+            logger.info(f"search_pos length: {len(search_pos)} | evidence length: {len(evidence)}")
+            logger.info(f"attack_pos length: {len(attack_pos)} | attack clues length: {len(disturb_tok_needles)}")
+            return False
+
         inp = inp.to(self.model_to_test.device)
 
         with torch.no_grad():
@@ -333,12 +296,15 @@ class LLMNeedleHaystackTester:
         
         logger.info(f"model response: {response}")
         logger.info(f"gloden label: {answer}")
-        logger.info(f"question: {question}")
         
         score = 100 if ((answer in response) and (answer not in question)) else 0
 
-        self.retrieval_head_accumulate(retrieval_score, score==100)
+        self.retrieval_head_accumulate(retrieval_score, fail=(score==100))
+
+
         import pdb; pdb.set_trace()
+        return True
+        
         
         all_detected_tokens = list()
         for item in retrieval_score:
@@ -403,92 +369,7 @@ class LLMNeedleHaystackTester:
             print("Writing at %s" % p)
             with open(p, 'w') as f:
                 json.dump(results, f)
-        
 
-
-    def result_exists(self, context_length, depth_percent):
-        """
-        Checks to see if a result has already been evaluated or not
-        """
-        results_dir = 'results/' + self.model_version
-        print("Searching existing results at %s" % results_dir)
-        if not os.path.exists(results_dir):
-            return False
-        for filename in os.listdir(results_dir):
-            if filename.endswith('.json'):
-                with open(os.path.join(results_dir, filename), 'r') as f:
-                    result = json.load(f)
-                    context_length_met = result['context_length'] == context_length
-                    depth_percent_met = result['depth_percent'] == depth_percent
-                    version_met = result.get('version', 1) == self.results_version
-                    model_met = result['model'] == self.model_name
-                    # import ipdb; ipdb.set_trace()
-                    if context_length_met and depth_percent_met and version_met and model_met:
-                        return True
-        return False
-
-
-    def generate_context(self, context_length, depth_percent):
-        """ zecheng_note: 如果是implicit reasoning, 则使用noise_sampler_test来采样上下文，不用原来的context文件
-        """
-        context = self.insert_multi_needle(depth_percent, context_length)
-        return context
-    
-
-    def encode_text_to_tokens(self, text):
-        if self.model_provider in ["OpenAI", "LLaMA", "Mistral", "GLM"]:
-            return self.enc.encode(text)
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            return self.enc.encode(text).ids
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-
-
-    def get_context_length_in_tokens(self, context):
-        if self.model_provider in ["OpenAI", "LLaMA", "Mistral", "GLM"]:
-            return len(self.enc.encode(context))
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            encoded = self.enc.encode(context)
-            return len(self.enc.encode(context).ids)
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-
-
-    def read_context_files(self):
-        context = ""
-        max_context_length = max(self.context_lengths)
-
-        while len(context.split()) < max_context_length:
-            for file in glob.glob(f"{self.haystack_dir}/*.txt"):
-                with open(file, 'r') as f:
-                    context += f.read()
-        return context
-
-
-    def get_tokens_from_context(self, context):
-        if self.model_provider in ["OpenAI", "LLaMA", "Mistral", "GLM"]:
-            return self.enc.encode(context)
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different encoder for Anthropic
-            return self.enc.encode(context).ids
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-        
-
-    def decode_tokens(self, tokens, context_length=None):
-        if self.model_provider in ["OpenAI", "LLaMA", "Mistral", "GLM"]:
-            return self.enc.decode(tokens[:context_length])
-        elif self.model_provider == "Anthropic":
-            # Assuming you have a different decoder for Anthropic
-            return self.enc.decode(tokens[:context_length])
-        else:
-            raise ValueError("model_provider must be either 'OpenAI' or 'Anthropic'")
-
-
-    def get_results(self):
-        return self.testing_results
 
     def start_test(self, args):
         needles_and_stacks = auto_read_data(args.needle_path)
@@ -498,64 +379,76 @@ class LLMNeedleHaystackTester:
         golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
         tags = [l["tag"] for l in needles_and_stacks]
 
-        for pe,pn in zip(evidence_list, needle_list):
-            last_idx = pn.index(pe[-1])
-            assert last_idx > -1
-            pe += [pn[last_idx + 1]]
+        if self.selected_idx is None:
+            self.selected_idx = range(len(needle_list))
+        
+        for context_length in self.context_lengths:
+            for task_tag in ["4-hop", "3-hop"]:
+                for s_id in self.selected_idx:
+                    if tags[s_id] != task_tag:
+                        continue
+                    logger.info(f"Selected idx: {s_id}")
+                    logger.info(f"Answer: {golden_answer_list[s_id]}")
+                    logger.info(f"Tag: {tags[s_id]}")
+                    logger.info(f"Needle: {needle_list[s_id]}")
+                    logger.info(f"Real Needle: {evidence_list[s_id]}")
+                    logger.info("=============================================")
 
-        for context_length in [0, 1900, 3900, 7900, 11900]:
-            for s_id in self.selected_idx:
-                logger.info(f"Selected idx: {s_id}")
-                logger.info(f"Question: {retrieval_question_list[s_id]}")
-                logger.info(f"Answer: {golden_answer_list[s_id]}")
-                logger.info(f"Tag: {tags[s_id]}")
-                logger.info(f"Needle: {needle_list[s_id]}")
-                logger.info(f"Real Needle: {evidence_list[s_id]}")
-                logger.info("=============================================")
+                    needle = [self.enc(' ' + i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
+                    evidence = [self.enc(' ' + i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
+                    question = retrieval_question_list[s_id]
+                    answer = golden_answer_list[s_id]
 
-                needle = [self.enc(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
-                evidence = [self.enc(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
-                question = retrieval_question_list[s_id]
-                answer = golden_answer_list[s_id]
-                tag = tags[s_id]
+                    if context_length > 0:
+                        background_text = self.noise_sampler_test.get_sample(context_length)
+                        disturb_tok_needles = [i for i in needle if i not in evidence]
+                        disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+                    else:
+                        background_text = None
+                        disturb_tok_needles = [i for i in needle if i not in evidence]
+                        disturb_pos = None
 
-                if context_length > 0:
-                    background_text = self.noise_sampler_test.get_sample(context_length)
-                    disturb_tok_needles = [i for i in needle if i not in evidence]
-                    disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
-                else:
-                    background_text = None
-                    disturb_tok_needles = [i for i in needle if i not in evidence]
-                    disturb_pos = None
+                    combinations_number = 5
+                    all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
+                    all_combinations = random.sample(all_combinations, combinations_number)
 
-                combinations_number = 5
-                all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
-                all_combinations = random.sample(all_combinations, combinations_number)
+                    logger.info(all_combinations)
 
-                logger.info(all_combinations)
+                    analysis_sample_nums = 0
+                    with tqdm(total=len(all_combinations)) as pbar:
+                        for depth_percent in all_combinations:
+                            torch.cuda.empty_cache()
+                            pbar.set_description(f"Processing depth {depth_percent}")
+                            depth_tag = "-".join([str(i) for i in depth_percent])
+                            model_name = args.model_path.split("/")[-1]
+                            save_file_name = f"{model_name}/{context_length}/{task_tag}_{depth_tag}"
+                            res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name)
+                            if res: analysis_sample_nums += 1
+                            pbar.update(1)
 
-                with tqdm(total=len(all_combinations)) as pbar:
-                    for depth_percent in all_combinations:
-                        torch.cuda.empty_cache()
-                        pbar.set_description(f"Processing depth {depth_percent}")
-                        depth_tag = "-".join([str(i) for i in depth_percent])
-                        model_name = args.model_path.split("/")[-1]
-                        save_file_name = f"{model_name}/{context_length}/{tag}_{depth_tag}"
-                        self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, save_file_name)
-                        pbar.update(1)
+            # after processing all the samples in different positions, average the attention scores
+            for head_layer_dict in self.succ_head_counter.values():
+                for pos_score_dict in head_layer_dict.values():
+                    for k, pos_scores in pos_score_dict.items():
+                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+            
+            for head_layer_dict in self.fail_head_counter.values():
+                for pos_score_dict in head_layer_dict.values():
+                    for k, pos_scores in pos_score_dict.items():
+                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+                    
+            # after average all the scores for #all_combinations * self.selected_idx, 
+            # which means one sequence length experiment is finished, then
+            # save the results and refresh the 
+            #   self.succ_head_counter = defaultdict(lambda: defaultdict(list))
+            #   self.fail_head_counter = defaultdict(lambda: defaultdict(list))
+            save_dir = f"attention_analysis/attention_score/{task_tag}/{context_length}"
+            auto_save_data(self.succ_head_counter, os.path.join(save_dir, "success.pkl"))
+            auto_save_data(self.fail_head_counter, os.path.join(save_dir, "fail.pkl"))
 
-        if not os.path.exists(f"head_score/{self.tag}"):
-            os.makedirs(f"head_score/{self.tag}")
-
-        # if os.path.exists(f"head_score/{self.tag}/{self.model_version}.json"):
-        #     with open(f"./head_score/{self.tag}/{self.model_version}.json", "r") as file:
-        #         head_counter = json.loads(file.readline())
-        #     for k,v in head_counter.items():
-        #         self.head_counter[k] += v
-        with open(f"head_score/{self.tag}/success_{self.model_version}.json", 'w') as f:
-            json.dump(self.head_counter, f)
-        with open(f"head_score/{self.tag}/fail_{self.model_version}.json", 'w') as f:
-            json.dump(self.fail_head_counter, f)
+            # refresh the counter for the next task_tag
+            self.succ_head_counter = defaultdict(lambda: defaultdict(list))
+            self.fail_head_counter = defaultdict(lambda: defaultdict(list))
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
@@ -580,11 +473,8 @@ if __name__ == "__main__":
 
     ht = LLMNeedleHaystackTester(
         model_name = model_name, 
-        context_lengths=None,
-        save_results=True,
-        save_contexts = False,
+        context_lengths=[0, 1900, 3900, 7900, 11900],
         print_ongoing_status = True,
-        selected_idx = [0]
     )
 
     ht.start_test(args)
