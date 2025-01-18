@@ -392,7 +392,7 @@ if __name__ == "__main__":
 
     ht = LLMNeedleHaystackTester(
         needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl",
-        model_name = "meta-llama/Meta-Llama-3-8B-Instruct", 
+        model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct", 
         context_lengths=list(reversed([1900, 3900, 7900, 11900])),
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
