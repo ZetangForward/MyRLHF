@@ -397,7 +397,7 @@ if __name__ == "__main__":
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
         # selected_idx=[0],  # for debug
-        combinations_number=50,
+        combinations_number=10,
     )
 
     ht.start_test()
