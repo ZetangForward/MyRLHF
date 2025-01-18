@@ -242,16 +242,15 @@ class LLMNeedleHaystackTester:
                 needle_ids = self.enc(evi, add_special_tokens=False)["input_ids"]
             else:
                 needle_ids = evi
-            logger.info(f"evidence {i} --> {self.enc.decode(needle_ids, skip_special_tokens=False)}")
             span_len = len(needle_ids)
             for j in range(len(input_ids)):
                 token_span = input_ids[j : j + span_len]
-                if token_span.tolist()[1:] == needle_ids[1:]:
-                # span_ids = set(token_span.tolist())
-                # overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
-                # if(overlap > 0.98):
+                # if token_span.tolist()[1:] == needle_ids[1:]:
+                span_ids = set(token_span.tolist())
+                overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
+                if(overlap > 0.95):
                     all_evi_pos.append((j + 1, j + span_len))
-                    logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
+                    # logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
         return all_evi_pos   
 
@@ -298,77 +297,9 @@ class LLMNeedleHaystackTester:
         logger.info(f"gloden label: {answer}")
         
         score = 100 if ((answer in response) and (answer not in question)) else 0
-
         self.retrieval_head_accumulate(retrieval_score, fail=(score==100))
 
-
-        import pdb; pdb.set_trace()
         return True
-        
-        
-        all_detected_tokens = list()
-        for item in retrieval_score:
-            for head in item:
-                all_detected_tokens.extend(head[1])
-        all_detected_token_id = sorted(list(set(all_detected_tokens)))
-        detected_evidences = self.enc.decode([input_ids[0][i] for i in all_detected_token_id])
-            
-        results = {
-            'model' : self.model_to_test_description,
-            'context_length' : int(context_length),
-            'depth_percent' : depth_percent.tolist(),
-            'version' : self.results_version,
-            'needle' : self.needle,
-            'model_response' : response,
-            'golden_text': self.real_needle,
-            'score' : score,
-            'detected_token_id' : all_detected_token_id,
-            'detected_evidences' : detected_evidences,
-            'test_duration_seconds' : test_elapsed_time,
-            'test_timestamp_utc' : datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
-        }
-        
-        self.testing_results.append(results)
-
-        if self.print_ongoing_status:
-            print (f"-- Test Summary -- ")
-            print (f"Duration: {test_elapsed_time:.1f} seconds")
-            print (f"Context: {context_length} tokens")
-            print (f"Depth: {depth_percent}%")
-            print (f"Score: {score}")
-            print(f"detected_evidences {detected_evidences}")
-            print (f"Response: {response}\n")
-        if isinstance(depth_percent, float) or isinstance(depth_percent, int) or isinstance(depth_percent, np.int64):
-            context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_depth_{int(depth_percent*100)}'
-        else:
-            combination = depth_percent * self.document_depth_percent_intervals
-            combination = [int(i) for i in combination]
-            tmp = "_".join(list(map(str, combination)))
-            context_file_location = f'{self.model_version.replace(".", "_")}_len_{context_length}_combination_{tmp}'
-            
-        if self.save_contexts:
-            results['file_name'] = context_file_location
-
-            # Save the context to file for retesting
-            if not os.path.exists('contexts'):
-                os.makedirs('contexts')
-
-            if not os.path.exists(f'contexts/{self.tag}/{self.model_version}'):
-                os.makedirs(f'contexts/{self.tag}/{self.model_version}')
-
-            with open(f'contexts/{self.tag}/{self.model_version}/{context_file_location}_context.txt', 'w') as f:
-                f.write(context)
-            
-        if self.save_results:
-            # Save the context to file for retesting
-            if not os.path.exists(f'results/{self.tag}/{self.model_version}'):
-                os.makedirs(f'results/{self.tag}/{self.model_version}')
-            
-            # Save the result to file for retesting
-            p = f'results/{self.tag}/{self.model_version}/{context_file_location}_results.json'
-            print("Writing at %s" % p)
-            with open(p, 'w') as f:
-                json.dump(results, f)
 
 
     def start_test(self, args):
@@ -382,8 +313,8 @@ class LLMNeedleHaystackTester:
         if self.selected_idx is None:
             self.selected_idx = range(len(needle_list))
         
-        for context_length in self.context_lengths:
-            for task_tag in ["4-hop", "3-hop"]:
+        for context_length in tqdm(self.context_lengths):
+            for task_tag in tqdm(["4-hop", "3-hop"]):
                 for s_id in self.selected_idx:
                     if tags[s_id] != task_tag:
                         continue
@@ -394,8 +325,8 @@ class LLMNeedleHaystackTester:
                     logger.info(f"Real Needle: {evidence_list[s_id]}")
                     logger.info("=============================================")
 
-                    needle = [self.enc(' ' + i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
-                    evidence = [self.enc(' ' + i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
+                    needle = [self.enc(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
+                    evidence = [self.enc(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
                     question = retrieval_question_list[s_id]
                     answer = golden_answer_list[s_id]
 
@@ -408,7 +339,7 @@ class LLMNeedleHaystackTester:
                         disturb_tok_needles = [i for i in needle if i not in evidence]
                         disturb_pos = None
 
-                    combinations_number = 5
+                    combinations_number = 20
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                     all_combinations = random.sample(all_combinations, combinations_number)
 
@@ -418,7 +349,7 @@ class LLMNeedleHaystackTester:
                     with tqdm(total=len(all_combinations)) as pbar:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
-                            pbar.set_description(f"Processing depth {depth_percent}")
+                            pbar.set_description(f"Processing lkength: {context_length} | task: {task_tag} | depth {depth_percent}")
                             depth_tag = "-".join([str(i) for i in depth_percent])
                             model_name = args.model_path.split("/")[-1]
                             save_file_name = f"{model_name}/{context_length}/{task_tag}_{depth_tag}"
@@ -473,7 +404,7 @@ if __name__ == "__main__":
 
     ht = LLMNeedleHaystackTester(
         model_name = model_name, 
-        context_lengths=[0, 1900, 3900, 7900, 11900],
+        context_lengths=[1900, 3900, 7900, 11900],
         print_ongoing_status = True,
     )
 
