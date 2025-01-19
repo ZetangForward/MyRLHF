@@ -280,7 +280,7 @@ class LLMNeedleHaystackTester:
 
         flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
         flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
-        if len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0:
+        if len(set(flatten_search_pos) & set(flatten_attack_pos)) != 0:
             logger.info("search_pos and attack_pos should not overlap")
             logger.info(f"search_pos: {search_pos}")
             logger.info(f"attack_pos: {attack_pos}")
@@ -391,13 +391,13 @@ if __name__ == "__main__":
     parser.add_argument('--head_file', type=str, default=None, help='path to head file')
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--model_name_suffix', type=str, default=None, help='name of model')
-    parser.add_argument('--model_provider', type=str, default="LLaMA", help='which model to use')
+    parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
     args = parser.parse_args()
 
     ht = LLMNeedleHaystackTester(
         needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl",
         model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct", 
-        context_lengths=list(reversed([1900, 3900, 7900, 11900])),
+        context_lengths=list(reversed(args.context_lengths)),
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
         # selected_idx=[0],  # for debug
