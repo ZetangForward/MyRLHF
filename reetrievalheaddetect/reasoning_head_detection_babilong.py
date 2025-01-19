@@ -151,11 +151,7 @@ class LLMNeedleHaystackTester:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
 
-    def retrieval_calculate(self, attention_maxtrix, retrieval_score, search_pos, attack_pos, step_token_id, topk=1):
-
-        flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
-        flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
-        assert len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0, "search_pos and attack_pos should not overlap"
+    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, step_token_id, topk=1):
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
@@ -196,7 +192,7 @@ class LLMNeedleHaystackTester:
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
 
-    def decode(self, q_outputs, inp, decode_len, search_pos, attack_pos, block_list=None):
+    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos):
         output = []
         retrieval_score = [
             [
@@ -219,7 +215,7 @@ class LLMNeedleHaystackTester:
             inp = outputs.logits[0, -1].argmax()
             step_token = self.enc.decode(inp.item())
             output.append(inp.item())
-            self.retrieval_calculate(outputs.attentions, retrieval_score, search_pos, attack_pos, inp.item(), topk=1)
+            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, inp.item(), topk=1)
             if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
@@ -282,11 +278,17 @@ class LLMNeedleHaystackTester:
             logger.info(f"attack_pos length: {len(attack_pos)} | attack clues length: {len(disturb_tok_needles)}")
             return False
 
+        flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
+        flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
+        if len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0:
+            logger.info("search_pos and attack_pos should not overlap")
+            return False
+            
         inp = inp.to(self.model_to_test.device)
 
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, search_pos, attack_pos)
+            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
         
         logger.info(f"model response: {response}")
