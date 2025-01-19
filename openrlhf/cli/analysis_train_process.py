@@ -1,12 +1,12 @@
 import argparse
 import math
 import os
-from datasets import load_dataset
+from datasets import load_from_disk
 from datetime import datetime
 from transformers.trainer import get_scheduler
-from openrlhf.datasets import SFTDataset
+from openrlhf.datasets.analysis_dataset import AnalysisDataset
 from openrlhf.models import Actor
-from openrlhf.trainer import SFTTrainer
+from openrlhf.trainer.analysis_trainer import AnalysisTrainer
 from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 
 
@@ -19,10 +19,10 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # configure datasets
-    dataset = load_dataset(args.dataset)
+    dataset = load_from_disk(args.dataset)
     train_data = dataset['train']
 
-    train_dataset = SFTDataset(
+    train_dataset = AnalysisDataset(
         train_data,
         tokenizer,
         args.max_len,
@@ -31,17 +31,17 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
-        search_clue_seg=False,
     )
-    
+
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
         train_dataset,
         args.micro_train_batch_size,
         True,
         True,
-        train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
+        train_dataset.packing_collate_fn,
     )
+    eval_dataloader = None
 
     # configure model
     # load huggingface model
@@ -57,7 +57,6 @@ def train(args):
         ds_config=strategy.get_ds_train_config(is_actor=True),
         packing_samples=args.packing_samples,
     )
-
     # configure tokenizer
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
@@ -96,12 +95,12 @@ def train(args):
     os.makedirs(args.save_path, exist_ok=True)
 
     # configure Trainer
-    trainer = SFTTrainer(
+    trainer = AnalysisTrainer(
         model=model,
         strategy=strategy,
         optim=optim,
         train_dataloader=train_dataloader,
-        eval_dataloader=None,
+        eval_dataloader=eval_dataloader,
         scheduler=scheduler,
         max_norm=args.max_norm,
         pretrain_mode=args.pretrain_mode,

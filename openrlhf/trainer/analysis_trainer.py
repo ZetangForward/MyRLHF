@@ -10,7 +10,7 @@ from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
-class SFTTrainer(ABC):
+class AnalysisTrainer(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
 
@@ -84,6 +84,8 @@ class SFTTrainer(ABC):
 
             wandb.define_metric("train/global_step")
             wandb.define_metric("train/*", step_metric="train/global_step", step_sync=True)
+            wandb.define_metric("step_log/mini_batch_step")
+            wandb.define_metric("step_log/*", step_metric="step_log/mini_batch_step", step_sync=True)
             wandb.define_metric("eval/global_step")
             wandb.define_metric("eval/*", step_metric="eval/global_step", step_sync=True)
 
@@ -127,30 +129,17 @@ class SFTTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
-            short_ctx_loss_mean = 0
-            # for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:  # zecheng_note: 临时取消这里 因为这里引入了clue prompt
-            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in self.train_dataloader:
-                if self.packing_samples:
-                    inputs = inputs.to(torch.cuda.current_device())
-                    attention_mask = attention_masks.to(torch.cuda.current_device())
-                    # if clue_inputs:
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
-                else:
-                    inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
-                    attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
+            for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader: 
+                inputs = inputs.to(torch.cuda.current_device())
+                attention_mask = attention_masks.to(torch.cuda.current_device())
 
-                if self.strategy.ring_attn_group is None:
-                    output = self.model(inputs, attention_mask=attention_mask, return_output=True)
-                else:
-                    output = self.model(
-                        inputs, 
-                        attention_mask=attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["input_length"],
-                    )
-
+                output, embeddings = self.model.forward_embedding_with_grad(
+                    inputs, 
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                )
 
                 # loss function
                 labels = torch.where(
@@ -178,40 +167,81 @@ class SFTTrainer(ABC):
                 gpt_loss = self.loss_fn(output.logits, labels)
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
-                self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
+                clue_poss, attack_poss = infos["clue_poss"], infos['attack_poss']
+                non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
+                batch_size, seq_len, embedding_dim = embeddings.size()
+                grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
+
+                # 计算梯度的 L2 范数
+                grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
+                print(f"grad_l2_norm: {grad_l2_norm}")
+                print(f"grad_l2_norm.size(): {grad_l2_norm.size()}")
+                print(f"grad_l2_norm.max(): {grad_l2_norm.max()}")
+                print(f"grad_l2_norm.min(): {grad_l2_norm.min()}")
+                # 排除梯度为零的位置，计算有效位置的平均值
+                non_zero_grad_l2_norm = grad_l2_norm * non_zero_mask
+                grad_mean = (non_zero_grad_l2_norm.sum(dim=1) / non_zero_mask.sum(dim=1).clamp(min=1)).unsqueeze(1)  # (b, 1)
+
+                # 标记梯度大于平均值的位置
+                important_grad_mask = (grad_l2_norm > grad_mean) & non_zero_mask  # (b, l)
+
+                print(f"grad_mean: {grad_mean}")
+                print(f"max grad: {grad_l2_norm.max()}")
+
+                statistic_grad_res = []
+                assert batch_size == 1
+                for batch_idx in range(batch_size): 
+                    non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
+                    important_positions = torch.where(important_grad_mask[batch_idx])[0].tolist()
+                    print(f"important_positions: {important_positions}")
+                    cur_clue_pos, cur_attack_pos = clue_poss[batch_idx], attack_poss[batch_idx]
+                    clue_positions_set, attack_position_set = set(), set()
+                    for start, end in cur_clue_pos:
+                        clue_positions_set.update(range(start, end))
+                        grad_mask[batch_idx, start:end] = 1
+                    for start, end in cur_attack_pos:
+                        attack_position_set.update(range(start, end))
+                        grad_mask[batch_idx, start:end] = 1
+
+
+                    important_positions_set = set(important_positions)
+                    clue_pos_overlap = clue_positions_set & important_positions_set
+                    attack_pos_overlap = attack_position_set & important_positions_set
+
+                    clue_overlap_count = len(clue_pos_overlap)
+                    attack_overlap_count = len(attack_pos_overlap)
+
+                    total_clue_positions = len(clue_positions_set)
+                    total_attack_positions = len(attack_position_set)
+                    important_grad_count = len(important_positions_set)
+
+                    clue_overlap_ratio = clue_overlap_count / total_clue_positions if total_clue_positions > 0 else 0
+                    attack_overlap_ratio = attack_overlap_count / total_attack_positions if total_attack_positions > 0 else 0
+                    
+                    statistic_grad_res.append({
+                        "clue_overlap_count": clue_overlap_count,  # length of clue positions with large gradient 
+                        "clue_overlap_ratio": clue_overlap_ratio,  # overlap ratio of clue position with large gradient among all clue positions
+                        "clue_important_overlap_ratio": clue_overlap_count / important_grad_count if important_grad_count != 0 else 0,   # overlap ratio of import clue positions among all important positions
+                        "attack_overlap_count": attack_overlap_count,  # length of attack positions with large gradient
+                        "attack_overlap_ratio": attack_overlap_ratio,  # overlap ratio of attack position with large gradient among all attack positions
+                        "attack_important_overlap_ratio": attack_overlap_count / important_grad_count if important_grad_count != 0 else 0,  # overlap ratio of import attack positions among all important positions
+                        "important_grad_count": important_grad_count,  # length of all positions with large gradient
+                        "important_grad_ratio": important_grad_count / seq_len,  # ratio of positions with large gradient among all inputs
+                        "context_overlap_ratio": (1 - clue_overlap_count / important_grad_count - attack_overlap_count / important_grad_count) if important_grad_count != 0 else 0,  # ratio of positions of remain positions
+                    })
+                statistic_grad_res = statistic_grad_res[0]
+                statistic_grad_res = self.strategy.all_reduce(statistic_grad_res, "sum")
+                if self._wandb is not None and self.strategy.is_rank_0():
+                    logs = {"step_log/%s" % k: v for k, v in {**statistic_grad_res, "mini_batch_step": step}.items()}
+                    self._wandb.log(logs)
+
+                self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
                 
-                ### ============================= ###
-                # zecheng_note: 这里加上contextual 的labels，专门计算上下文的loss
-                # with torch.no_grad():
-                #     clue_output = self.model(
-                #         clue_inputs, 
-                #         attention_mask=clue_attention_mask, 
-                #         return_output=True,
-                #         ring_attn_group=self.strategy.ring_attn_group,
-                #         packed_seq_lens=infos["clue_input_length"],
-                #     )
-
-                #     clue_labels = torch.where(
-                #         clue_attention_mask.bool(),
-                #         clue_inputs,
-                #         self.loss_fn.IGNORE_INDEX,
-                #     )
-
-                #     index = 0
-                #     for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                #         clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                #         index += input_length
-
-                #     short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                #     short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
-                
                 logs_dict = {
-                    # "short_gpt_loss": short_ctx_gpt_loss.item(),
                     "gpt_loss": gpt_loss.item(),
                     "loss_mean": loss_mean,
-                    # "short_ctx_loss_mean": short_ctx_loss_mean,
                     "lr": self.scheduler.get_last_lr()[0],
                 }
                 if self.aux_loss:

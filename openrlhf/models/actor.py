@@ -280,10 +280,9 @@ class Actor(nn.Module):
         else:
             return action_log_probs
         
-    def forward_base_model_embedding(
+    def forward_embedding_with_grad(
         self,
         sequences,
-        inputs_embeds,  # b x l x d
         num_actions: Optional[Union[int, list[int]]] = None,
         attention_mask: Optional[torch.Tensor] = None,
         return_output=False,
@@ -296,23 +295,25 @@ class Actor(nn.Module):
             position_ids = attention_mask.long().cumsum(-1) - 1
         else:
             if ring_attn_group is not None:
-                sequences, inputs_embeds, attention_mask, position_ids = convert_ring_attn_params_embedding(
-                    sequences, inputs_embeds, attention_mask, packed_seq_lens, ring_attn_group
+                sequences, attention_mask, position_ids = convert_ring_attn_params(
+                    sequences, attention_mask, packed_seq_lens, ring_attn_group
                 )
             else:
                 # reset the positions for packed samples
                 position_ids = reset_position_ids(attention_mask)
         position_ids.masked_fill_(attention_mask == 0, 1)
 
+        embedding = self.model.base_model.model.get_input_embeddings()(sequences)
+
         output = self.model(
-            inputs_embeds=inputs_embeds, 
+            inputs_embeds=embedding, 
             attention_mask=attention_mask, 
             position_ids=position_ids,
         )
 
         if num_actions is None:
             assert return_output
-            return output
+            return output, embedding
 
         log_probs = log_probs_from_logits(output["logits"][:, :-1, :], sequences[:, 1:])
 
