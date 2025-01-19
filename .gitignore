@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.png
-
+reetrievalheaddetect/analysis/information_flow*
 evaluation/babilong/babilong_evals_ms_poe
 reetrievalheaddetect/results/
 sbatch_logs/
