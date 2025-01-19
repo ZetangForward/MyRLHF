@@ -98,11 +98,11 @@ def perturb_whole_sequence(sequence, epsilon):
         -sigma.unsqueeze(-1) * noise,    # Opposite direction for large gradients
         sigma.unsqueeze(-1) * noise      # Same direction for small gradients
     )
-    
+
     return sequence + perturbation
 
 
-class FDSMTrainer(ABC):
+class FDSMTrainerV2(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
 
@@ -228,7 +228,7 @@ class FDSMTrainer(ABC):
 
             # train
             self.model.train()
-            loss_mean, overlap_mean, acc_mean = 0, 0, 0
+            loss_mean = 0
             for data in self.train_dataloader:
                 prompt_id_lens, inputs, attention_masks, infos, _, _, _ = data
                 inputs = inputs.to(torch.cuda.current_device())
@@ -249,6 +249,8 @@ class FDSMTrainer(ABC):
                 for param in self.model.model.parameters():
                     param.requires_grad = False
 
+                self.model.model.base_model.disable_adapter_layers()
+
                 embedding_layer = self.model.model.base_model.model.get_input_embeddings()
                 embeddings = embedding_layer(inputs)
                 embeddings.requires_grad = True
@@ -263,74 +265,47 @@ class FDSMTrainer(ABC):
                 )
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                 adv_loss.backward()
+
+                self.model.model.base_model.enable_adapter_layers()
                 
                 if not self.pretrain_mode:
                     adv_embeddings = perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
                 else:
                     adv_embeddings = perturb_whole_sequence(embeddings, self.adv_epsilon)
 
-                # 确保新的扰动张量需要梯度
-                context_adv_embeddings = context_adv_embeddings.detach().requires_grad_(True)
-                clue_adv_embeddings = clue_adv_embeddings.detach().requires_grad_(True)
+                # detach from the original gradient graph
+                adv_embeddings = adv_embeddings.detach().requires_grad_(True)
 
                 torch.cuda.empty_cache()
 
-                chosen_logps, rejected_logps, gpt_loss = self.concatenated_forward(
-                    self.model,
-                    inputs, attention_mask, context_adv_embeddings, 
-                    inputs, attention_mask, clue_adv_embeddings, 
-                    infos["input_length"], prompt_id_lens
+                output = self.model.forward_embedding(
+                    inputs,
+                    inputs_embeds=adv_embeddings,
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
                 )
 
-                losses, chosen_reward, reject_reward, _, _ = self.simpo_loss_fn(chosen_logps, rejected_logps)
-
-                preference_loss = losses.mean()
-
-                loss = preference_loss * self.gan_weight + gpt_loss * self.sft_weight
-                self.strategy.backward(loss, self.model, self.optimizer)
+                gpt_loss = self.loss_fn(output.logits, labels)
+                self.strategy.backward(gpt_loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
-
-                acc = (chosen_reward > reject_reward).float().mean().item()
-                acc_mean = acc_mean * 0.9 + 0.1 * acc
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
-                
-                # print(f"overlap_ratio is: {overlap_ratio}")
-                
-                step_log_dict = {
-                    "total_loss": loss.item(),
-                    "chosen_reward": - chosen_reward.mean().item(),
-                    "reject_reward": - reject_reward.mean().item(),
-                    "overlap_ratio": overlap_ratio * dist.get_world_size(self.strategy.ring_attn_group),
-                    "preference_loss": preference_loss.item(),
-                    "adv_loss": adv_loss.item(),
-                    "acc": acc,
+                logs_dict = {
+                    "gpt_loss": gpt_loss.item(),
+                    "loss_mean": loss_mean,
+                    "lr": self.scheduler.get_last_lr()[0],
                 }
 
-                # step bar
-                step_log_dict = self.strategy.all_reduce(step_log_dict)
-                if self._wandb is not None and self.strategy.is_rank_0():
-                    logs = {"step_log/%s" % k: v for k, v in {**step_log_dict, "mini_batch_step": step}.items()}
-                    self._wandb.log(logs)
-                
-                step_bar.set_postfix(step_log_dict)
+                logs_dict = self.strategy.all_reduce(logs_dict)
+                step_bar.set_postfix(logs_dict)
                 step_bar.update()
-
 
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
-                    logs_dict = {
-                        "acc_mean": acc_mean,
-                        "total_loss": loss_mean,
-                        "lr": self.scheduler.get_last_lr()[0],
-                    }
-                    # step bar
-                    logs_dict = self.strategy.all_reduce(logs_dict)
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-
-                torch.cuda.empty_cache()
-
                 step += 1
 
             epoch_bar.update()
@@ -414,21 +389,17 @@ class FDSMTrainer(ABC):
                         self.loss_fn.IGNORE_INDEX,
                     )
 
-                    index = 0
-                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
+                    if not self.pretrain_mode:
+                        index = 0
+                        for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                            clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                            index += input_length
 
                     short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                    
                     short_ctx_loss_sum += short_ctx_gpt_loss.item()
                 
                 # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
-                )
+                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                 if not self.pretrain_mode:
                     if self.packing_samples:
@@ -456,6 +427,7 @@ class FDSMTrainer(ABC):
                 elif self._tensorboard is not None:
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
+
         self.model.train()  # reset model state
     
     @torch.no_grad

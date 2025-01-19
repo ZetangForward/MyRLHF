@@ -110,11 +110,8 @@ class CDTrainer(ABC):
         start_epoch = consumed_samples // args.train_batch_size // num_update_steps_per_epoch
         consumed_samples = consumed_samples % (num_update_steps_per_epoch * args.train_batch_size)
 
-        epoch_bar = tqdm(
-            range(start_epoch, self.epochs),
-            desc="Train epoch",
-            disable=not self.strategy.is_rank_0(),
-        )
+        epoch_bar = tqdm(range(start_epoch, self.epochs), desc="Train epoch", disable=not self.strategy.is_rank_0())
+
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -129,9 +126,9 @@ class CDTrainer(ABC):
 
             self.model.train()
             pos_loss_mean, neg_loss_mean = 0, 0
-            short_ctx_loss_mean = 0
+            clue_pos_mean = 0
 
-            for data in self.train_dataloader:  # zecheng: 这里是packing_samples的数据
+            for data in self.train_dataloader:  # here is the packing data since `flash_ring_attention` is applied
 
                 prompt_id_lens, inputs, attention_masks, neg_inputs, neg_attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
 

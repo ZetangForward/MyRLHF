@@ -10,6 +10,8 @@ from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
+
+
 class AnalysisTrainer(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
@@ -96,6 +98,15 @@ class AnalysisTrainer(ABC):
             os.makedirs(self.strategy.args.use_tensorboard, exist_ok=True)
             log_dir = os.path.join(self.strategy.args.use_tensorboard, strategy.args.wandb_run_name)
             self._tensorboard = SummaryWriter(log_dir=log_dir)
+
+    def perturb_clue_positions(self):
+        pass
+
+
+    
+
+
+
 
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
