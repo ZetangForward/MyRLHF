@@ -17,211 +17,6 @@ import itertools
 from tqdm import trange
 
 
-def hack_attn_phi(
-    self,
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
-    past_key_value: Optional[Cache] = None,
-    output_attentions: bool = False,
-    use_cache: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
-    attention_adapter=None,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-
-    bsz, q_len, _ = hidden_states.size()
-
-    qkv = self.qkv_proj(hidden_states)
-    query_pos = self.num_heads * self.head_dim
-    query_states = qkv[..., :query_pos]
-    key_states = qkv[..., query_pos : query_pos + self.num_key_value_heads * self.head_dim]
-    value_states = qkv[..., query_pos + self.num_key_value_heads * self.head_dim :]
-
-    query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-    key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-    value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-
-    kv_seq_len = key_states.shape[-2]
-    if past_key_value is not None:
-        if self.layer_idx is None:
-            raise ValueError(
-                f"The cache structure has changed since version v4.36. If you are using {self.__class__.__name__} "
-                "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
-                "with a layer index."
-            )
-        kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
-    cos, sin = self.rotary_emb(value_states, position_ids, seq_len=kv_seq_len)
-
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
-
-    if past_key_value is not None:
-        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}  # Specific to RoPE models
-        key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-    # repeat k/v heads if n_kv_heads < n_heads
-    key_states = repeat_kv(key_states, self.num_key_value_groups)
-    value_states = repeat_kv(value_states, self.num_key_value_groups)
-
-    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-
-    if attention_mask is not None:
-        causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
-        attn_weights += causal_mask
-
-    # upcast attention to fp32
-    attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(value_states.dtype)
-
-    if attention_adapter is not None:  # pass attention weights to adapter
-        attn_weights = attention_adapter(attn_weights)
-
-    attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
-
-    attn_output = torch.matmul(attn_weights, value_states)
-
-    if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
-        raise ValueError(
-            f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"
-            f" {attn_output.size()}"
-        )
-
-    attn_output = attn_output.transpose(1, 2).contiguous()
-    attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
-
-    attn_output = self.o_proj(attn_output)
-
-    if not output_attentions:
-        attn_weights = None
-
-    return attn_output, attn_weights, past_key_value
-
-
-def hack_attn_qwen(
-    self,
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
-    past_key_value: Optional[Cache] = None,
-    output_attentions: bool = False,
-    use_cache: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
-    position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-    attention_adapter=None,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-    bsz, q_len, _ = hidden_states.size()
-
-    query_states = self.q_proj(hidden_states)
-    key_states = self.k_proj(hidden_states)
-    value_states = self.v_proj(hidden_states)
-
-    query_states = query_states.view(bsz, q_len, -1, self.head_dim).transpose(1, 2)
-    key_states = key_states.view(bsz, q_len, -1, self.head_dim).transpose(1, 2)
-    value_states = value_states.view(bsz, q_len, -1, self.head_dim).transpose(1, 2)
-
-    cos, sin = position_embeddings
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
-
-    if past_key_value is not None:
-        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}  # Specific to RoPE models
-        key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-    # repeat k/v heads if n_kv_heads < n_heads
-    key_states = repeat_kv(key_states, self.num_key_value_groups)
-    value_states = repeat_kv(value_states, self.num_key_value_groups)
-
-    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-    if attention_mask is not None:  # no matter the length, we just slice it
-        causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
-        attn_weights = attn_weights + causal_mask
-
-    # upcast attention to fp32
-    attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-    
-    if attention_adapter is not None:  # pass attention weights to adapter
-        attn_weights = attention_adapter(attn_weights)
-
-    attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
-    attn_output = torch.matmul(attn_weights, value_states)
-
-    if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
-        raise ValueError(
-            f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"
-            f" {attn_output.size()}"
-        )
-
-    attn_output = attn_output.transpose(1, 2).contiguous()
-    attn_output = attn_output.reshape(bsz, q_len, self.hidden_size)
-
-    attn_output = self.o_proj(attn_output)
-
-    if not output_attentions:
-        attn_weights = None
-
-    return attn_output, attn_weights, past_key_value
-
-
-def hack_attn_mistral(
-    self,
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
-    past_key_value: Optional[Cache] = None,
-    output_attentions: bool = False,
-    use_cache: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
-    attention_adapter=None,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-    bsz, q_len, _ = hidden_states.size()
-
-    query_states = self.q_proj(hidden_states)
-    key_states = self.k_proj(hidden_states)
-    value_states = self.v_proj(hidden_states)
-
-    query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-    key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-    value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-
-    cos, sin = self.rotary_emb(value_states, position_ids)
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
-
-    if past_key_value is not None:
-        # sin and cos are specific to RoPE models; cache_position needed for the static cache
-        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
-        key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-    key_states = repeat_kv(key_states, self.num_key_value_groups)
-    value_states = repeat_kv(value_states, self.num_key_value_groups)
-
-    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-
-    if attention_mask is not None:  # no matter the length, we just slice it
-        causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
-        attn_weights = attn_weights + causal_mask
-
-    # upcast attention to fp32
-    attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-
-    if attention_adapter is not None:  # pass attention weights to adapter
-        attn_weights = attention_adapter(attn_weights)
-    attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
-    attn_output = torch.matmul(attn_weights, value_states)
-
-    if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
-        raise ValueError(
-            f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"
-            f" {attn_output.size()}"
-        )
-
-    attn_output = attn_output.transpose(1, 2).contiguous()
-
-    attn_output = attn_output.view(bsz, q_len, -1)
-    attn_output = self.o_proj(attn_output)
-
-    if not output_attentions:
-        attn_weights = None
-
-    return attn_output, attn_weights, past_key_value
-
-
 def hack_attn_llama(
     self,
     hidden_states: torch.Tensor,
@@ -394,6 +189,7 @@ class AttentionerManagerBase:
     def input_ids(self, input_ids):
         self._input_ids = input_ids
         for attention_adapter in self.attention_adapters:
+            if attention_adapter is None:continue
             attention_adapter.register_input_ids(input_ids)
 
     def register_input_ids(self, input_ids):
@@ -403,11 +199,14 @@ class AttentionerManagerBase:
         raise NotImplementedError
 
     def zero_grad(self,set_to_none=True):
+        
         if set_to_none:
             for attention_adapter in self.attention_adapters:
+                if attention_adapter is None:continue
                 attention_adapter.params = None
         else:
             for attention_adapter in self.attention_adapters:
+                if attention_adapter is None:continue
                 attention_adapter.zero_grad(set_to_none=True)
 
     def grad_process(self, grad,use_abs = True):
@@ -420,6 +219,7 @@ class AttentionerManagerBase:
     def grad(self,*args,**kwargs):
         grads = []
         for attention_adapter in self.attention_adapters:
+            if attention_adapter is None:continue
             grads.append(self.grad_process(attention_adapter.params.grad,*args,**kwargs))
         return grads
 
@@ -436,9 +236,12 @@ class AttentionerManagerBase:
 
 
 class AttentionerManager(AttentionerManagerBase):
-    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False):
+    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False, start_layer = 0):
+        self.start_layer = start_layer
+
         super().__init__(model, model_name, with_adapter)
         self.model_name = model_name
+        
 
     def register_attentioner_to_model(self):
         attention_adapters = []
@@ -447,15 +250,19 @@ class AttentionerManager(AttentionerManagerBase):
         else:
             layer_module = self.model.model.layers
         for i, layer in enumerate(layer_module):
+            if i< self.start_layer:
+                print("ignore layer:",i,"!")
+                attention_adapters.append(None)
+                continue
             attention_adapter = AttentionAdapter()
             if "llama" in self.model_name.lower() or "tulu" in self.model_name.lower():
                 layer.self_attn.forward = partial(hack_attn_llama, layer.self_attn, attention_adapter=attention_adapter)
-            elif "qwen" in self.model_name.lower():
-                layer.self_attn.forward = partial(hack_attn_qwen, layer.self_attn, attention_adapter=attention_adapter)
-            elif "phi" in self.model_name.lower():
-                layer.self_attn.forward = partial(hack_attn_phi, layer.self_attn, attention_adapter=attention_adapter)
-            elif "mistral" in self.model_name.lower():
-                layer.self_attn.forward = partial(hack_attn_mistral, layer.self_attn, attention_adapter=attention_adapter)
+            # elif "qwen" in self.model_name.lower():
+            #     layer.self_attn.forward = partial(hack_attn_qwen, layer.self_attn, attention_adapter=attention_adapter)
+            # elif "phi" in self.model_name.lower():
+            #     layer.self_attn.forward = partial(hack_attn_phi, layer.self_attn, attention_adapter=attention_adapter)
+            # elif "mistral" in self.model_name.lower():
+            #     layer.self_attn.forward = partial(hack_attn_mistral, layer.self_attn, attention_adapter=attention_adapter)
             else:
                 raise NotImplementedError(f"{self.model_name} not supported")
             attention_adapters.append(attention_adapter)
@@ -471,23 +278,85 @@ def np_topk(arr, k):
     return topk_values, topk_indices
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: int):
+def multi_torch_topk(saliency, target_poss, k):
+    values = torch.full((saliency.shape[-1],), 0.)
+    for target_pos in range(*target_poss):
+        topk_values ,topk_indices = np_topk(saliency[target_pos, :], 20)
+        topk_values = torch.tensor(topk_values).flatten()
+        topk_indices = torch.tensor(topk_indices).flatten()
+        values[topk_indices] += topk_values
+    
+    return np_topk(values.numpy(), k)
+
+
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int]):
     """
     saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
+
+    target_poss: [l, r)
     """
     saliency = saliency.float().detach().clone().cpu()
     assert len(saliency.shape) == 2 or (len(saliency.shape) == 3 and saliency.shape[0] == 1)
     if len(saliency.shape) == 3:
         saliency = saliency.squeeze(0)
-    saliency = saliency.numpy()
+        
+    saliency = saliency.numpy() #(seq_len, seq_len)
     np.fill_diagonal(saliency, 0)
     total_context_length = saliency.shape[1]
 
     # zecheng_note: 查询信息流里面的Peak Tokens, 关键词Flow
-    _, topk_indices = np_topk(saliency[target_poss, :], 20)
+    # _, topk_indices = np_topk(saliency[target_poss, :], 20)
+    
+    _, topk_indices = multi_torch_topk(saliency, target_poss, 20)
 
     # add: proportion-n: each evidence -> target token
     evidence_proportions = []
+
+    
+    # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
+    proportion1 = 0
+    evidence_length = 0
+    for span_idx in evi_poss:
+        temp_proportion1 = 0
+        for target_pos in range(*target_poss):
+            temp_proportion1 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
+        proportion1 += temp_proportion1/(target_poss[1] - target_poss[0])
+        
+        # evidence proportions
+        evidence_length += span_idx[1] - span_idx[0]
+        temp_evidence_length = 0
+        for target_pos in range(*target_poss):
+            temp_evidence_length += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum() / (span_idx[1] - span_idx[0])
+        
+        evidence_proportions.append(temp_evidence_length/(target_poss[1] - target_poss[0]))
+
+    # proportion2: all context -> target token
+    temp_proportion2 = 0
+    for target_pos in range(*target_poss):
+        temp_proportion2 +=saliency[target_pos, :].sum()
+    proportion2 = temp_proportion2/(target_poss[1] - target_poss[0])
+
+    # proportion3: irrevelent evidence -> target token
+    proportion3 = 0
+    irr_evidence_length = 0
+    for span_idx in attack_pos:
+        temp_proportion3 = 0
+        for target_pos in range(*target_poss):
+            temp_proportion3 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
+
+        proportion3 += temp_proportion3/(target_poss[1] - target_poss[0])
+        
+        irr_evidence_length += span_idx[1] - span_idx[0]
+
+    # proportion4: remain context -> target token
+    proportion4 = proportion2 - proportion1 - proportion3
+
+    proportion1 = proportion1 / evidence_length if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
+    proportion2 = proportion2 / total_context_length
+    proportion3 = proportion3 / irr_evidence_length if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
+    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
+
+    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
 
     # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
     proportion1 = 0
@@ -518,7 +387,6 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
 
     return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
     
-
 
 def get_proportion_wla(saliency, class_poss, final_poss):
     saliency = saliency.detach().clone().cpu()
@@ -562,28 +430,29 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True, with_adapter=False):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
     """
-    zecheng_note: 这里计算的是language modeling loss
+    zecheng_note: 这里计算的是language modeling loss    
     """
-    attentionermanger = AttentionerManager(model, model_name, with_adapter=with_adapter)
+    attentionermanger = AttentionerManager(model, model_name, with_adapter=with_adapter, start_layer = start_layer)
     attentionermanger.zero_grad()
 
     output = model(input)
-    
+    # print("input_golden_size:", input.size(),golden.size())
     if input.size(-1) == golden.size(-1):
         logits = output['logits'][:, :-1, :]
         labels = golden[:, 1:]
     else:
         logits = output['logits'][:, -1, :]
         labels = golden[:, -1]
-
+    # print("logits_shape:",logits.shape, labels)
     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
     loss.backward()
 
     pros_dict = dict()
-    for i in trange(len(attentionermanger.attention_adapters)):
-        saliency = attentionermanger.grad(use_abs=True)[i]        
+    saliencies = attentionermanger.grad(use_abs=True)
+    for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
+        saliency = saliencies[i-attentionermanger.start_layer]        
         proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
         top_tokens = []
         for idx in topk_indices:
@@ -591,24 +460,43 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
         pros_dict[i] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
     return pros_dict
 
+def random_combine(ref:list, att:list):
 
-def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter=False):
+    att_list =[[] for _ in range(len(ref) + 1)]
+    for p_att in att[:-1]:
+        att_list[random.randint(0,len(ref)-1)].append(p_att)
+    att_list[-1].append(att[-1])
 
-    depth_percent = [i / 10 for i in depth_percent]
-    updated_sample = [[] for _ in range(len(background_text) + 1)]
-    real_pos = [int(len(background_text) * i) for i in depth_percent]
-    for fact, pos in zip(evidence, real_pos):  # insert real needle
-        updated_sample[pos].append(fact)
-    for fact, pos in zip(disturb_tok_needles, disturb_pos):  # insert disturb needle
-        updated_sample[pos].append(fact)
-    for i, s in enumerate(background_text):  # insert irrevelent needle
-        updated_sample[i].append(s)
+    results = [k for k in att_list[0]]
+
+    for r, patt in zip(ref,att_list[1:]):
+        results.append(r)
+        results.extend(patt)
+
+    return results
+
+
+def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter=False, start_layer = 0):
+    if background_text is not None:
+        depth_percent = [i / 10 for i in depth_percent]
+        updated_sample = [[] for _ in range(len(background_text) + 1)]
+        real_pos = [int(len(background_text) * i) for i in depth_percent]
+        for fact, pos in zip(evidence, real_pos):  # insert real needle
+            updated_sample[pos].append(fact)
+        for fact, pos in zip(disturb_tok_needles, disturb_pos):  # insert disturb needle
+            updated_sample[pos].append(fact)
+        for i, s in enumerate(background_text):  # insert irrevelent needle
+            updated_sample[i].append(s)
+    else:
+        updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
+        updated_sample = [[k] for k in updated_sample]
+        # print("updated_sample:", updated_sample)
 
     flat = [i for s in updated_sample for i in s]
     tokens = [i for s in flat for i in s]
 
     new_context = tokenizer.decode(tokens)
-    input_context = new_context + f"\nQuestion: {question}\nAnswer:"
+    input_context = new_context + f"\n{question}\nAnswer:"
     inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
 
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
@@ -629,20 +517,33 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
-    
-    for j in range(inp.size(-1), 0, -1):
-        if inp[0, j - 1] == answer_ids:
-            target_pos = j - 1 
+    toks_length = answer_ids.size(-1)
+    for j in range(inp.size(-1), toks_length, -1):
+        if (inp[0, j-toks_length : j] == answer_ids).sum().item() == toks_length:
+            target_pos = (j-toks_length, j) 
             break
+    else:
+        raise ValueError("Not find target in input tokens!")
+    # print("ANDADSDSAD:", inp.shape, target_pos, answer_ids, toks_length,answer)
     
     if args.loss_type == "label":
         label = torch.full(inp.shape, -100).to(model.device)
-        label[0, target_pos] = inp[0, target_pos]
-        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, target_pos-1, model_name, tokenizer, with_adapter=with_adapter)
+        for sub_pos in range(*target_pos):
+            label[0, sub_pos] = inp[0, sub_pos]
+
+        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
+                                                     (target_pos[0] - 1,
+                                                      target_pos[1] - 1), 
+                                                      model_name, tokenizer, with_adapter=with_adapter,
+                                                      start_layer = start_layer)
     
     elif args.loss_type == "ce":
          # shift to left before the label token
-        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, target_pos-1, model_name, tokenizer, with_adapter=with_adapter)
+        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, 
+                                                     (target_pos[0] - 1,
+                                                      target_pos[1] - 1), 
+                                                      model_name, tokenizer, with_adapter=with_adapter,
+                                                      start_layer = start_layer)
 
     flow_res["pred_res"] = pred_res
     flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0
