@@ -237,12 +237,12 @@ class LLMNeedleHaystackTester:
             span_len = len(needle_ids)
             for j in range(len(input_ids)):
                 token_span = input_ids[j : j + span_len]
-                # if token_span.tolist()[1:] == needle_ids[1:]:
-                span_ids = set(token_span.tolist())
-                overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
-                if(overlap > 0.95):
-                    all_evi_pos.append((j + 1, j + span_len))
-                    # logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
+                if token_span.tolist()[1:-1] == needle_ids[1:-1]:
+                # span_ids = set(token_span.tolist())
+                # overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
+                # if(overlap > 0.98):
+                    all_evi_pos.append((j + 1, j + span_len - 1))
+                    logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
         return all_evi_pos   
 
@@ -282,6 +282,8 @@ class LLMNeedleHaystackTester:
         flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
         if len(set(flatten_search_pos) & set(flatten_attack_pos)) == 0:
             logger.info("search_pos and attack_pos should not overlap")
+            logger.info(f"search_pos: {search_pos}")
+            logger.info(f"attack_pos: {attack_pos}")
             return False
             
         inp = inp.to(self.model_to_test.device)
@@ -323,8 +325,8 @@ class LLMNeedleHaystackTester:
                     logger.info(f"Real Needle: {evidence_list[s_id]}")
                     logger.info("=============================================")
 
-                    needle = [self.enc(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
-                    evidence = [self.enc(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
+                    needle = [self.enc('\n' + i + '\n', add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
+                    evidence = [self.enc('\n' + i + '\n', add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
                     question = retrieval_question_list[s_id]
                     answer = golden_answer_list[s_id]
 
