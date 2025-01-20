@@ -1,0 +1,16 @@
+{"time":"2024-11-14T14:15:40.324447133+08:00","level":"INFO","msg":"using version","core version":"0.18.6"}
+{"time":"2024-11-14T14:15:40.326761491+08:00","level":"INFO","msg":"created symlink","path":"/mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241114_141540-nhguj73l/logs/debug-core.log"}
+{"time":"2024-11-14T14:15:40.546493753+08:00","level":"INFO","msg":"created new stream","id":"nhguj73l"}
+{"time":"2024-11-14T14:15:40.547595374+08:00","level":"INFO","msg":"stream: started","id":"nhguj73l"}
+{"time":"2024-11-14T14:15:40.547642992+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"nhguj73l"}}
+{"time":"2024-11-14T14:15:40.547863661+08:00","level":"INFO","msg":"sender: started","stream_id":"nhguj73l"}
+{"time":"2024-11-14T14:15:40.547861246+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"nhguj73l"}}
+{"time":"2024-11-14T14:16:10.553067756+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": context deadline exceeded"}
+{"time":"2024-11-14T14:16:43.05070273+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": context deadline exceeded"}
+{"time":"2024-11-14T14:17:10.409594054+08:00","level":"INFO","msg":"stream: closing","id":"nhguj73l"}
+{"time":"2024-11-14T14:17:10.410679445+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"nhguj73l"}}
+{"time":"2024-11-14T14:17:10.410713888+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"nhguj73l"}}
+{"time":"2024-11-14T14:17:10.410786182+08:00","level":"ERROR","msg":"sender: upsertRun:","error":"failed to upsert bucket: api: failed sending: POST https://api.wandb.ai/graphql giving up after 3 attempt(s): context canceled"}
+{"time":"2024-11-14T14:17:10.413616256+08:00","level":"WARN","msg":"runwork: ignoring record after close","work":{"Record":{"RecordType":{"Request":{"RequestType":{"Defer":{}}}},"control":{"always_send":true}}}}
+{"time":"2024-11-14T14:17:10.414716785+08:00","level":"INFO","msg":"sender: closed","stream_id":"nhguj73l"}
+{"time":"2024-11-14T14:17:10.415688576+08:00","level":"INFO","msg":"stream: closed","id":"nhguj73l"}

@@ -1,0 +1,140 @@
+2024-11-12 at 00:40:37 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 00:40:37 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 00:40:37 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 00:40:39 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 00:40:41 | INFO | Total number of query: 400
+2024-11-12 at 00:40:41 | INFO | json file saved successfully!
+2024-11-12 at 00:40:41 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/rapid_single_api_400_pool.json | len: 1 |  size: 402.79 KB
+2024-11-12 at 00:41:31 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 00:41:31 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 00:41:31 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 00:41:33 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 00:43:28 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 00:43:28 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 00:43:28 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 00:43:30 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 00:48:06 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 00:48:06 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 00:48:06 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 00:48:07 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:00:58 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:00:58 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:00:58 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:01:00 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:04:48 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:04:48 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:04:48 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:04:49 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:25:03 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:25:03 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:25:03 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:25:05 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:26:02 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:26:02 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:26:03 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:26:04 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:26:21 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:26:21 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:26:22 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:26:23 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:26:26 | INFO | Total number of query: 400
+2024-11-12 at 01:26:26 | INFO | /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling not exist! --> Create data dir /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling
+2024-11-12 at 01:26:26 | INFO | json file saved successfully!
+2024-11-12 at 01:26:26 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_400_pool.json | len: 1 |  size: 739.18 KB
+2024-11-12 at 01:27:05 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:27:06 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:27:06 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:27:07 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:27:10 | INFO | Total number of query: 400
+2024-11-12 at 01:27:10 | INFO | json file saved successfully!
+2024-11-12 at 01:27:10 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_400_pool.json | len: 1 |  size: 704.12 KB
+2024-11-12 at 01:27:44 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:27:44 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:27:44 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:27:46 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:27:48 | INFO | Total number of query: 400
+2024-11-12 at 01:27:48 | INFO | json file saved successfully!
+2024-11-12 at 01:27:48 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_400_pool.json | len: 1 |  size: 696.57 KB
+2024-11-12 at 01:27:48 | INFO | current setting has 2 buckets, each has 301 unique APIs
+2024-11-12 at 01:27:50 | INFO | Total number of query: 400
+2024-11-12 at 01:27:50 | INFO | json file saved successfully!
+2024-11-12 at 01:27:50 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_300_pool.json | len: 2 |  size: 853.99 KB
+2024-11-12 at 01:27:50 | INFO | current setting has 2 buckets, each has 201 unique APIs
+2024-11-12 at 01:27:51 | INFO | Total number of query: 400
+2024-11-12 at 01:27:52 | INFO | json file saved successfully!
+2024-11-12 at 01:27:52 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_200_pool.json | len: 2 |  size: 702.82 KB
+2024-11-12 at 01:27:52 | INFO | current setting has 4 buckets, each has 101 unique APIs
+2024-11-12 at 01:27:52 | INFO | Total number of query: 400
+2024-11-12 at 01:27:52 | INFO | json file saved successfully!
+2024-11-12 at 01:27:52 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_100_pool.json | len: 4 |  size: 726.89 KB
+2024-11-12 at 01:27:52 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:27:55 | INFO | Total number of query: 400
+2024-11-12 at 01:27:55 | INFO | /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location not exist! --> Create data dir /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location
+2024-11-12 at 01:27:55 | INFO | json file saved successfully!
+2024-11-12 at 01:27:55 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_400_pool.json | len: 1 |  size: 700.93 KB
+2024-11-12 at 01:27:55 | INFO | current setting has 2 buckets, each has 301 unique APIs
+2024-11-12 at 01:27:57 | INFO | Total number of query: 400
+2024-11-12 at 01:27:57 | INFO | json file saved successfully!
+2024-11-12 at 01:27:57 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_300_pool.json | len: 2 |  size: 849.0 KB
+2024-11-12 at 01:27:57 | INFO | current setting has 2 buckets, each has 201 unique APIs
+2024-11-12 at 01:27:58 | INFO | Total number of query: 400
+2024-11-12 at 01:27:58 | INFO | json file saved successfully!
+2024-11-12 at 01:27:58 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_200_pool.json | len: 2 |  size: 748.7 KB
+2024-11-12 at 01:27:58 | INFO | current setting has 4 buckets, each has 101 unique APIs
+2024-11-12 at 01:27:59 | INFO | Total number of query: 400
+2024-11-12 at 01:27:59 | INFO | json file saved successfully!
+2024-11-12 at 01:27:59 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_100_pool.json | len: 4 |  size: 720.63 KB
+2024-11-12 at 01:34:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 01:34:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 01:34:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 01:34:24 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:34:27 | INFO | Total number of query: 400
+2024-11-12 at 01:34:27 | INFO | json file saved successfully!
+2024-11-12 at 01:34:27 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_400_pool.json | len: 1 |  size: 699.99 KB
+2024-11-12 at 01:34:27 | INFO | current setting has 2 buckets, each has 301 unique APIs
+2024-11-12 at 01:34:29 | INFO | Total number of query: 400
+2024-11-12 at 01:34:29 | INFO | json file saved successfully!
+2024-11-12 at 01:34:29 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_300_pool.json | len: 2 |  size: 905.3 KB
+2024-11-12 at 01:34:29 | INFO | current setting has 2 buckets, each has 201 unique APIs
+2024-11-12 at 01:34:30 | INFO | Total number of query: 400
+2024-11-12 at 01:34:30 | INFO | json file saved successfully!
+2024-11-12 at 01:34:30 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_200_pool.json | len: 2 |  size: 734.6 KB
+2024-11-12 at 01:34:30 | INFO | current setting has 4 buckets, each has 101 unique APIs
+2024-11-12 at 01:34:31 | INFO | Total number of query: 400
+2024-11-12 at 01:34:31 | INFO | json file saved successfully!
+2024-11-12 at 01:34:31 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_calling/num_100_pool.json | len: 4 |  size: 764.21 KB
+2024-11-12 at 01:34:31 | INFO | current setting has 1 buckets, each has 401 unique APIs
+2024-11-12 at 01:34:34 | INFO | Total number of query: 400
+2024-11-12 at 01:34:34 | INFO | json file saved successfully!
+2024-11-12 at 01:34:34 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_400_pool.json | len: 1 |  size: 719.61 KB
+2024-11-12 at 01:34:34 | INFO | current setting has 2 buckets, each has 301 unique APIs
+2024-11-12 at 01:34:36 | INFO | Total number of query: 400
+2024-11-12 at 01:34:36 | INFO | json file saved successfully!
+2024-11-12 at 01:34:36 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_300_pool.json | len: 2 |  size: 843.36 KB
+2024-11-12 at 01:34:36 | INFO | current setting has 2 buckets, each has 201 unique APIs
+2024-11-12 at 01:34:37 | INFO | Total number of query: 400
+2024-11-12 at 01:34:37 | INFO | json file saved successfully!
+2024-11-12 at 01:34:37 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_200_pool.json | len: 2 |  size: 713.06 KB
+2024-11-12 at 01:34:37 | INFO | current setting has 4 buckets, each has 101 unique APIs
+2024-11-12 at 01:34:38 | INFO | Total number of query: 400
+2024-11-12 at 01:34:38 | INFO | json file saved successfully!
+2024-11-12 at 01:34:38 | INFO | Save file to /mnt/petrelfs/tangzecheng/local_data/benchmark_data/rapid_single_api/tool_location/num_100_pool.json | len: 4 |  size: 724.57 KB
+2024-11-12 at 13:54:24 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 13:54:24 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 13:54:24 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:01:19 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 14:01:19 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 14:01:19 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:06:00 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 14:06:00 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 14:06:00 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:22:20 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 14:22:21 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 14:22:21 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:25:51 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 14:25:51 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 14:25:51 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:28:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_multiple_api.jsonl | file size: 13.86 MB | file type: jsonl
+2024-11-12 at 14:28:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_parallel_api.jsonl | file size: 17.96 MB | file type: jsonl
+2024-11-12 at 14:28:23 | INFO | begin to read data from /mnt/petrelfs/tangzecheng/transfer_data/llama3.1_generated_9.24/rapid_single_api.jsonl | file size: 7.02 MB | file type: jsonl
+2024-11-12 at 14:28:24 | INFO | current setting has 2 buckets, each has 384 unique APIs

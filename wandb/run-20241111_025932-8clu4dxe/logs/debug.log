@@ -1,0 +1,33 @@
+2024-11-11 02:59:32,122 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Current SDK version is 0.18.6
+2024-11-11 02:59:32,124 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Configure stats pid to 251914
+2024-11-11 02:59:32,125 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Loading settings from /mnt/petrelfs/tangzecheng/.config/wandb/settings
+2024-11-11 02:59:32,126 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Loading settings from /mnt/petrelfs/tangzecheng/MyRLHF/wandb/settings
+2024-11-11 02:59:32,127 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Loading settings from environment variables: {}
+2024-11-11 02:59:32,128 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Inferring run settings from compute environment: {'program_relpath': 'openrlhf/cli/train_sft_dev.py', 'program_abspath': '/mnt/petrelfs/tangzecheng/MyRLHF/openrlhf/cli/train_sft_dev.py', 'program': '/mnt/petrelfs/tangzecheng/MyRLHF/openrlhf/cli/train_sft_dev.py'}
+2024-11-11 02:59:32,129 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Applying login settings: {'api_key': '***REDACTED***'}
+2024-11-11 02:59:32,130 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Applying login settings: {'api_key': '***REDACTED***'}
+2024-11-11 02:59:32,131 INFO    MainThread:251914 [wandb_setup.py:_flush():79] Applying login settings: {}
+2024-11-11 02:59:32,132 INFO    MainThread:251914 [wandb_init.py:_log_setup():533] Logging user logs to /mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241111_025932-8clu4dxe/logs/debug.log
+2024-11-11 02:59:32,133 INFO    MainThread:251914 [wandb_init.py:_log_setup():534] Logging internal logs to /mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241111_025932-8clu4dxe/logs/debug-internal.log
+2024-11-11 02:59:32,134 INFO    MainThread:251914 [wandb_init.py:init():619] calling init triggers
+2024-11-11 02:59:32,135 INFO    MainThread:251914 [wandb_init.py:init():626] wandb.init called with sweep_config: {}
+config: {'save_path': '/mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/model/Llama-3-8B-Instruct-128k-tool-sft', 'save_steps': 50, 'logging_steps': 1, 'eval_steps': -1, 'ckpt_path': '/mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft', 'max_ckpt_num': 3, 'max_ckpt_mem': 100000000.0, 'load_checkpoint': False, 'micro_train_batch_size': 1, 'train_batch_size': 64, 'max_norm': 1.0, 'gradient_checkpointing': True, 'seed': 42, 'local_rank': 0, 'zero_stage': 3, 'bf16': True, 'zpg': 1, 'adam_offload': False, 'flash_attn': True, 'grad_accum_dtype': None, 'disable_trace_cache': False, 'gradient_checkpointing_use_reentrant': False, 'disable_fast_tokenizer': True, 'max_epochs': 2, 'aux_loss_coef': 0, 'pretrain': 'meta-llama/Meta-Llama-3.1-8B-Instruct', 'learning_rate': 5e-06, 'pretrain_mode': False, 'lr_scheduler': 'cosine_with_min_lr', 'l2': 0, 'adam_betas': (0.9, 0.95), 'load_in_4bit': False, 'lora_rank': 32, 'lora_alpha': 16, 'target_modules': 'all-linear', 'lora_dropout': 0, 'packing_samples': True, 'dataset': '/mnt/petrelfs/tangzecheng/transfer_data/Qwen_query_answer_gen', 'dataset_probs': '1.0', 'num_process': 20, 'train_split': 'train', 'eval_split': 'test', 'return_eval': False, 'input_key': 'instruction_str', 'output_key': 'pred_str', 'input_template': 'User: {}\nAssistant: ', 'apply_chat_template': True, 'tokenizer_chat_template': None, 'max_samples': 100000000.0, 'max_len': 64000, 'ring_attn_size': 2, 'ring_head_stride': 1, 'use_wandb': 'f81f2a236e712350a0ec153e02f43d1366c856a5', 'wandb_org': None, 'wandb_group': None, 'wandb_project': 'openrlhf_sft', 'wandb_run_name': 'Llama-3-8B-Instruct-80K-tool-sft-ring-2', 'use_tensorboard': None}
+2024-11-11 02:59:32,136 INFO    MainThread:251914 [wandb_init.py:init():669] starting backend
+2024-11-11 02:59:32,137 INFO    MainThread:251914 [wandb_init.py:init():673] sending inform_init request
+2024-11-11 02:59:32,140 INFO    MainThread:251914 [backend.py:_multiprocessing_setup():104] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-11-11 02:59:32,141 INFO    MainThread:251914 [wandb_init.py:init():686] backend started and connected
+2024-11-11 02:59:32,146 INFO    MainThread:251914 [wandb_init.py:init():781] updated telemetry
+2024-11-11 02:59:32,194 INFO    MainThread:251914 [wandb_init.py:init():814] communicating run to backend with 90.0 second timeout
+2024-11-11 02:59:32,775 INFO    MainThread:251914 [wandb_init.py:init():867] starting run threads in backend
+2024-11-11 02:59:33,304 INFO    MainThread:251914 [wandb_run.py:_console_start():2451] atexit reg
+2024-11-11 02:59:33,306 INFO    MainThread:251914 [wandb_run.py:_redirect():2299] redirect: wrap_raw
+2024-11-11 02:59:33,307 INFO    MainThread:251914 [wandb_run.py:_redirect():2364] Wrapping output streams.
+2024-11-11 02:59:33,308 INFO    MainThread:251914 [wandb_run.py:_redirect():2389] Redirects installed.
+2024-11-11 02:59:33,316 INFO    MainThread:251914 [wandb_init.py:init():911] run started, returning control to user process
+2024-11-11 13:21:43,110 INFO    MainThread:251914 [wandb_run.py:_finish():2146] finishing run zecheng-tang/openrlhf_sft/8clu4dxe
+2024-11-11 13:21:43,113 INFO    MainThread:251914 [wandb_run.py:_atexit_cleanup():2414] got exitcode: 0
+2024-11-11 13:21:43,115 INFO    MainThread:251914 [wandb_run.py:_restore():2396] restore
+2024-11-11 13:21:43,116 INFO    MainThread:251914 [wandb_run.py:_restore():2402] restore done
+2024-11-11 13:21:49,163 INFO    MainThread:251914 [wandb_run.py:_footer_history_summary_info():3963] rendering history
+2024-11-11 13:21:49,165 INFO    MainThread:251914 [wandb_run.py:_footer_history_summary_info():3995] rendering summary
+2024-11-11 13:21:49,182 INFO    MainThread:251914 [wandb_run.py:_footer_sync_info():3922] logging synced files
