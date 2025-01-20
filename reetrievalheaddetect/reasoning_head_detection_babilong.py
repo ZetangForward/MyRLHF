@@ -242,7 +242,7 @@ class LLMNeedleHaystackTester:
                 # overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
                 # if(overlap > 0.98):
                     all_evi_pos.append((j + 1, j + span_len - 1))
-                    logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
+                    # logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {self.enc.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                     break
         return all_evi_pos   
 
@@ -401,7 +401,7 @@ if __name__ == "__main__":
     ht.start_test()
 
 
-
+# nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=0 > logs/1900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=1900 > logs/1900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=1 python reasoning_head_detection_babilong.py --context_lengths=3900 > logs/3900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=2 python reasoning_head_detection_babilong.py --context_lengths=7900 > logs/7900.log 2>&1 &

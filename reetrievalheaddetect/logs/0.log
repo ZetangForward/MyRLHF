@@ -1,0 +1,27 @@
+[1;32m🌐 Proxy has been set up successfully![0m
+[1;34m🚀 A new terminal window is now connected to the server.[0m
+[1;33m💻 Use 'svp list -p belt_road' to check the available GPUs in the belt_road cluster.[0m
+[1;33m💻 Use 'svp list -p s2_bigdata' to check the available GPUs in the s2_bigdata cluster.[0m
+[1;36m📦 Use 'petrelfs-ctl --getquota --uid tangzecheng' to check the available storage for the user.[0m
+
+Quota information for storage pool Default (ID: 1):
+
+      user/group     ||           size          ||    chunk files    
+     name     |  id  ||    used    |    hard    ||  used   |  hard   
+--------------|------||------------|------------||---------|---------
+   tangzecheng|200002796||  776.18 GiB|    1.65 TiB||   477408|unlimited
+[1;35m📋 Use 'squeue -u tangzecheng' to check the current jobs of the user.[0m
+             JOBID  VIRTUAL_PARTITION       NAME     QUOTA_TYPE     USER PHX_PRIORITY ST        TIME  NODES TOTAL_GRES NODELIST(REASON)                        
+           5051576          belt_road tmp_infere       reserved tangzech       normal PD        0:00      1      gpu:2 (Resources)                             
+           5051571          belt_road reasoning_       reserved tangzech       normal  R        0:00      1      gpu:1 SH-IDC1-10-140-24-130                   
+           5051242         s2_bigdata reasoning_       reserved tangzech       normal  R     1:08:47      1      gpu:1 SH-IDC1-10-140-24-27                    
+           5051241         s2_bigdata reasoning_       reserved tangzech       normal  R     1:08:59      1      gpu:1 SH-IDC1-10-140-24-27                    
+           5051240         s2_bigdata reasoning_       reserved tangzech       normal  R     1:09:07      1      gpu:1 SH-IDC1-10-140-24-136                   
+           5051238         s2_bigdata reasoning_       reserved tangzech       normal  R     1:10:33      1      gpu:1 SH-IDC1-10-140-24-56                    
+           5049764          belt_road       bash       reserved tangzech       normal  R     9:27:01      1      gpu:0 SH-IDC1-10-140-24-130                   
+           5049576          belt_road baseline_P       reserved tangzech       normal  R    10:28:58      1      gpu:8 SH-IDC1-10-140-24-72                    
+           5048658          belt_road   Long_PPL       reserved tangzech       normal  R    20:50:57      1      gpu:8 SH-IDC1-10-140-24-86                    
+           5048503          belt_road saliency_s       reserved tangzech       normal  R    23:46:08      1      gpu:8 SH-IDC1-10-140-24-35                    
+[31m🛑 远程桶未挂载，请使用 quick_mount 命令进行挂载。 [0m
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-21 04:33:00
+begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 247.16 KB | file type: jsonl

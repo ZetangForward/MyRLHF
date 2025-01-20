@@ -1,284 +1,0 @@
-nohup: 忽略输入
-2025-01-19 20:16:33.355 | INFO     | test_jbb_embedding:<module>:7 - ['/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python310.zip', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages', '/mnt/petrelfs/tangzecheng/DeepSpeed', '/mnt/petrelfs/tangzecheng/modelzipper/src', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
-2025-01-19 20:16:35.354 | INFO     | __main__:<module>:11 - ['/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/faiss_attn', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python310.zip', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages', '/mnt/petrelfs/tangzecheng/DeepSpeed', '/mnt/petrelfs/tangzecheng/modelzipper/src', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:73 - Selected idx: 0
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:74 - Question: I have provided you context with the facts about locations and actions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts.
-
-If a person obtained an item in the first location and traveled to the second location, the item is also in the second location.
-If a person left an item in the first location and moved to the second location, the item remains in the first location.
-If a person got an item and traveled to another location, the item will be in the new location unless they dropped it during the journey.
-
-Just return the location directly. Do not write anything else after that.
-
-Question: Where was the football before the bathroom? 
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:75 - Answer: office
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:76 - Tag: 3-hop
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:77 - Needle: [' John went back to the bedroom.', ' John took the milk.', ' Mary journeyed to the office.', ' Sandra journeyed to the bedroom.', ' John journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:78 - Real Needle: [' Mary journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
-2025-01-19 20:16:36.287 | INFO     | __main__:<module>:79 - =============================================
-ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-20 00:16:28
-Process: 160635
-begin to read data from ./haystack_for_detect/reasoning_needle_jbb_200.jsonl | file size: 247.16 KB | file type: jsonl
-  0%|          | 0/5 [00:00<?, ?it/s]You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour
-You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
-
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:03,  1.12s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.04s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:03<00:00,  1.01it/s][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.37it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.19it/s]
-Processing depth (0, 1, 5, 8):   0%|          | 0/5 [00:24<?, ?it/s]2025-01-19 20:17:00.978 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:17:00.980 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
-2025-01-19 20:17:00.980 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary journeyed to the bathroom.
-2025-01-19 20:17:00.988 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (1495, 1501) -->  tragedy. Mary journeyed to
-2025-01-19 20:17:00.988 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary dropped the football.
-2025-01-19 20:17:01.015 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (5927, 5931) -->  Mary dropped the football
-2025-01-19 20:17:01.015 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Daniel went back to the kitchen.
-2025-01-19 20:17:01.061 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (9583, 9589) -->  Daniel went back to the kitchen
-2025-01-19 20:17:01.061 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:17:01.088 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5446, 5452) --> . John went back to the
-2025-01-19 20:17:01.088 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John took the milk.
-2025-01-19 20:17:01.123 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (7639, 7643) -->  took the milk.
-2025-01-19 20:17:01.123 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:17:01.171 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9837, 9843) --> . Sandra journeyed to the
-2025-01-19 20:17:01.171 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  John journeyed to the office.
-2025-01-19 20:17:01.171 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-2025-01-19 20:17:08.803 | INFO     | test_jbb_embedding:begin_test:605 - Mary dropped the football.<|eot_id|>
-2025-01-19 20:17:08.803 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12133])
-2025-01-19 20:17:12.610 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [3.380837180397727, 0.16709606043340544, 2.8738902698863638, 0.1563234380492205], 'topk_indices': array([   30, 12021, 12118, 12114,  5928, 12031, 12117,  5452, 12124,
-        9799,     0, 12121, 12115,  9838,    31, 12120,  9839,  5930,
-        1502, 12123]), 'topk_tokens': ['Mary', '.\n\n', ' was', '.\n\n', ' dropped', ' location', ' Where', ' bedroom', '?', ' array', '<|begin_of_text|>', ' before', 'Question', ' Sandra', ' journey', ' football', ' journey', ' football', ' bathroom', ' bathroom'], 'evidence_proportions': [3.88720703125, 3.0193684895833335, 6.55517578125, 1.1197102864583333]}, 'pred_res': 'Mary dropped the football.<|eot_id|>', 'score': 0}
-2025-01-19 20:17:12.615 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:17:12.615 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-0_0-1-5-8.pkl | len: 3 |  size: 853.0 B
-Processing depth (0, 1, 5, 8):  20%|██        | 1/5 [00:36<02:24, 36.11s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:03,  1.10s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.05s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:03<00:01,  1.02s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.33it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.16it/s]
-Processing depth (2, 5, 8, 9):  20%|██        | 1/5 [00:47<02:24, 36.11s/it]2025-01-19 20:17:24.539 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:17:24.552 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (2454, 2460) --> . Mary journeyed to the
-2025-01-19 20:17:24.552 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary journeyed to the bathroom.
-2025-01-19 20:17:24.564 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (2454, 2460) --> . Mary journeyed to the
-2025-01-19 20:17:24.564 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary dropped the football.
-2025-01-19 20:17:24.609 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9579, 9583) -->  dropped the football.
-2025-01-19 20:17:24.610 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Daniel went back to the kitchen.
-2025-01-19 20:17:24.662 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (10692, 10698) --> . Daniel went back to the
-2025-01-19 20:17:24.662 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:17:24.688 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5439, 5445) --> . John went back to the
-2025-01-19 20:17:24.688 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John took the milk.
-2025-01-19 20:17:24.724 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (7634, 7638) -->  took the milk.
-2025-01-19 20:17:24.724 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:17:24.773 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9830, 9836) --> . Sandra journeyed to the
-2025-01-19 20:17:24.773 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  John journeyed to the office.
-2025-01-19 20:17:24.785 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (2455, 2461) -->  Mary journeyed to the office
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:17:26.042 | INFO     | test_jbb_embedding:begin_test:605 - bedroom<|eot_id|>
-2025-01-19 20:17:26.043 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12133])
-2025-01-19 20:17:29.707 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [2.4743166836825283, 0.15054137454290276, 3.2279163707386362, 0.14071379148795463], 'topk_indices': array([   24,  9579,  5445,  5921,  9578,  2456, 12118, 12124, 12031,
-       12117,  9792, 12115, 12121,  9581,  5925,  9831, 12120,  9836,
-        9832, 12123]), 'topk_tokens': ['\n\n', ' dropped', ' bedroom', ' journey', ' Mary', ' journey', ' was', '?', ' location', ' Where', ' array', 'Question', ' before', ' football', ' bathroom', ' Sandra', ' football', ' bedroom', ' journey', ' bathroom'], 'evidence_proportions': [2.6478678385416665, 2.6478678385416665, 5.49658203125, 0.11237080891927083]}, 'pred_res': 'bedroom<|eot_id|>', 'score': 0}
-2025-01-19 20:17:29.713 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:17:29.713 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-1_2-5-8-9.pkl | len: 3 |  size: 830.0 B
-Processing depth (2, 5, 8, 9):  40%|████      | 2/5 [00:53<01:14, 24.93s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.44s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.45s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.31s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.07it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.10s/it]
-Processing depth (5, 6, 7, 8):  40%|████      | 2/5 [01:06<01:14, 24.93s/it]2025-01-19 20:17:42.970 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:17:42.991 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (4052, 4058) -->  John journeyed to the office
-2025-01-19 20:17:42.991 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary journeyed to the bathroom.
-2025-01-19 20:17:43.020 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (5912, 5918) --> . Mary journeyed to the
-2025-01-19 20:17:43.020 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary dropped the football.
-2025-01-19 20:17:43.067 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (8337, 8341) -->  Mary dropped the football
-2025-01-19 20:17:43.068 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Daniel went back to the kitchen.
-2025-01-19 20:17:43.114 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (9583, 9589) -->  Daniel went back to the kitchen
-2025-01-19 20:17:43.115 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:17:43.141 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5432, 5438) --> . John went back to the
-2025-01-19 20:17:43.141 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John took the milk.
-2025-01-19 20:17:43.177 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (7634, 7638) -->  took the milk.
-2025-01-19 20:17:43.177 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:17:43.226 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9837, 9843) --> . Sandra journeyed to the
-2025-01-19 20:17:43.226 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  John journeyed to the office.
-2025-01-19 20:17:43.246 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (4051, 4057) --> . John journeyed to the
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:17:44.554 | INFO     | test_jbb_embedding:begin_test:605 - The bedroom.<|eot_id|>
-2025-01-19 20:17:44.554 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12133])
-2025-01-19 20:17:48.197 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [3.717262961647727, 0.1655104540874794, 2.0958806818181817, 0.15553553884668866], 'topk_indices': array([12021,    22,    24,  4053,    19,  7636, 12115,  8925, 11987,
-        8337,  5913,    20,    23, 12121, 12120, 12123,  8338,  5914,
-        7155,  8340]), 'topk_tokens': ['.\n\n', '202', '\n\n', ' journey', '26', ' milk', 'Question', ' Anthony', ' context', ' Mary', ' Mary', ' Jul', '4', ' before', ' football', ' bathroom', ' dropped', ' journey', ' bathroom', ' football'], 'evidence_proportions': [2.4261067708333335, 3.8683268229166665, 9.4169921875, 1.0575358072916667]}, 'pred_res': 'The bedroom.<|eot_id|>', 'score': 0}
-2025-01-19 20:17:48.258 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:17:48.259 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-2_5-6-7-8.pkl | len: 3 |  size: 817.0 B
-Processing depth (5, 6, 7, 8):  60%|██████    | 3/5 [01:11<00:44, 22.01s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.45s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.38s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.34s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.03it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.12s/it]
-Processing depth (0, 4, 8, 9):  60%|██████    | 3/5 [01:24<00:44, 22.01s/it]2025-01-19 20:18:01.434 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:18:01.435 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
-2025-01-19 20:18:01.435 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary journeyed to the bathroom.
-2025-01-19 20:18:01.459 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (4839, 4845) --> . Mary journeyed to the
-2025-01-19 20:18:01.459 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary dropped the football.
-2025-01-19 20:18:01.504 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9579, 9583) -->  dropped the football.
-2025-01-19 20:18:01.505 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Daniel went back to the kitchen.
-2025-01-19 20:18:01.557 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (10692, 10698) --> . Daniel went back to the
-2025-01-19 20:18:01.557 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:18:01.583 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5446, 5452) --> . John went back to the
-2025-01-19 20:18:01.584 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John took the milk.
-2025-01-19 20:18:01.619 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (7634, 7638) -->  took the milk.
-2025-01-19 20:18:01.619 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:18:01.668 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9830, 9836) --> . Sandra journeyed to the
-2025-01-19 20:18:01.668 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  John journeyed to the office.
-2025-01-19 20:18:01.668 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:18:02.912 | INFO     | test_jbb_embedding:begin_test:605 - bedroom<|eot_id|>
-2025-01-19 20:18:02.912 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12133])
-2025-01-19 20:18:06.503 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [3.065163352272727, 0.19267974463715493, 3.041592684659091, 0.1822694622743673], 'topk_indices': array([   40,  4840, 12118, 11987, 12077, 12117, 12027, 12076,    31,
-       12124,  9832, 12025,  9581,  9836, 12115,  9831,  4845, 12120,
-       12121, 12123]), 'topk_tokens': ['\n\n\n', ' Mary', ' was', ' context', ' an', ' Where', ' item', ' got', ' journey', '?', ' journey', ' obtained', ' football', ' bedroom', 'Question', ' Sandra', ' bathroom', ' football', ' before', ' bathroom'], 'evidence_proportions': [3.4205729166666665, 4.085286458333333, 5.34814453125, 0.16764322916666666]}, 'pred_res': 'bedroom<|eot_id|>', 'score': 0}
-2025-01-19 20:18:06.534 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:18:06.534 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-3_0-4-8-9.pkl | len: 3 |  size: 821.0 B
-Processing depth (0, 4, 8, 9):  80%|████████  | 4/5 [01:30<00:20, 20.54s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.53s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.45s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.42s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.08s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.22s/it]
-Processing depth (0, 1, 3, 6):  80%|████████  | 4/5 [01:44<00:20, 20.54s/it]2025-01-19 20:18:20.613 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:18:20.613 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
-2025-01-19 20:18:20.613 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary journeyed to the bathroom.
-2025-01-19 20:18:20.621 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (1495, 1501) -->  tragedy. Mary journeyed to
-2025-01-19 20:18:20.621 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary dropped the football.
-2025-01-19 20:18:20.639 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (3769, 3773) -->  Mary dropped the football
-2025-01-19 20:18:20.639 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Daniel went back to the kitchen.
-2025-01-19 20:18:20.674 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (7161, 7167) --> . Daniel went back to the
-2025-01-19 20:18:20.674 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:18:20.701 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5451, 5457) --> . John went back to the
-2025-01-19 20:18:20.701 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John took the milk.
-2025-01-19 20:18:20.737 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (7646, 7650) -->  took the milk.
-2025-01-19 20:18:20.737 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:18:20.786 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (9837, 9843) --> . Sandra journeyed to the
-2025-01-19 20:18:20.786 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  John journeyed to the office.
-2025-01-19 20:18:20.786 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:18:22.148 | INFO     | test_jbb_embedding:begin_test:605 - Mary dropped the football.<|eot_id|>
-2025-01-19 20:18:22.149 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12133])
-2025-01-19 20:18:25.768 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [3.026333895596591, 0.17112714706942728, 1.6812744140625, 0.16318423181498634], 'topk_indices': array([12077,  4598,  4597, 12027,    24, 12076,     0, 12120,    31,
-       12025, 12123,    39,  3772,  1502,  5054,  5055,  5057,  5056,
-        5058,  5059]), 'topk_tokens': [' an', '      ', ' *', ' item', '\n\n', ' got', '<|begin_of_text|>', ' football', ' journey', ' obtained', ' bathroom', '***', ' football', ' bathroom', ' *', '      ', '      ', ' *', ' *', '      '], 'evidence_proportions': [3.8733723958333335, 2.8982747395833335, 5.13134765625, 0.9040120442708334]}, 'pred_res': 'Mary dropped the football.<|eot_id|>', 'score': 0}
-2025-01-19 20:18:25.804 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:18:25.805 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-4_0-1-3-6.pkl | len: 3 |  size: 829.0 B
-Processing depth (0, 1, 3, 6): 100%|██████████| 5/5 [01:49<00:00, 20.08s/it]Processing depth (0, 1, 3, 6): 100%|██████████| 5/5 [01:49<00:00, 21.86s/it]
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:73 - Selected idx: 1
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:74 - Question: I have provided you context with the facts about locations and actions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts.
-
-If a person obtained an item in the first location and traveled to the second location, the item is also in the second location.
-If a person left an item in the first location and moved to the second location, the item remains in the first location.
-If a person got an item and traveled to another location, the item will be in the new location unless they dropped it during the journey.
-
-Just return the location directly. Do not write anything else after that.
-
-Question: Where was the location prior to the place where the apple was discarded, left or dropped?
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:75 - Answer: office
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:76 - Tag: 4-hop
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:77 - Needle: [' Mary journeyed to the office.', ' John went back to the bedroom.', ' John journeyed to the office.', ' Mary got the apple.', ' John took the milk.', ' Mary journeyed to the bathroom.', ' Sandra journeyed to the bedroom.', ' Mary dropped the apple.', ' Daniel went back to the kitchen.']
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:78 - Real Needle: [' Mary journeyed to the office.', ' Mary got the apple.', ' Mary journeyed to the bathroom.', ' Mary dropped the apple.', ' Daniel went back to the kitchen.']
-2025-01-19 20:18:25.806 | INFO     | __main__:<module>:79 - =============================================
-  0%|          | 0/5 [00:00<?, ?it/s]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.41s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.38s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.38s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.05s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.17s/it]
-Processing depth (0, 1, 4, 6, 9):   0%|          | 0/5 [00:17<?, ?it/s]2025-01-19 20:18:43.880 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:18:43.880 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
-2025-01-19 20:18:43.881 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary got the apple.
-2025-01-19 20:18:43.888 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (1511, 1515) -->  Mary got the apple
-2025-01-19 20:18:43.888 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary journeyed to the bathroom.
-2025-01-19 20:18:43.912 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (4851, 4857) --> . Mary journeyed to the
-2025-01-19 20:18:43.912 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Mary dropped the apple.
-2025-01-19 20:18:43.945 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (7174, 7178) -->  Mary dropped the apple
-2025-01-19 20:18:43.946 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 4 -->  Daniel went back to the kitchen.
-2025-01-19 20:18:43.998 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 4 at --> (10697, 10703) --> . Daniel went back to the
-2025-01-19 20:18:43.998 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:18:44.024 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5248, 5254) --> . John went back to the
-2025-01-19 20:18:44.024 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John journeyed to the office.
-2025-01-19 20:18:44.024 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (31, 37) -->  journeyed to the office.
-2025-01-19 20:18:44.024 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  John took the milk.
-2025-01-19 20:18:44.050 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (5589, 5593) -->  John took the milk
-2025-01-19 20:18:44.050 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:18:44.053 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (628, 634) -->  Republican. Sandra journeyed to
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:18:45.396 | INFO     | test_jbb_embedding:begin_test:605 - Mary's bathroom.<|eot_id|>
-2025-01-19 20:18:45.396 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12147])
-2025-01-19 20:18:48.995 | INFO     | test_jbb_embedding:begin_test:646 - {'embedding': {'score': [2.700444148137019, 0.18753615186306485, 2.582375266335227, 0.17778306795086665], 'topk_indices': array([12030, 12126, 12132, 12066, 12140,    24, 12065,   630, 12139,
-       12032,   635, 12119, 12035,    31, 12026,     0, 12134, 12064,
-       12120, 12036]), 'topk_tokens': [' obtained', ' prior', ' apple', ' the', 'Answer', '\n\n', ' to', ' Sandra', '?\n', ' item', ' bedroom', '.\n\n', ' first', ' journey', '.\n\n', '<|begin_of_text|>', ' discarded', ' moved', 'Question', ' location'], 'evidence_proportions': [4.41357421875, 3.531494140625, 1.9536946614583333, 3.82666015625, 0.4292195638020833]}, 'pred_res': "Mary's bathroom.<|eot_id|>", 'score': 0}
-2025-01-19 20:18:49.002 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
-2025-01-19 20:18:49.002 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to ./analysis/information_flow_normal_max12k_sample200_embedding/Meta-Llama-3.1-8B-Instruct/11900/label/4-hop_sid-1_pid-0_0-1-4-6-9.pkl | len: 3 |  size: 847.0 B
-Processing depth (0, 1, 4, 6, 9):  20%|██        | 1/5 [00:23<01:32, 23.07s/it]
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
-Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.64s/it][A
-Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.38s/it][A
-Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.30s/it][A
-Loading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.06it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:04<00:00,  1.11s/it]
-Processing depth (4, 5, 6, 7, 9):  20%|██        | 1/5 [00:37<01:32, 23.07s/it]2025-01-19 20:19:03.758 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  Mary journeyed to the office.
-2025-01-19 20:19:03.765 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (1263, 1269) -->  John journeyed to the office
-2025-01-19 20:19:03.765 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  Mary got the apple.
-2025-01-19 20:19:03.795 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (5932, 5936) -->  Mary got the apple
-2025-01-19 20:19:03.796 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  Mary journeyed to the bathroom.
-2025-01-19 20:19:03.820 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (4839, 4845) --> . Mary journeyed to the
-2025-01-19 20:19:03.820 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Mary dropped the apple.
-2025-01-19 20:19:03.860 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (8349, 8353) -->  Mary dropped the apple
-2025-01-19 20:19:03.860 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 4 -->  Daniel went back to the kitchen.
-2025-01-19 20:19:03.912 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 4 at --> (10697, 10703) --> . Daniel went back to the
-2025-01-19 20:19:03.912 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 0 -->  John went back to the bedroom.
-2025-01-19 20:19:03.938 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 0 at --> (5236, 5242) --> . John went back to the
-2025-01-19 20:19:03.938 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 1 -->  John journeyed to the office.
-2025-01-19 20:19:03.944 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 1 at --> (1262, 1268) --> . John journeyed to the
-2025-01-19 20:19:03.944 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 2 -->  John took the milk.
-2025-01-19 20:19:03.970 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 2 at --> (5577, 5581) -->  John took the milk
-2025-01-19 20:19:03.970 | INFO     | test_jbb_embedding:find_multi_needle_idx:503 - evidence 3 -->  Sandra journeyed to the bedroom.
-2025-01-19 20:19:03.973 | INFO     | test_jbb_embedding:find_multi_needle_idx:511 - find evidence 3 at --> (621, 627) -->  Republican. Sandra journeyed to
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
-  warnings.warn(
-/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
-  warnings.warn(
-The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
-2025-01-19 20:19:05.284 | INFO     | test_jbb_embedding:begin_test:605 - The bathroom.<|eot_id|>
-2025-01-19 20:19:05.285 | INFO     | test_jbb_embedding:begin_test:607 - torch.Size([1, 12147])
