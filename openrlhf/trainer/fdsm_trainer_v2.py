@@ -254,6 +254,9 @@ class FDSMTrainerV2(ABC):
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                 adv_loss.backward()
 
+                for param in self.model.model.parameters():
+                    param.requires_grad = True
+
                 if self.args.lora_rank != 0:
                     self.model.model.base_model.enable_adapter_layers()
 

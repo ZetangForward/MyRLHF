@@ -8,8 +8,8 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/context_denoise/language_model
    --train_batch_size 64 \
    --micro_train_batch_size 1 \
    --pretrain 'Crystalcareai/meta-llama-3.1-8b' \
-   --save_path ${SAVE_DIR}/pg19/Llama-3.1-8B/cd_lm_full \
-   --ckpt_path ${SAVE_DIR}/pg19/Llama-3.1-8B/cd_lm_full \
+   --save_path ${SAVE_DIR}/pg19/Llama-3.1-8B/cd_lm_full-0.01 \
+   --ckpt_path ${SAVE_DIR}/pg19/Llama-3.1-8B/cd_lm_full-0.01 \
    --save_steps 50 \
    --logging_steps 1 \
    --eval_steps 50 \
@@ -18,6 +18,7 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/context_denoise/language_model
    --max_ckpt_num 20 \
    --max_epochs 2 \
    --pretrain_mode \
+   --adv_epsilon 0.01 \
    --input_key "text" \
    --packing_samples \
    --bf16 \
@@ -28,6 +29,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/context_denoise/language_model
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project '初号机' \
-   --wandb_run_name 'Llama-3.1-8B-cd_lm_full-adv0.1' \
+   --wandb_run_name 'Llama-3.1-8B-cd-lm_full-adv0.05' \
    --ring_attn_size 4 \
    --ring_head_stride 2;
