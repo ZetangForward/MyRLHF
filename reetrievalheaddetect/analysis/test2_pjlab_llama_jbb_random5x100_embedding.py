@@ -16,7 +16,7 @@ from accelerate.utils import get_balanced_memory
 
 # nohup python test2_pjlab_llama_jbb_random5x100_embedding.py > jbb_embedding.log
 
-# nohup env CUDA_VISIBLE_DEVICES=4,5,6,7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py > logs/embedding_saliency_score.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=6,7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py > logs/embedding_saliency_score2.log 2>&1 &
 if __name__ == "__main__":
     print("Process:",os.getpid())
     parser = argparse.ArgumentParser()
@@ -26,16 +26,16 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
-    # args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+    args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
-    # args.dataset_path = "/data/pub_data/pg19-test"
+    args.dataset_path = "/data/pub_data/pg19-test"
     # args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl"
-    # args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_embedding"
-    args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-    args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
-    args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
+    args.save_dir = "/data/zecheng/acl2025/tmp_embedding_data"
+    # args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
+    # args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
     args.needle_path = "./haystack_for_detect/reasoning_needle_jbb_200.jsonl"
-    args.save_dir = "/mnt/petrelfs/tangzecheng/repos/Long-form-reasoning/preliminary/babilong_random5x100/results"
+    # args.save_dir = "/mnt/petrelfs/tangzecheng/repos/Long-form-reasoning/preliminary/babilong_random5x100/results"
     args.selected_idx = list(range(200))
     # args.loss_type = "ce"
 
@@ -57,11 +57,10 @@ if __name__ == "__main__":
     
         # print("evidence:", pe)
 
-
     for context_length in [
         # 15900,
-        11900,
-        7900,
+        # 11900,
+        # 7900,
         3900,
         1900,
         0
