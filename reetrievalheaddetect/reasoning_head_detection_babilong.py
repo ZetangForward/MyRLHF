@@ -357,40 +357,34 @@ class LLMNeedleHaystackTester:
                             if res: analysis_sample_nums += 1
                             pbar.update(1)
 
-            # after processing all the samples in different positions, average the attention scores
-            for pos_score_dict in self.succ_head_counter.values():
-                for k, pos_scores in pos_score_dict.items():
-                    pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
-            
-            for pos_score_dict in self.fail_head_counter.values():
-                for k, pos_scores in pos_score_dict.items():
-                    pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
-                    
-            # after average all the scores for #all_combinations * self.selected_idx, 
-            # which means one sequence length experiment is finished, then
-            # save the results and refresh the 
-            #   self.succ_head_counter = defaultdict(lambda: defaultdict(list))
-            #   self.fail_head_counter = defaultdict(lambda: defaultdict(list))
-            merge_dict = {
-                "succ_head_counter": self.succ_head_counter,
-                "fail_head_counter": self.fail_head_counter,
-            }
-            auto_save_data(merge_dict, f"attention_analysis/attention_score/{task_tag}-{context_length}.json")
+                # after processing all the samples in different positions, average the attention scores
+                for pos_score_dict in self.succ_head_counter.values():
+                    for k, pos_scores in pos_score_dict.items():
+                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+                
+                for pos_score_dict in self.fail_head_counter.values():
+                    for k, pos_scores in pos_score_dict.items():
+                        pos_score_dict[k] = sum(pos_scores) / len(pos_scores)
+                        
+                # after average all the scores for #all_combinations * self.selected_idx, 
+                # which means one sequence length experiment is finished, then
+                # save the results and refresh the 
+                #   self.succ_head_counter = defaultdict(lambda: defaultdict(list))
+                #   self.fail_head_counter = defaultdict(lambda: defaultdict(list))
+                merge_dict = {
+                    "succ_head_counter": self.succ_head_counter,
+                    "fail_head_counter": self.fail_head_counter,
+                }
+                auto_save_data(merge_dict, f"attention_analysis/attention_score/{task_tag}-{context_length}.json")
 
-            # refresh the counter for the next task_tag
-            self.succ_head_counter = defaultdict(lambda: defaultdict(list))
-            self.fail_head_counter = defaultdict(lambda: defaultdict(list))
+                # refresh the counter for the next task_tag
+                self.succ_head_counter = defaultdict(lambda: defaultdict(list))
+                self.fail_head_counter = defaultdict(lambda: defaultdict(list))
 
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--s_len', metavar='N', type=int, help='a number')
-    parser.add_argument('-e', '--e_len', metavar='N', type=int, help='a number')
-    parser.add_argument('--needle_ids', metavar='N', type=int, nargs='+', help='a list of numbers')
-    parser.add_argument('--mask_topk', metavar='N', type=int, default=0, help='masking top K heads')
-    parser.add_argument('--head_file', type=str, default=None, help='path to head file')
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
-    parser.add_argument('--model_name_suffix', type=str, default=None, help='name of model')
     parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
     args = parser.parse_args()
 
@@ -405,3 +399,10 @@ if __name__ == "__main__":
     )
 
     ht.start_test()
+
+
+
+# nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=1900 > logs/1900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=1 python reasoning_head_detection_babilong.py --context_lengths=3900 > logs/3900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=2 python reasoning_head_detection_babilong.py --context_lengths=7900 > logs/7900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=3 python reasoning_head_detection_babilong.py --context_lengths=11900 > logs/11900.log 2>&1 &

@@ -1,10 +1,11 @@
 import os
 from abc import ABC
-
 import torch
+import torch.distributed as dist
+from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
+from torch.nn import functional as F
 from tqdm import tqdm
-
 from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
@@ -25,8 +26,6 @@ class SFTTrainer(ABC):
         batch_size (int, defaults to 1): Batch size for training.
         max_epochs (int, defaults to 2): The maximum number of training epochs.
         tokenizer (Tokenizer, optional): The tokenizer for processing input data.
-        save_hf_ckpt (bool): Whether to save huggingface-format model weight.
-        disable_ds_ckpt (bool): Whether not to save deepspeed-format model weight. (Deepspeed model weight is used for training recovery)
     """
 
     def __init__(
@@ -42,8 +41,6 @@ class SFTTrainer(ABC):
         batch_size: int = 1,
         max_epochs: int = 2,
         tokenizer=None,
-        save_hf_ckpt: bool = False,
-        disable_ds_ckpt: bool = False,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -58,8 +55,6 @@ class SFTTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
-        self.save_hf_ckpt = save_hf_ckpt
-        self.disable_ds_ckpt = disable_ds_ckpt
 
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
 
@@ -117,7 +112,6 @@ class SFTTrainer(ABC):
             desc="Train epoch",
             disable=not self.strategy.is_rank_0(),
         )
-        loss_sum = 0
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -132,10 +126,16 @@ class SFTTrainer(ABC):
 
             # train
             self.model.train()
-            for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:
+            loss_mean = 0
+            short_ctx_loss_mean = 0
+            # for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:  # zecheng_note: 临时取消这里 因为这里引入了clue prompt
+            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in self.train_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    # if clue_inputs:
+                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -144,12 +144,13 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                 else:
                     output = self.model(
-                        inputs,
-                        attention_mask=attention_mask,
+                        inputs, 
+                        attention_mask=attention_mask, 
                         return_output=True,
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=infos["input_length"],
                     )
+
 
                 # loss function
                 labels = torch.where(
@@ -173,14 +174,44 @@ class SFTTrainer(ABC):
                         for label, source_len in zip(labels, prompt_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
+
                 gpt_loss = self.loss_fn(output.logits, labels)
                 loss = gpt_loss + aux_loss * self.args.aux_loss_coef
                 self.strategy.backward(loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
 
-                loss_sum += gpt_loss.item()
+                loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
+                
+                ### ============================= ###
+                # zecheng_note: 这里加上contextual 的labels，专门计算上下文的loss
+                # with torch.no_grad():
+                #     clue_output = self.model(
+                #         clue_inputs, 
+                #         attention_mask=clue_attention_mask, 
+                #         return_output=True,
+                #         ring_attn_group=self.strategy.ring_attn_group,
+                #         packed_seq_lens=infos["clue_input_length"],
+                #     )
+
+                #     clue_labels = torch.where(
+                #         clue_attention_mask.bool(),
+                #         clue_inputs,
+                #         self.loss_fn.IGNORE_INDEX,
+                #     )
+
+                #     index = 0
+                #     for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                #         clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                #         index += input_length
+
+                #     short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                #     short_ctx_loss_mean = short_ctx_loss_mean * 0.9 + 0.1 * short_ctx_gpt_loss.item()
+                
                 logs_dict = {
+                    # "short_gpt_loss": short_ctx_gpt_loss.item(),
                     "gpt_loss": gpt_loss.item(),
+                    "loss_mean": loss_mean,
+                    # "short_ctx_loss_mean": short_ctx_loss_mean,
                     "lr": self.scheduler.get_last_lr()[0],
                 }
                 if self.aux_loss:
@@ -192,8 +223,6 @@ class SFTTrainer(ABC):
 
                 # logs/checkpoints/evaluation
                 if step % self.strategy.accumulated_gradient == 0:
-                    logs_dict["loss_mean"] = loss_sum / self.strategy.accumulated_gradient
-                    loss_sum = 0
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
@@ -224,34 +253,34 @@ class SFTTrainer(ABC):
             # do eval when len(dataloader) > 0, avoid zero division in eval.
             if len(self.eval_dataloader) > 0:
                 self.evaluate(self.eval_dataloader, global_step)
-
         # save ckpt
         # TODO: save best model on dev, use loss/perplexity on whole dev dataset as metric
         if global_step % args.save_steps == 0:
             tag = f"global_step{global_step}"
-            if not self.disable_ds_ckpt:
-                self.strategy.save_ckpt(
-                    self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
-                )
-            if self.save_hf_ckpt:
-                save_path = os.path.join(args.ckpt_path, f"{tag}_hf")
-                self.strategy.save_model(self.model, self.tokenizer, save_path)
+            # self.strategy.save_ckpt(
+            #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
+            # )
+            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, "adapter", tag))
+
 
     def evaluate(self, eval_dataloader, steps=0):
         times = 0
         self.model.eval()
         with torch.no_grad():
             loss_sum = 0
+            short_ctx_loss_sum = 0
             step_bar = tqdm(
                 range(eval_dataloader.__len__()),
                 desc="Eval stage of steps %d" % steps,
                 disable=not self.strategy.is_rank_0(),
             )
-
-            for prompt_id_lens, inputs, attention_masks, infos in eval_dataloader:
+ 
+            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
+                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -260,13 +289,36 @@ class SFTTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                 else:
                     output = self.model(
-                        inputs,
-                        attention_mask=attention_mask,
+                        inputs, 
+                        attention_mask=attention_mask, 
                         return_output=True,
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=infos["input_length"],
                     )
 
+                    clue_output = self.model(
+                        clue_inputs, 
+                        attention_mask=clue_attention_mask, 
+                        return_output=True,
+                        ring_attn_group=self.strategy.ring_attn_group,
+                        packed_seq_lens=infos["clue_input_length"],
+                    )
+
+                    clue_labels = torch.where(
+                        clue_attention_mask.bool(),
+                        clue_inputs,
+                        self.loss_fn.IGNORE_INDEX,
+                    )
+
+                    index = 0
+                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                        index += input_length
+
+                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                    
+                    short_ctx_loss_sum += short_ctx_gpt_loss.item()
+                
                 # loss function
                 labels = torch.where(
                     attention_mask.bool(),
@@ -288,7 +340,7 @@ class SFTTrainer(ABC):
 
                 times += 1
                 loss_sum += loss.item()
-                bar_dict = {"eval gpt_loss": loss_sum / times}
+                bar_dict = {"eval gpt_loss": loss_sum / times, "eval short_ctx_gpt_loss": short_ctx_loss_sum / times}
                 step_bar.update()
                 logs = self.strategy.all_reduce(bar_dict)
                 step_bar.set_postfix(logs)
@@ -301,3 +353,4 @@ class SFTTrainer(ABC):
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
         self.model.train()  # reset model state
+        

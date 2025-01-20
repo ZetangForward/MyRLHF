@@ -4,9 +4,9 @@ import os
 from datasets import load_dataset, concatenate_datasets
 from datetime import datetime
 from transformers.trainer import get_scheduler
-from openrlhf.datasets.babilong_dataset import SFTDataset
+from openrlhf.datasets.lm_dataset import LanguageModelingDataset
 from openrlhf.models import Actor
-from openrlhf.trainer import SFTTrainer
+from openrlhf.trainer.sft_trainer import SFTTrainer
 from openrlhf.utils import get_strategy, get_tokenizer
 
 
@@ -19,33 +19,10 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # configure datasets
-    # zecheng_note: 这里手动选择超参
-    splits = ['0k', '2k', '4k', '8k', '16k', '32k']
-    dataset_name = args.dataset  # 数据集名称
-    train_datasets = []
-    dev_datasets = []
+    dataset = load_dataset(args.dataset, trust_remote_code=True)
+    train_data, eval_data = dataset['train'], dataset['validation']
 
-    for split in splits:
-        split_data = load_dataset(dataset_name, split)
-        all_samples = []
-        for subset_name, subset_data in split_data.items(): # 从每个子集抽取 1k 条数据
-            sampled_data = subset_data.select(range(500))  # TODO: 500
-            sampled_data = sampled_data.map(
-                lambda x: {"task": subset_name}, 
-            )
-            all_samples.append(sampled_data) 
-        final_dataset = concatenate_datasets(all_samples)
-
-        dev_data = final_dataset.select(range(50)) # 抽取前 50 条作为验证集
-        train_data = final_dataset.select(range(50, len(final_dataset)))  # 剩余的作为训练集
-        dev_datasets.append(dev_data)
-        train_datasets.append(train_data)
-
-    # 合并所有训练集和验证集
-    train_data = concatenate_datasets(train_datasets)
-    eval_data = concatenate_datasets(dev_datasets)
-
-    train_dataset = SFTDataset(
+    train_dataset = LanguageModelingDataset(
         train_data,
         tokenizer,
         args.max_len,
@@ -54,8 +31,9 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
+        num_training_samples=args.num_training_samples,
     )
-    eval_dataset = SFTDataset(
+    eval_dataset = LanguageModelingDataset(
         eval_data,
         tokenizer,
         args.max_len,
@@ -66,6 +44,9 @@ def train(args):
         multiple_of=args.ring_attn_size,
     )
 
+    print(f"length of train_dataset {len(train_dataset)}")
+    print(f"length of eval_dataset {len(eval_dataset)}")
+
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
         train_dataset,
@@ -74,6 +55,7 @@ def train(args):
         True,
         train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
     )
+
     eval_dataloader = strategy.setup_dataloader(
         eval_dataset,
         args.micro_train_batch_size,
@@ -81,6 +63,7 @@ def train(args):
         False,
         eval_dataset.packing_collate_fn if args.packing_samples else eval_dataset.collate_fn,
     )
+
 
     # configure model
     # load huggingface model
@@ -217,6 +200,7 @@ if __name__ == "__main__":
 
     # custom dataset
     parser.add_argument("--dataset", type=str, default=None)
+    parser.add_argument("--num_training_samples", type=int, default=10000, help="number of training samples")
     parser.add_argument("--dataset_probs", type=str, default="1.0", help="sampling probs for datasets")
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")
