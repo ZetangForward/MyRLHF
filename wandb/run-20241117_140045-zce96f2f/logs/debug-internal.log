@@ -1,0 +1,16 @@
+{"time":"2024-11-17T14:00:45.100525188+08:00","level":"INFO","msg":"using version","core version":"0.18.6"}
+{"time":"2024-11-17T14:00:45.103134172+08:00","level":"INFO","msg":"created symlink","path":"/mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241117_140045-zce96f2f/logs/debug-core.log"}
+{"time":"2024-11-17T14:00:45.322855767+08:00","level":"INFO","msg":"created new stream","id":"zce96f2f"}
+{"time":"2024-11-17T14:00:45.324009336+08:00","level":"INFO","msg":"stream: started","id":"zce96f2f"}
+{"time":"2024-11-17T14:00:45.324094648+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"zce96f2f"}}
+{"time":"2024-11-17T14:00:45.324294152+08:00","level":"INFO","msg":"sender: started","stream_id":"zce96f2f"}
+{"time":"2024-11-17T14:00:45.324299325+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"zce96f2f"}}
+{"time":"2024-11-17T14:01:15.331378485+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)"}
+{"time":"2024-11-17T14:01:47.404413965+08:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": context deadline exceeded"}
+{"time":"2024-11-17T14:02:15.183246257+08:00","level":"INFO","msg":"stream: closing","id":"zce96f2f"}
+{"time":"2024-11-17T14:02:15.184440307+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"zce96f2f"}}
+{"time":"2024-11-17T14:02:15.184521218+08:00","level":"ERROR","msg":"sender: upsertRun:","error":"failed to upsert bucket: api: failed sending: POST https://api.wandb.ai/graphql giving up after 3 attempt(s): context canceled"}
+{"time":"2024-11-17T14:02:15.184519976+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"zce96f2f"}}
+{"time":"2024-11-17T14:02:15.186554541+08:00","level":"WARN","msg":"runwork: ignoring record after close","work":{"Record":{"RecordType":{"Request":{"RequestType":{"Defer":{}}}},"control":{"always_send":true}}}}
+{"time":"2024-11-17T14:02:15.188470053+08:00","level":"INFO","msg":"sender: closed","stream_id":"zce96f2f"}
+{"time":"2024-11-17T14:02:15.189455571+08:00","level":"INFO","msg":"stream: closed","id":"zce96f2f"}

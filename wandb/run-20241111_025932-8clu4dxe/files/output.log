@@ -1,0 +1,85 @@
+Train epoch:   0%|          | 0/2 [00:00<?, ?it/s]             /mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/torch/utils/checkpoint.py:1399: FutureWarning: `torch.cpu.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cpu', args...)` instead.
+  with device_autocast_ctx, torch.cpu.amp.autocast(**cpu_autocast_kwargs), recompute_context:  # type: ignore[attr-defined]
+                                                                                                                          /mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-67311df3-73a8d69f1dcb8dde3dbe64ad;fa5b5c14-2ee8-4dbf-b7ec-b7cb686bd12c)
+Train step of epoch 0:  45%|████▌     | 800/1776 [1:56:36<3:35:22, 13.24s/it, gpt_loss=0.528, loss_mean=0.518, lr=4.57e-6]
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/save_and_load.py:243: UserWarning: Could not find a config file in meta-llama/Meta-Llama-3.1-8B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-67311df4-09a3c4792859489772025b6f;c6500fae-9df3-4beb-9f04-7921ffd0f7a2)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+[2024-11-11 04:56:22,599] [INFO] [logging.py:96:log_dist] [Rank 0] [Torch] Checkpoint global_step50 is about to be saved!
+[2024-11-11 04:56:23,434] [INFO] [logging.py:96:log_dist] [Rank 0] Saving model checkpoint: /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/zero_pp_rank_0_mp_rank_00_model_states.pt
+[2024-11-11 04:56:23,436] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/zero_pp_rank_0_mp_rank_00_model_states.pt...
+[2024-11-11 05:00:28,112] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/zero_pp_rank_0_mp_rank_00_model_states.pt.
+[2024-11-11 05:00:29,088] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt...
+[2024-11-11 05:00:42,180] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt.
+[2024-11-11 05:00:42,507] [INFO] [engine.py:3536:_save_zero_checkpoint] zero checkpoint saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt
+[2024-11-11 05:00:43,399] [INFO] [torch_checkpoint_engine.py:33:commit] [Torch] Checkpoint global_step50 is ready now!
+                                                                                                                         /mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-673142bd-0fb0e4464260430c58431327;d6af78fb-c812-49eb-9110-17265932e2c7)
+Train step of epoch 0:  90%|█████████ | 1600/1776 [4:33:33<34:39, 11.82s/it, gpt_loss=0.191, loss_mean=0.261, lr=3.22e-6]  
+[2024-11-11 07:33:06,254] [INFO] [logging.py:96:log_dist] [Rank 0] step=100, skipped=0, lr=[3.2231596931682497e-06], mom=[(0.9, 0.95)]
+[2024-11-11 07:33:06,257] [INFO] [timer.py:259:stop] epoch=0/micro_step=1600/global_step=100, RunningAvgSamplesPerSec=0.8377742186463304, CurrSamplesPerSec=0.7155902769316045, MemAllocated=11.45GB, MaxMemAllocated=33.63GB
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-673142bd-6bd1579551a8577472a60a1c;19c2bd54-6039-47b9-a3a4-b2c81f93717e)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+[2024-11-11 07:33:19,397] [INFO] [logging.py:96:log_dist] [Rank 0] [Torch] Checkpoint global_step100 is about to be saved!
+[2024-11-11 07:33:20,174] [INFO] [logging.py:96:log_dist] [Rank 0] Saving model checkpoint: /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/zero_pp_rank_0_mp_rank_00_model_states.pt
+[2024-11-11 07:33:20,176] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/zero_pp_rank_0_mp_rank_00_model_states.pt...
+[2024-11-11 07:37:18,864] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/zero_pp_rank_0_mp_rank_00_model_states.pt.
+[2024-11-11 07:37:25,221] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt...
+[2024-11-11 07:37:35,804] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt.
+[2024-11-11 07:37:36,045] [INFO] [engine.py:3536:_save_zero_checkpoint] zero checkpoint saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step100/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt
+[2024-11-11 07:37:39,316] [INFO] [torch_checkpoint_engine.py:33:commit] [Torch] Checkpoint global_step100 is ready now!
+Train step of epoch 0: 100%|██████████| 1776/1776 [5:10:50<00:00, 10.50s/it, gpt_loss=0.234, loss_mean=0.222, lr=2.87e-6]
+Train step of epoch 0: 100%|██████████| 1776/1776 [5:10:50<00:00, 10.98s/it, gpt_loss=0.234, loss_mean=0.222, lr=2.87e-6] /mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-67315f0c-253b681a2b662d115157c77b;6b28eae3-717b-4131-b5e7-eb05511794b1)
+Train step of epoch 1:   0%|          | 0/1776 [00:00<?, ?it/s]
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.6] 
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-67315f0c-364ec8c272947cce10de0c24;b380a680-938c-42d2-a64e-1742dab9e1a9)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+[2024-11-11 09:34:07,018] [INFO] [logging.py:96:log_dist] [Rank 0] [Torch] Checkpoint global_step150 is about to be saved!
+[2024-11-11 09:34:07,770] [INFO] [logging.py:96:log_dist] [Rank 0] Saving model checkpoint: /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/zero_pp_rank_0_mp_rank_00_model_states.pt
+[2024-11-11 09:34:07,771] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/zero_pp_rank_0_mp_rank_00_model_states.pt...
+[2024-11-11 09:37:02,242] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/zero_pp_rank_0_mp_rank_00_model_states.pt.
+[2024-11-11 09:37:49,230] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt...
+[2024-11-11 09:38:02,337] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt.
+[2024-11-11 09:38:02,397] [INFO] [engine.py:3536:_save_zero_checkpoint] zero checkpoint saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step150/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt
+[2024-11-11 09:38:02,689] [INFO] [torch_checkpoint_engine.py:33:commit] [Torch] Checkpoint global_step150 is ready now!
+                                                                                                                         /mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-6731841e-5b06b45e508b825e4f5e5f3d;4d8fe545-41d3-4127-ba12-9df3e5e75f23)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.7]  
+[2024-11-11 12:11:58,992] [INFO] [logging.py:96:log_dist] [Rank 0] step=200, skipped=0, lr=[6.15259700464785e-07], mom=[(0.9, 0.95)]
+[2024-11-11 12:11:58,995] [INFO] [timer.py:259:stop] epoch=0/micro_step=3200/global_step=200, RunningAvgSamplesPerSec=0.8383952274791866, CurrSamplesPerSec=0.8292662706279676, MemAllocated=10.58GB, MaxMemAllocated=33.63GB
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/peft/utils/other.py:689: UserWarning: Unable to fetch remote file due to the following error 401 Client Error. (Request ID: Root=1-6731841e-08d902fb6ee0f4b8663cc990;936624f0-6820-4d91-aa86-bda0386ab7e3)
+
+Cannot access gated repo for url https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct/resolve/main/config.json.
+Access to model meta-llama/Llama-3.1-8B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in. - silently ignoring the lookup for the file config.json in meta-llama/Meta-Llama-3.1-8B-Instruct.
+  warnings.warn(
+Deleted oldest ckpt /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step50
+[2024-11-11 12:12:17,505] [INFO] [logging.py:96:log_dist] [Rank 0] [Torch] Checkpoint global_step200 is about to be saved!
+[2024-11-11 12:12:18,372] [INFO] [logging.py:96:log_dist] [Rank 0] Saving model checkpoint: /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/zero_pp_rank_0_mp_rank_00_model_states.pt
+[2024-11-11 12:12:18,374] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/zero_pp_rank_0_mp_rank_00_model_states.pt...
+[2024-11-11 12:16:35,361] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/zero_pp_rank_0_mp_rank_00_model_states.pt.
+[2024-11-11 12:16:46,001] [INFO] [torch_checkpoint_engine.py:21:save] [Torch] Saving /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt...
+[2024-11-11 12:17:02,862] [INFO] [torch_checkpoint_engine.py:23:save] [Torch] Saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt.
+[2024-11-11 12:17:03,083] [INFO] [engine.py:3536:_save_zero_checkpoint] zero checkpoint saved /mnt/petrelfs/tangzecheng/local_ckpt/checkpoint/opt/Llama-3-8B-Instruct-tool-sft/global_step200/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt
+[2024-11-11 12:17:03,172] [INFO] [torch_checkpoint_engine.py:33:commit] [Torch] Checkpoint global_step200 is ready now!
+Train epoch: 100%|██████████| 2/2 [10:22:09<00:00, 18667.48s/it]
+
+Train step of epoch 1: 100%|██████████| 1776/1776 [5:11:19<00:00, 11.08s/it, gpt_loss=0.189, loss_mean=0.156, lr=5e-7]      

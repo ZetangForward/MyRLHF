@@ -1,0 +1,88 @@
+2024-11-14 01:09:55,725 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Current SDK version is 0.18.6
+2024-11-14 01:09:55,727 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Configure stats pid to 37949
+2024-11-14 01:09:55,728 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Loading settings from /mnt/petrelfs/tangzecheng/.config/wandb/settings
+2024-11-14 01:09:55,729 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Loading settings from /mnt/petrelfs/tangzecheng/MyRLHF/wandb/settings
+2024-11-14 01:09:55,730 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Loading settings from environment variables: {}
+2024-11-14 01:09:55,731 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Applying setup settings: {'mode': None, '_disable_service': None}
+2024-11-14 01:09:55,732 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Inferring run settings from compute environment: {'program_relpath': 'openrlhf/cli/train_sft_dev.py', 'program_abspath': '/mnt/petrelfs/tangzecheng/MyRLHF/openrlhf/cli/train_sft_dev.py', 'program': '/mnt/petrelfs/tangzecheng/MyRLHF/openrlhf/cli/train_sft_dev.py'}
+2024-11-14 01:09:55,733 INFO    MainThread:37949 [wandb_setup.py:_flush():79] Applying login settings: {}
+2024-11-14 01:09:55,735 INFO    MainThread:37949 [wandb_init.py:_log_setup():533] Logging user logs to /mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241114_010955-yd8tqk3r/logs/debug.log
+2024-11-14 01:09:55,736 INFO    MainThread:37949 [wandb_init.py:_log_setup():534] Logging internal logs to /mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241114_010955-yd8tqk3r/logs/debug-internal.log
+2024-11-14 01:09:55,737 INFO    MainThread:37949 [wandb_init.py:init():619] calling init triggers
+2024-11-14 01:09:55,738 INFO    MainThread:37949 [wandb_init.py:init():626] wandb.init called with sweep_config: {}
+config: {'save_path': '/mnt/petrelfs/tangzecheng/llm-data-exp-space-2/zecheng/remote_ckpt/model/llama3.1-8b-sft', 'save_steps': 15, 'logging_steps': 1, 'eval_steps': -1, 'ckpt_path': '/mnt/petrelfs/tangzecheng/llm-data-exp-space-2/zecheng/remote_ckpt/model/llama3.1-8b-sft', 'max_ckpt_num': 3, 'max_ckpt_mem': 100000000.0, 'load_checkpoint': False, 'micro_train_batch_size': 1, 'train_batch_size': 64, 'max_norm': 1.0, 'gradient_checkpointing': True, 'seed': 42, 'local_rank': 0, 'zero_stage': 3, 'bf16': True, 'zpg': 1, 'adam_offload': False, 'flash_attn': True, 'grad_accum_dtype': None, 'disable_trace_cache': False, 'gradient_checkpointing_use_reentrant': False, 'disable_fast_tokenizer': True, 'max_epochs': 5, 'aux_loss_coef': 0, 'pretrain': 'meta-llama/Meta-Llama-3-8B-Instruct', 'learning_rate': 5e-06, 'pretrain_mode': False, 'lr_scheduler': 'cosine_with_min_lr', 'l2': 0, 'adam_betas': (0.9, 0.95), 'load_in_4bit': False, 'lora_rank': 32, 'lora_alpha': 16, 'target_modules': 'all-linear', 'lora_dropout': 0, 'packing_samples': True, 'dataset': '/mnt/petrelfs/tangzecheng/llm-data-exp-space-2/zecheng/transfer_data/Qwen_query_answer_gen', 'dataset_probs': '1.0', 'num_process': 2, 'train_split': 'train', 'eval_split': 'test', 'return_eval': False, 'input_key': 'instruction_str', 'output_key': 'pred_str', 'input_template': 'User: {}\nAssistant: ', 'apply_chat_template': True, 'tokenizer_chat_template': None, 'max_samples': 100000000.0, 'max_len': 64000, 'ring_attn_size': 2, 'ring_head_stride': 1, 'use_wandb': 'f81f2a236e712350a0ec153e02f43d1366c856a5', 'wandb_org': None, 'wandb_group': None, 'wandb_project': 'debug_openrlhf_train_sft', 'wandb_run_name': 'llama3.1-8b-sft-ring', 'use_tensorboard': None}
+2024-11-14 01:09:55,739 INFO    MainThread:37949 [wandb_init.py:init():669] starting backend
+2024-11-14 01:09:55,740 INFO    MainThread:37949 [wandb_init.py:init():673] sending inform_init request
+2024-11-14 01:09:55,742 INFO    MainThread:37949 [backend.py:_multiprocessing_setup():104] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-11-14 01:09:55,744 INFO    MainThread:37949 [wandb_init.py:init():686] backend started and connected
+2024-11-14 01:09:55,748 INFO    MainThread:37949 [wandb_init.py:init():781] updated telemetry
+2024-11-14 01:09:55,790 INFO    MainThread:37949 [wandb_init.py:init():814] communicating run to backend with 90.0 second timeout
+2024-11-14 01:10:53,959 INFO    Thread-6 (wrapped_target):37949 [retry.py:__call__():172] Retry attempt failed:
+Traceback (most recent call last):
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/util/connection.py", line 85, in create_connection
+    raise err
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connection.py", line 208, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.HTTPSConnection object at 0x7ff4ac52d510>, 'Connection to api.wandb.ai timed out. (connect timeout=20)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.wandb.ai', port=443): Max retries exceeded with url: /graphql (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x7ff4ac52d510>, 'Connection to api.wandb.ai timed out. (connect timeout=20)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/sdk/lib/retry.py", line 131, in __call__
+    result = self._call_fn(*args, **kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/sdk/internal/internal_api.py", line 400, in execute
+    return self.client.execute(*args, **kwargs)  # type: ignore
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 52, in execute
+    result = self._get_result(document, *args, **kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/vendor/gql-0.2.0/wandb_gql/client.py", line 60, in _get_result
+    return self.transport.execute(document, *args, **kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/sdk/lib/gql_request.py", line 58, in execute
+    request = self.session.post(self.url, **post_args)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/requests/sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/requests/adapters.py", line 688, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='api.wandb.ai', port=443): Max retries exceeded with url: /graphql (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x7ff4ac52d510>, 'Connection to api.wandb.ai timed out. (connect timeout=20)'))
+2024-11-14 01:11:25,804 ERROR   MainThread:37949 [wandb_init.py:init():841] encountered error: Run initialization has timed out after 90.0 sec. Please try increasing the timeout with the `init_timeout` setting: `wandb.init(settings=wandb.Settings(init_timeout=120))`.
+2024-11-14 01:11:25,806 ERROR   MainThread:37949 [wandb_init.py:init():1266] error in wandb.init()
+Traceback (most recent call last):
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1256, in init
+    return wi.init()
+  File "/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng_new/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 847, in init
+    raise error
+wandb.errors.errors.CommError: Run initialization has timed out after 90.0 sec. Please try increasing the timeout with the `init_timeout` setting: `wandb.init(settings=wandb.Settings(init_timeout=120))`.
+2024-11-14 01:11:25,833 WARNING MsgRouterThr:37949 [router.py:message_loop():75] message_loop has been closed

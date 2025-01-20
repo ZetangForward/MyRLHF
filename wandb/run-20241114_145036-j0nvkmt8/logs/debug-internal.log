@@ -1,0 +1,16 @@
+{"time":"2024-11-14T14:50:36.41947515+08:00","level":"INFO","msg":"using version","core version":"0.18.6"}
+{"time":"2024-11-14T14:50:36.422211309+08:00","level":"INFO","msg":"created symlink","path":"/mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241114_145036-j0nvkmt8/logs/debug-core.log"}
+{"time":"2024-11-14T14:50:36.644581448+08:00","level":"INFO","msg":"created new stream","id":"j0nvkmt8"}
+{"time":"2024-11-14T14:50:36.645732641+08:00","level":"INFO","msg":"stream: started","id":"j0nvkmt8"}
+{"time":"2024-11-14T14:50:36.645763048+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"j0nvkmt8"}}
+{"time":"2024-11-14T14:50:36.646062503+08:00","level":"INFO","msg":"sender: started","stream_id":"j0nvkmt8"}
+{"time":"2024-11-14T14:50:36.646064947+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"j0nvkmt8"}}
+{"time":"2024-11-14T14:50:37.063673406+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-14T16:19:52.937289021+08:00","level":"INFO","msg":"stream: closing","id":"j0nvkmt8"}
+{"time":"2024-11-14T16:19:52.93747688+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-14T16:19:52.948167798+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-14T16:19:54.444573902+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-14T16:19:54.743539288+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"j0nvkmt8"}}
+{"time":"2024-11-14T16:19:54.743606112+08:00","level":"INFO","msg":"sender: closed","stream_id":"j0nvkmt8"}
+{"time":"2024-11-14T16:19:54.743598297+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"j0nvkmt8"}}
+{"time":"2024-11-14T16:19:54.746807804+08:00","level":"INFO","msg":"stream: closed","id":"j0nvkmt8"}

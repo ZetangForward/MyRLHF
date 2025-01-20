@@ -1,0 +1,16 @@
+{"time":"2024-11-14T11:11:53.565488863+08:00","level":"INFO","msg":"using version","core version":"0.18.6"}
+{"time":"2024-11-14T11:11:53.567968781+08:00","level":"INFO","msg":"created symlink","path":"/mnt/petrelfs/tangzecheng/MyRLHF/wandb/run-20241114_111153-mpckwetc/logs/debug-core.log"}
+{"time":"2024-11-14T11:11:53.821198503+08:00","level":"INFO","msg":"created new stream","id":"mpckwetc"}
+{"time":"2024-11-14T11:11:53.822364857+08:00","level":"INFO","msg":"stream: started","id":"mpckwetc"}
+{"time":"2024-11-14T11:11:53.822391879+08:00","level":"INFO","msg":"handler: started","stream_id":{"value":"mpckwetc"}}
+{"time":"2024-11-14T11:11:53.822563865+08:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"mpckwetc"}}
+{"time":"2024-11-14T11:11:53.822570127+08:00","level":"INFO","msg":"sender: started","stream_id":"mpckwetc"}
+{"time":"2024-11-14T11:11:54.275431+08:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-14T13:21:21.736944108+08:00","level":"INFO","msg":"stream: closing","id":"mpckwetc"}
+{"time":"2024-11-14T13:21:21.737041162+08:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-14T13:21:21.740289298+08:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-14T13:21:23.102309334+08:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-14T13:21:23.81290901+08:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"mpckwetc"}}
+{"time":"2024-11-14T13:21:23.81296156+08:00","level":"INFO","msg":"sender: closed","stream_id":"mpckwetc"}
+{"time":"2024-11-14T13:21:23.812952412+08:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"mpckwetc"}}
+{"time":"2024-11-14T13:21:23.815939032+08:00","level":"INFO","msg":"stream: closed","id":"mpckwetc"}
