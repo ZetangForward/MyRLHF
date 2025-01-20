@@ -1,12 +1,12 @@
 import argparse
 import math
 import os
-from datasets import load_from_disk
+from datasets import load_dataset
 from datetime import datetime
 from transformers.trainer import get_scheduler
-from openrlhf.datasets import SFTDataset
+from openrlhf.datasets.lm_dataset import LanguageModelingDataset
 from openrlhf.models import Actor
-from openrlhf.trainer.fdsm_trainer import FDSMTrainer
+from openrlhf.trainer.fdsm_trainer_v2 import FDSMTrainerV2
 from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 
 
@@ -19,10 +19,10 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # configure datasets
-    dataset = load_from_disk(args.dataset)
+    dataset = load_dataset(args.dataset, trust_remote_code=True)
     train_data, eval_data = dataset['train'], dataset['validation']
 
-    train_dataset = SFTDataset(
+    train_dataset = LanguageModelingDataset(
         train_data,
         tokenizer,
         args.max_len,
@@ -31,9 +31,8 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
-        search_clue_seg=False,
     )
-    eval_dataset = SFTDataset(
+    eval_dataset = LanguageModelingDataset(
         eval_data,
         tokenizer,
         args.max_len,
@@ -42,8 +41,10 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
-        search_clue_seg=True,
     )
+
+    print(f"length of train_dataset {len(train_dataset)}")
+    print(f"length of eval_dataset {len(eval_dataset)}")
 
     # prepare dataloader
     train_dataloader = strategy.setup_dataloader(
@@ -53,6 +54,7 @@ def train(args):
         True,
         train_dataset.packing_collate_fn if args.packing_samples else train_dataset.collate_fn,
     )
+
     eval_dataloader = strategy.setup_dataloader(
         eval_dataset,
         args.micro_train_batch_size,
@@ -76,14 +78,6 @@ def train(args):
         packing_samples=args.packing_samples,
     )
 
-    # ref_model = Actor(
-    #     args.pretrain,
-    #     use_flash_attention_2=args.flash_attn,
-    #     bf16=args.bf16,
-    #     load_in_4bit=args.load_in_4bit,
-    #     ds_config=strategy.get_ds_eval_config(offload=args.ref_offload),
-    #     packing_samples=args.packing_samples,
-    # )
     # configure tokenizer
     tokenizer = get_tokenizer(args.pretrain, model.model, "right", strategy, use_fast=not args.disable_fast_tokenizer)
     strategy.print(model)
@@ -123,7 +117,7 @@ def train(args):
     os.makedirs(args.save_path, exist_ok=True)
 
     # configure Trainer
-    trainer = FDSMTrainer(
+    trainer = FDSMTrainerV2(
         model=model,
         # ref_model=ref_model,
         strategy=strategy,
@@ -137,12 +131,6 @@ def train(args):
         max_epochs=args.max_epochs,
         tokenizer=tokenizer,
         adv_epsilon=args.adv_epsilon,
-        sft_weight=args.sft_weight,
-        gan_weight=args.gan_weight,
-        beta=args.beta,
-        gamma_beta_ratio=args.gamma_beta_ratio,
-        label_smoothing=args.label_smoothing,
-        construct_with_lora=args.construct_with_lora
     )
 
     trainer.fit(args, consumed_samples, num_update_steps_per_epoch)
@@ -187,17 +175,11 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=5e-6)
     parser.add_argument("--lr_warmup_ratio", type=float, default=0.03)
     parser.add_argument("--pretrain_mode", action="store_true", default=False, help="Use pretrain loss")
+    parser.add_argument("--search_clue_seg", action="store_true", default=False, help="Whether search for clues in the input")
     parser.add_argument("--lr_scheduler", type=str, default="cosine_with_min_lr")
     parser.add_argument("--l2", type=float, default=0, help="weight decay loss")
     parser.add_argument("--adam_betas", type=float, nargs=2, default=(0.9, 0.95), help="Betas for Adam optimizer")
-    parser.add_argument("--gamma_beta_ratio", type=float, default=0.5)
-    parser.add_argument("--label_smoothing", type=float, default=0.0)
-    parser.add_argument("--beta", type=float, default=0.1)
-    parser.add_argument("--sft_weight", type=float, default=0.1)
-    parser.add_argument("--gan_weight", type=float, default=1)
     parser.add_argument("--adv_epsilon", type=float, default=0.1)
-    parser.add_argument("--ref_offload", action="store_true", default=False)
-    parser.add_argument("--construct_with_lora", action="store_true", default=False)
     
     # ring-attention
     parser.add_argument("--ring_attn_size", type=int, default=1, help="Ring attention group size")
@@ -222,6 +204,7 @@ if __name__ == "__main__":
 
     # custom dataset
     parser.add_argument("--dataset", type=str, default=None)
+    parser.add_argument("--num_training_samples", type=int, default=10000, help="number of training samples")
     parser.add_argument("--dataset_probs", type=str, default="1.0", help="sampling probs for datasets")
     parser.add_argument("--train_split", type=str, default="train", help="train split of the HF dataset")
     parser.add_argument("--eval_split", type=str, default="test", help="test split of the dataset")

@@ -1,18 +1,60 @@
 import os
 from abc import ABC
 import torch
+from typing import Dict, List, Optional, Tuple, Union
 import torch.distributed as dist
 from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
 from torch.nn import functional as F
 from tqdm import tqdm
-from openrlhf.models import GPTLMLoss
+from openrlhf.models import GPTLMLoss, SimPOLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
+def perturb_partial_sequence(sequence, epsilon, perturb_positions):
+    raise NotImplementedError("Only support pretrain mode")
+
+    clue_poss = infos["clue_poss"]
+    non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
+    grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
+    batch_size, seq_len, _ = embeddings.size()
+    grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
+    
+    for batch_idx in range(batch_size):
+        non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
+        cur_clue_pos = clue_poss[batch_idx]
+        clue_positions_set = set()
+        for start, end in cur_clue_pos:
+            clue_positions_set.update(range(start, end))
+            grad_mask[batch_idx, start: end] = 1
+        non_zero_positions_set = set(non_zero_positions)
+        overlap = clue_positions_set & non_zero_positions_set
+        overlap_count = len(overlap)
+        total_clue_positions = len(clue_positions_set)
+        overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
+        # print(f"cur_clue_pos is {cur_clue_pos}")
+        # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
+        # print(f"total_clue_positions is {total_clue_positions}")
+        # print(f"overlap_count is {overlap_count}")
+        # print(f"inputs.shape is {inputs.shape}")
+        # print(f"non_zero_mask.shape is {non_zero_mask.shape}")
+        # print(f"overlap_ratio is {overlap_ratio}")
+
+    context_grad = embeddings.grad.clone().detach()
+    clue_grad = embeddings.grad.clone().detach()
+
+    context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
+    context_adv_embeddings = embeddings + self.adv_epsilon * context_grad.sign()
+
+    clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(1, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
+    clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
+    clue_adv_embeddings = embeddings + self.adv_epsilon * clue_grad.sign()
 
 
-class AnalysisTrainer(ABC):
+
+
+
+class FDSMTrainerV2(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
 
@@ -43,6 +85,7 @@ class AnalysisTrainer(ABC):
         batch_size: int = 1,
         max_epochs: int = 2,
         tokenizer=None,
+        adv_epsilon: float = 0.1,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -57,11 +100,8 @@ class AnalysisTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
-
+        self.adv_epsilon = adv_epsilon
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
-
-        # Mixtral 8*7b
-        self.aux_loss = self.args.aux_loss_coef > 1e-8
 
         # packing samples
         self.packing_samples = strategy.args.packing_samples
@@ -86,8 +126,6 @@ class AnalysisTrainer(ABC):
 
             wandb.define_metric("train/global_step")
             wandb.define_metric("train/*", step_metric="train/global_step", step_sync=True)
-            wandb.define_metric("step_log/mini_batch_step")
-            wandb.define_metric("step_log/*", step_metric="step_log/mini_batch_step", step_sync=True)
             wandb.define_metric("eval/global_step")
             wandb.define_metric("eval/*", step_metric="eval/global_step", step_sync=True)
 
@@ -99,14 +137,56 @@ class AnalysisTrainer(ABC):
             log_dir = os.path.join(self.strategy.args.use_tensorboard, strategy.args.wandb_run_name)
             self._tensorboard = SummaryWriter(log_dir=log_dir)
 
-    def perturb_clue_positions(self):
-        pass
+    def perturb_whole_sequence(self, sequence, epsilon, ring_attn_group=None):
+        """ 
+        Perturb the entire sequence based on the gradient of the sequence.
 
+        Larger gradients result in smaller perturbations, while smaller gradients
+        result in larger perturbations. The noise is injected in the direction of
+        the gradient (or opposite depending on gradient size relative to the average).
 
-    
+        Args:
+            sequence (torch.Tensor): The sequence to perturb, with shape (b, l, d), 
+                                    where `b` is the batch size, `l` is the sequence length, 
+                                    and `d` is the embedding dimension.
+            epsilon (float): The maximum possible perturbation value. Determines the 
+                            scaling factor for the noise.
 
+        Returns:
+            torch.Tensor: The perturbed sequence with the same shape as the input `sequence` (b, l, d).
 
+        Notes:
+            - The gradient of the sequence should be computed prior to calling this function.
+            - Noise is scaled based on the L2 norm of the gradient, with larger gradients receiving
+            smaller perturbations and smaller gradients receiving larger perturbations.
+            - Perturbations are applied in the direction of the gradient for smaller gradients
+            and in the opposite direction for larger gradients.
+        """
+        dist.all_reduce(sequence.grad, op=dist.ReduceOp.SUM, group=self.strategy.ring_attn_group)
 
+        # Calculate the L2 norm of the gradient for each position in the sequence
+        grad_l2_norm = torch.norm(sequence.grad, p=2, dim=2)  # (b, l)
+        sigma = epsilon / (1 + grad_l2_norm)  # (b, l)
+        avg_grad_l2_norm = grad_l2_norm.mean(dim=-1, keepdim=True)  # (b, 1)
+        
+        # Create a mask indicating whether each position's gradient is larger than the average
+        is_large_gradient = grad_l2_norm > avg_grad_l2_norm  # (b, l)
+        grad_sign = sequence.grad.sign()  # (b, l, d)
+        
+        # Generate Gaussian noise with the same shape as the sequence
+        noise = torch.randn_like(sequence, device=sequence.device)  # (b, l, d)
+        noise = noise * grad_sign  # (b, l, d)
+        
+        # Apply perturbation in the direction based on gradient size
+        # For large gradients, perturb in the opposite direction
+        # For small or equal gradients, perturb in the same direction
+        perturbation = torch.where(
+            is_large_gradient.unsqueeze(-1),  # (b, l, 1)
+            -sigma.unsqueeze(-1) * noise,    # Opposite direction for large gradients
+            sigma.unsqueeze(-1) * noise      # Same direction for small gradients
+        )
+
+        return sequence + perturbation
 
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
@@ -120,11 +200,8 @@ class AnalysisTrainer(ABC):
         start_epoch = consumed_samples // args.train_batch_size // num_update_steps_per_epoch
         consumed_samples = consumed_samples % (num_update_steps_per_epoch * args.train_batch_size)
 
-        epoch_bar = tqdm(
-            range(start_epoch, self.epochs),
-            desc="Train epoch",
-            disable=not self.strategy.is_rank_0(),
-        )
+        epoch_bar = tqdm(range(start_epoch, self.epochs), desc="Train epoch", disable=not self.strategy.is_rank_0())
+
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -140,29 +217,11 @@ class AnalysisTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
-            for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader: 
+            for data in self.train_dataloader:
+                prompt_id_lens, inputs, attention_masks, infos = data
                 inputs = inputs.to(torch.cuda.current_device())
                 attention_mask = attention_masks.to(torch.cuda.current_device())
-
-                output, embeddings = self.model.forward_embedding_with_grad(
-                    inputs, 
-                    attention_mask=attention_mask, 
-                    return_output=True,
-                    ring_attn_group=self.strategy.ring_attn_group,
-                    packed_seq_lens=infos["input_length"],
-                )
-
-                # loss function
-                labels = torch.where(
-                    attention_mask.bool(),
-                    inputs,
-                    self.loss_fn.IGNORE_INDEX,
-                )
-                # mixtral
-                if self.aux_loss:
-                    aux_loss = output.aux_loss
-                else:
-                    aux_loss = 0
+                labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
                 if not self.pretrain_mode:
                     if self.packing_samples:
@@ -174,90 +233,58 @@ class AnalysisTrainer(ABC):
                         for label, source_len in zip(labels, prompt_id_lens):
                             label[:source_len] = self.loss_fn.IGNORE_INDEX
 
+                ### ======= obtain the embedding gradient of the base model ====== ###
+                for param in self.model.model.parameters():
+                    param.requires_grad = False
+
+                self.model.model.base_model.disable_adapter_layers()
+
+                embedding_layer = self.model.model.base_model.model.get_input_embeddings()
+                embeddings = embedding_layer(inputs)
+                embeddings.requires_grad = True
+                
+                adv_output = self.model.forward_embedding(
+                    inputs,
+                    inputs_embeds=embeddings,
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                )
+                adv_loss = self.loss_fn(adv_output.logits, labels)
+                adv_loss.backward()
+
+                self.model.model.base_model.enable_adapter_layers()
+
+                if not self.pretrain_mode:
+                    adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
+                else:
+                    adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
+
+                # detach from the original gradient graph
+                adv_embeddings = adv_embeddings.detach().requires_grad_(True)
+
+                torch.cuda.empty_cache()
+
+                output = self.model.forward_embedding(
+                    inputs,
+                    inputs_embeds=adv_embeddings,
+                    attention_mask=attention_mask, 
+                    return_output=True,
+                    ring_attn_group=self.strategy.ring_attn_group,
+                    packed_seq_lens=infos["input_length"],
+                )
 
                 gpt_loss = self.loss_fn(output.logits, labels)
-                loss = gpt_loss + aux_loss * self.args.aux_loss_coef
-                self.strategy.backward(loss, self.model, self.optimizer)
-
-                clue_poss, attack_poss = infos["clue_poss"], infos['attack_poss']
-                non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
-                batch_size, seq_len, embedding_dim = embeddings.size()
-                grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
-
-                # 计算梯度的 L2 范数
-                grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
-                print(f"grad_l2_norm: {grad_l2_norm}")
-                print(f"grad_l2_norm.size(): {grad_l2_norm.size()}")
-                print(f"grad_l2_norm.max(): {grad_l2_norm.max()}")
-                print(f"grad_l2_norm.min(): {grad_l2_norm.min()}")
-                # 排除梯度为零的位置，计算有效位置的平均值
-                non_zero_grad_l2_norm = grad_l2_norm * non_zero_mask
-                grad_mean = (non_zero_grad_l2_norm.sum(dim=1) / non_zero_mask.sum(dim=1).clamp(min=1)).unsqueeze(1)  # (b, 1)
-
-                # 标记梯度大于平均值的位置
-                important_grad_mask = (grad_l2_norm > grad_mean) & non_zero_mask  # (b, l)
-
-                print(f"grad_mean: {grad_mean}")
-                print(f"max grad: {grad_l2_norm.max()}")
-
-                statistic_grad_res = []
-                assert batch_size == 1
-                for batch_idx in range(batch_size): 
-                    non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
-                    important_positions = torch.where(important_grad_mask[batch_idx])[0].tolist()
-                    print(f"important_positions: {important_positions}")
-                    cur_clue_pos, cur_attack_pos = clue_poss[batch_idx], attack_poss[batch_idx]
-                    clue_positions_set, attack_position_set = set(), set()
-                    for start, end in cur_clue_pos:
-                        clue_positions_set.update(range(start, end))
-                        grad_mask[batch_idx, start:end] = 1
-                    for start, end in cur_attack_pos:
-                        attack_position_set.update(range(start, end))
-                        grad_mask[batch_idx, start:end] = 1
-
-
-                    important_positions_set = set(important_positions)
-                    clue_pos_overlap = clue_positions_set & important_positions_set
-                    attack_pos_overlap = attack_position_set & important_positions_set
-
-                    clue_overlap_count = len(clue_pos_overlap)
-                    attack_overlap_count = len(attack_pos_overlap)
-
-                    total_clue_positions = len(clue_positions_set)
-                    total_attack_positions = len(attack_position_set)
-                    important_grad_count = len(important_positions_set)
-
-                    clue_overlap_ratio = clue_overlap_count / total_clue_positions if total_clue_positions > 0 else 0
-                    attack_overlap_ratio = attack_overlap_count / total_attack_positions if total_attack_positions > 0 else 0
-                    
-                    statistic_grad_res.append({
-                        "clue_overlap_count": clue_overlap_count,  # length of clue positions with large gradient 
-                        "clue_overlap_ratio": clue_overlap_ratio,  # overlap ratio of clue position with large gradient among all clue positions
-                        "clue_important_overlap_ratio": clue_overlap_count / important_grad_count if important_grad_count != 0 else 0,   # overlap ratio of import clue positions among all important positions
-                        "attack_overlap_count": attack_overlap_count,  # length of attack positions with large gradient
-                        "attack_overlap_ratio": attack_overlap_ratio,  # overlap ratio of attack position with large gradient among all attack positions
-                        "attack_important_overlap_ratio": attack_overlap_count / important_grad_count if important_grad_count != 0 else 0,  # overlap ratio of import attack positions among all important positions
-                        "important_grad_count": important_grad_count,  # length of all positions with large gradient
-                        "important_grad_ratio": important_grad_count / seq_len,  # ratio of positions with large gradient among all inputs
-                        "context_overlap_ratio": (1 - clue_overlap_count / important_grad_count - attack_overlap_count / important_grad_count) if important_grad_count != 0 else 0,  # ratio of positions of remain positions
-                    })
-                statistic_grad_res = statistic_grad_res[0]
-                statistic_grad_res = self.strategy.all_reduce(statistic_grad_res, "sum")
-                if self._wandb is not None and self.strategy.is_rank_0():
-                    logs = {"step_log/%s" % k: v for k, v in {**statistic_grad_res, "mini_batch_step": step}.items()}
-                    self._wandb.log(logs)
-
+                self.strategy.backward(gpt_loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()
-                
                 logs_dict = {
                     "gpt_loss": gpt_loss.item(),
                     "loss_mean": loss_mean,
                     "lr": self.scheduler.get_last_lr()[0],
                 }
-                if self.aux_loss:
-                    logs_dict["aux_loss"] = aux_loss.item()
-                # step bar
+
                 logs_dict = self.strategy.all_reduce(logs_dict)
                 step_bar.set_postfix(logs_dict)
                 step_bar.update()
@@ -267,7 +294,6 @@ class AnalysisTrainer(ABC):
                     global_step = step // self.strategy.accumulated_gradient
                     client_states = {"consumed_samples": global_step * args.train_batch_size}
                     self.save_logs_and_checkpoints(args, global_step, step_bar, logs_dict, client_states)
-
                 step += 1
 
             epoch_bar.update()
@@ -301,7 +327,7 @@ class AnalysisTrainer(ABC):
             # self.strategy.save_ckpt(
             #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             # )
-            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, "adapter", tag))
+            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
 
 
     def evaluate(self, eval_dataloader, steps=0):
@@ -309,19 +335,16 @@ class AnalysisTrainer(ABC):
         self.model.eval()
         with torch.no_grad():
             loss_sum = 0
-            short_ctx_loss_sum = 0
             step_bar = tqdm(
                 range(eval_dataloader.__len__()),
                 desc="Eval stage of steps %d" % steps,
                 disable=not self.strategy.is_rank_0(),
             )
- 
-            for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in eval_dataloader:
+
+            for prompt_id_lens, inputs, attention_masks, infos in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -330,36 +353,13 @@ class AnalysisTrainer(ABC):
                     output = self.model(inputs, attention_mask=attention_mask, return_output=True)
                 else:
                     output = self.model(
-                        inputs, 
-                        attention_mask=attention_mask, 
+                        inputs,
+                        attention_mask=attention_mask,
                         return_output=True,
                         ring_attn_group=self.strategy.ring_attn_group,
                         packed_seq_lens=infos["input_length"],
                     )
 
-                    clue_output = self.model(
-                        clue_inputs, 
-                        attention_mask=clue_attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["clue_input_length"],
-                    )
-
-                    clue_labels = torch.where(
-                        clue_attention_mask.bool(),
-                        clue_inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
-
-                    index = 0
-                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
-
-                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                    
-                    short_ctx_loss_sum += short_ctx_gpt_loss.item()
-                
                 # loss function
                 labels = torch.where(
                     attention_mask.bool(),
@@ -381,7 +381,7 @@ class AnalysisTrainer(ABC):
 
                 times += 1
                 loss_sum += loss.item()
-                bar_dict = {"eval gpt_loss": loss_sum / times, "eval short_ctx_gpt_loss": short_ctx_loss_sum / times}
+                bar_dict = {"eval gpt_loss": loss_sum / times}
                 step_bar.update()
                 logs = self.strategy.all_reduce(bar_dict)
                 step_bar.set_postfix(logs)
@@ -394,4 +394,3 @@ class AnalysisTrainer(ABC):
                     for k, v in logs.items():
                         self._tensorboard.add_scalar(f"eval/{k}", v, steps)
         self.model.train()  # reset model state
-        

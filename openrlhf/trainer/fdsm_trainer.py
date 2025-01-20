@@ -11,6 +11,97 @@ from openrlhf.models import GPTLMLoss, SimPOLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
+def perturb_partial_sequence(sequence, epsilon, perturb_positions):
+    raise NotImplementedError("Only support pretrain mode")
+
+    clue_poss = infos["clue_poss"]
+    non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
+    grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
+    batch_size, seq_len, _ = embeddings.size()
+    grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
+    
+    for batch_idx in range(batch_size):
+        non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
+        cur_clue_pos = clue_poss[batch_idx]
+        clue_positions_set = set()
+        for start, end in cur_clue_pos:
+            clue_positions_set.update(range(start, end))
+            grad_mask[batch_idx, start: end] = 1
+        non_zero_positions_set = set(non_zero_positions)
+        overlap = clue_positions_set & non_zero_positions_set
+        overlap_count = len(overlap)
+        total_clue_positions = len(clue_positions_set)
+        overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
+        # print(f"cur_clue_pos is {cur_clue_pos}")
+        # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
+        # print(f"total_clue_positions is {total_clue_positions}")
+        # print(f"overlap_count is {overlap_count}")
+        # print(f"inputs.shape is {inputs.shape}")
+        # print(f"non_zero_mask.shape is {non_zero_mask.shape}")
+        # print(f"overlap_ratio is {overlap_ratio}")
+
+    context_grad = embeddings.grad.clone().detach()
+    clue_grad = embeddings.grad.clone().detach()
+
+    context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
+    context_adv_embeddings = embeddings + self.adv_epsilon * context_grad.sign()
+
+    clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(1, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
+    clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
+    clue_adv_embeddings = embeddings + self.adv_epsilon * clue_grad.sign()
+
+
+def perturb_whole_sequence(sequence, epsilon):
+    """ 
+    Perturb the entire sequence based on the gradient of the sequence.
+
+    Larger gradients result in smaller perturbations, while smaller gradients
+    result in larger perturbations. The noise is injected in the direction of
+    the gradient (or opposite depending on gradient size relative to the average).
+
+    Args:
+        sequence (torch.Tensor): The sequence to perturb, with shape (b, l, d), 
+                                 where `b` is the batch size, `l` is the sequence length, 
+                                 and `d` is the embedding dimension.
+        epsilon (float): The maximum possible perturbation value. Determines the 
+                         scaling factor for the noise.
+
+    Returns:
+        torch.Tensor: The perturbed sequence with the same shape as the input `sequence` (b, l, d).
+
+    Notes:
+        - The gradient of the sequence should be computed prior to calling this function.
+        - Noise is scaled based on the L2 norm of the gradient, with larger gradients receiving
+          smaller perturbations and smaller gradients receiving larger perturbations.
+        - Perturbations are applied in the direction of the gradient for smaller gradients
+          and in the opposite direction for larger gradients.
+    """
+    
+    # Calculate the L2 norm of the gradient for each position in the sequence
+    grad_l2_norm = torch.norm(sequence.grad, p=2, dim=2)  # (b, l)
+    sigma = epsilon / (1 + grad_l2_norm)  # (b, l)
+    avg_grad_l2_norm = grad_l2_norm.mean(dim=-1, keepdim=True)  # (b, 1)
+    
+    # Create a mask indicating whether each position's gradient is larger than the average
+    is_large_gradient = grad_l2_norm > avg_grad_l2_norm  # (b, l)
+    grad_sign = sequence.grad.sign()  # (b, l, d)
+    
+    # Generate Gaussian noise with the same shape as the sequence
+    noise = torch.randn_like(sequence, device=sequence.device)  # (b, l, d)
+    noise = noise * grad_sign  # (b, l, d)
+    
+    # Apply perturbation in the direction based on gradient size
+    # For large gradients, perturb in the opposite direction
+    # For small or equal gradients, perturb in the same direction
+    perturbation = torch.where(
+        is_large_gradient.unsqueeze(-1),  # (b, l, 1)
+        -sigma.unsqueeze(-1) * noise,    # Opposite direction for large gradients
+        sigma.unsqueeze(-1) * noise      # Same direction for small gradients
+    )
+    
+    return sequence + perturbation
+
+
 class FDSMTrainer(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
@@ -121,11 +212,8 @@ class FDSMTrainer(ABC):
         start_epoch = consumed_samples // args.train_batch_size // num_update_steps_per_epoch
         consumed_samples = consumed_samples % (num_update_steps_per_epoch * args.train_batch_size)
 
-        epoch_bar = tqdm(
-            range(start_epoch, self.epochs),
-            desc="Train epoch",
-            disable=not self.strategy.is_rank_0(),
-        )
+        epoch_bar = tqdm(range(start_epoch, self.epochs), desc="Train epoch", disable=not self.strategy.is_rank_0())
+
         for epoch in range(start_epoch, self.epochs):
             if isinstance(self.train_dataloader.sampler, DistributedSampler):
                 self.train_dataloader.sampler.set_epoch(
@@ -142,22 +230,28 @@ class FDSMTrainer(ABC):
             self.model.train()
             loss_mean, overlap_mean, acc_mean = 0, 0, 0
             for data in self.train_dataloader:
-                prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
+                prompt_id_lens, inputs, attention_masks, infos, _, _, _ = data
                 inputs = inputs.to(torch.cuda.current_device())
                 attention_mask = attention_masks.to(torch.cuda.current_device())
-
                 labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
 
-                ### ============= 对抗学习逻辑 ============= ###
+                if not self.pretrain_mode:
+                    if self.packing_samples:
+                        index = 0
+                        for input_length, source_len in zip(infos["input_length"], prompt_id_lens):
+                            labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                            index += input_length
+                    else:
+                        for label, source_len in zip(labels, prompt_id_lens):
+                            label[:source_len] = self.loss_fn.IGNORE_INDEX
+
+                ### ======= obtain the embedding gradient of the base model ====== ###
                 for param in self.model.model.parameters():
                     param.requires_grad = False
 
                 embedding_layer = self.model.model.base_model.model.get_input_embeddings()
                 embeddings = embedding_layer(inputs)
                 embeddings.requires_grad = True
-                
-                if not self.construct_with_lora:
-                    self.model.model.base_model.disable_adapter_layers()
                 
                 adv_output = self.model.forward_embedding(
                     inputs,
@@ -170,43 +264,10 @@ class FDSMTrainer(ABC):
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                 adv_loss.backward()
                 
-                if not self.construct_with_lora:
-                    self.model.model.base_model.enable_adapter_layers()
-                
-                clue_poss = infos["clue_poss"]
-                non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
-                batch_size, seq_len, _ = embeddings.size()
-                grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
-                
-                for batch_idx in range(batch_size):
-                    non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
-                    cur_clue_pos = clue_poss[batch_idx]
-                    clue_positions_set = set()
-                    for start, end in cur_clue_pos:
-                        clue_positions_set.update(range(start, end))
-                        grad_mask[batch_idx, start: end] = 1
-                    non_zero_positions_set = set(non_zero_positions)
-                    overlap = clue_positions_set & non_zero_positions_set
-                    overlap_count = len(overlap)
-                    total_clue_positions = len(clue_positions_set)
-                    overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
-                    # print(f"cur_clue_pos is {cur_clue_pos}")
-                    # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
-                    # print(f"total_clue_positions is {total_clue_positions}")
-                    # print(f"overlap_count is {overlap_count}")
-                    # print(f"inputs.shape is {inputs.shape}")
-                    # print(f"non_zero_mask.shape is {non_zero_mask.shape}")
-                    # print(f"overlap_ratio is {overlap_ratio}")
-
-                context_grad = embeddings.grad.clone().detach()
-                clue_grad = embeddings.grad.clone().detach()
-
-                context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
-                context_adv_embeddings = embeddings + self.adv_epsilon * context_grad.sign()
-
-                clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(1, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
-                clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
-                clue_adv_embeddings = embeddings + self.adv_epsilon * clue_grad.sign()
+                if not self.pretrain_mode:
+                    adv_embeddings = perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
+                else:
+                    adv_embeddings = perturb_whole_sequence(embeddings, self.adv_epsilon)
 
                 # 确保新的扰动张量需要梯度
                 context_adv_embeddings = context_adv_embeddings.detach().requires_grad_(True)
