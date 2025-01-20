@@ -72,7 +72,6 @@ class SFTDataset(Dataset):
         self.multiple_of = multiple_of
         self.search_clue_seg = search_clue_seg
 
-        # chat template
         self.input_template = input_template
         self.input_key = getattr(self.strategy.args, "input_key", None)
         self.output_key = getattr(self.strategy.args, "output_key", None)

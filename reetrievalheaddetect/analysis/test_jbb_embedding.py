@@ -434,7 +434,6 @@ def calculate_embedding_portions(saliency,
 
     total_context_length = saliency.shape[0]
 
-    
     _, topk_indices = np_topk(saliency, 20)# NOTE:  embedding 分数最高的20个词
 
     # add: proportion-n: each evidence -> target token
@@ -448,7 +447,6 @@ def calculate_embedding_portions(saliency,
         proportion1 += temp
         # evidence proportions
         evidence_length += (span_idx[1] - span_idx[0])
-
         evidence_proportions += [temp/(span_idx[1] - span_idx[0])]
 
     # proportion2: all context -> target token
@@ -464,9 +462,9 @@ def calculate_embedding_portions(saliency,
     # proportion4: remain context -> target token
     proportion4 = proportion2 - proportion1 - proportion3
 
-    proportion1 = proportion1 / evidence_length if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
+    proportion1 = proportion1 / evidence_length
     proportion2 = proportion2 / total_context_length
-    proportion3 = proportion3 / irr_evidence_length if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
+    proportion3 = proportion3 / irr_evidence_length
     proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
     return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
@@ -513,8 +511,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_embedding(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, 
-                         take_last_loss = True):
+def test_model_embedding(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True):
     """
     zecheng_note: 这里计算的是language modeling loss    
     """
@@ -535,15 +532,17 @@ def test_model_embedding(model, input, golden, search_pos, attack_pos, target_po
     pros_dict = dict()
     saliency = embeddingmanger.grad(use_abs=True)
 
-    proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices =\
-          calculate_embedding_portions(saliency, search_pos, attack_pos, target_poss)
+    proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_embedding_portions(saliency, search_pos, attack_pos, target_poss)
     top_tokens = []
     for idx in topk_indices:
         top_tokens.append(tokenizer.decode(input[0][idx].item()))
 
-    pros_dict['embedding'] = {'score': [proportion1, proportion2, proportion3, proportion4], 
-                              "topk_indices": topk_indices,
-                              'topk_tokens': top_tokens,'evidence_proportions': evidence_proportions}
+    pros_dict['embedding'] = {
+        'score': [proportion1, proportion2, proportion3, proportion4], 
+        "topk_indices": topk_indices,
+        'topk_tokens': top_tokens,
+        'evidence_proportions': evidence_proportions
+    }
     
     return pros_dict
 
@@ -599,6 +598,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
     inp = inp.to(model.device)
+
+    if len(search_pos) != len(evidence_list[selected_idx]) or len(attack_pos) != len(disturb_tok_needles):
+        logger.info("evidence_list:", evidence_list[selected_idx])
+        logger.info("disturb_tok_needles:", disturb_tok_needles)
+        logger.info("search_pos:", search_pos)
+        logger.info("attack_pos:", attack_pos)
+        raise ValueError("evidence_list and disturb_tok_needles length not match!")
     
     with torch.no_grad():
         pred_res = tokenizer.decode(model.generate(inp, max_new_tokens=32, do_sample=False)[0, inp.size(-1):])
