@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=reasoning_head_detection  # 任务名称
+#SBATCH --job-name=0_reasoning_head_detection  # 任务名称
 #SBATCH --nodes=1                            # 使用1个节点
 #SBATCH --ntasks-per-node=1                  # 每个节点运行1个任务
 #SBATCH --cpus-per-task=8                    # 每个任务使用8个CPU核心

@@ -151,13 +151,13 @@ class LLMNeedleHaystackTester:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
 
-    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, step_token_id, topk=1):
+    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, step_token_id, topk=1):
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
-                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos)
+                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
 
-    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int]):
+    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int], irrevelant_pos: List[int]):
         """
         check if the attention index (where the model put attention at) 
         fall into the search_pos or attack_pos scope
@@ -167,7 +167,6 @@ class LLMNeedleHaystackTester:
         1. attention_score = number of attended times for each head
         2. attention_token_id = tokenized index of the attended token
         """
-
         for idx in attention_index:
             if idx in flatten_search_pos:
                 retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
@@ -175,7 +174,7 @@ class LLMNeedleHaystackTester:
             elif idx in flatten_attack_pos:
                 retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['attack_pos']['attention_token_id'].add(step_token_id)
-            else:
+            elif idx < irrevelant_pos[0] and idx >= irrevelant_pos[0]:
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_token_id'].add(step_token_id)
 
@@ -192,7 +191,7 @@ class LLMNeedleHaystackTester:
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
 
-    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos):
+    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos, irrevelant_pos):
         output = []
         retrieval_score = [
             [
@@ -215,7 +214,7 @@ class LLMNeedleHaystackTester:
             inp = outputs.logits[0, -1].argmax()
             step_token = self.enc.decode(inp.item())
             output.append(inp.item())
-            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, inp.item(), topk=1)
+            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, inp.item(), topk=1)
             if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
@@ -271,7 +270,7 @@ class LLMNeedleHaystackTester:
 
         search_pos = self.find_multi_needle_idx(inp[0], evidence)
         attack_pos = self.find_multi_needle_idx(inp[0], disturb_tok_needles)
-
+        irrevelant_pos = [(inp == 128007).nonzero(as_tuple=True)[1][1].item(), (inp == 128009).nonzero(as_tuple=True)[1][-1].item()]  # for llama3.1 model, context is wrapped between <|end_header_id|> (128007) and <|eot_id|> (128009) tokens
         if (len(search_pos) != len(evidence)) or (len(attack_pos) != len(disturb_tok_needles)):
             logger.info("length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case")
             logger.info(f"search_pos length: {len(search_pos)} | evidence length: {len(evidence)}")
@@ -290,7 +289,7 @@ class LLMNeedleHaystackTester:
 
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos)
+            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
         
         logger.info(f"model response: {response}")

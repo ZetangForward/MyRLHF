@@ -9,21 +9,19 @@ Quota information for storage pool Default (ID: 1):
       user/group     ||           size          ||    chunk files    
      name     |  id  ||    used    |    hard    ||  used   |  hard   
 --------------|------||------------|------------||---------|---------
-   tangzecheng|200002796||  776.53 GiB|    1.65 TiB||   477367|unlimited
+   tangzecheng|200002796||  776.92 GiB|    1.65 TiB||   477485|unlimited
 [1;35m📋 Use 'squeue -u tangzecheng' to check the current jobs of the user.[0m
              JOBID  VIRTUAL_PARTITION       NAME     QUOTA_TYPE     USER PHX_PRIORITY ST        TIME  NODES TOTAL_GRES NODELIST(REASON)                        
-           5051242         s2_bigdata reasoning_       reserved tangzech       normal  R        0:00      1      gpu:1 SH-IDC1-10-140-24-27                    
-           5051241         s2_bigdata reasoning_       reserved tangzech       normal  R        0:12      1      gpu:1 SH-IDC1-10-140-24-27                    
-           5051240         s2_bigdata reasoning_       reserved tangzech       normal  R        0:20      1      gpu:1 SH-IDC1-10-140-24-136                   
-           5051238         s2_bigdata reasoning_       reserved tangzech       normal  R        1:46      1      gpu:1 SH-IDC1-10-140-24-56                    
-           5049764          belt_road       bash       reserved tangzech       normal  R     8:18:14      1      gpu:0 SH-IDC1-10-140-24-130                   
-           5049576          belt_road baseline_P       reserved tangzech       normal  R     9:20:11      1      gpu:8 SH-IDC1-10-140-24-72                    
-           5048658          belt_road   Long_PPL       reserved tangzech       normal  R    19:42:10      1      gpu:8 SH-IDC1-10-140-24-86                    
-           5048503          belt_road saliency_s       reserved tangzech       normal  R    22:37:21      1      gpu:8 SH-IDC1-10-140-24-35                    
+           5051705          belt_road 0_reasonin       reserved tangzech       normal  R        0:01      1      gpu:1 SH-IDC1-10-140-24-64                    
+           5051706          belt_road 1900_reaso       reserved tangzech       normal  R        0:01      1      gpu:1 SH-IDC1-10-140-24-64                    
+           5051707          belt_road 3900_reaso       reserved tangzech       normal  R        0:01      1      gpu:1 SH-IDC1-10-140-24-64                    
+           5051708          belt_road 7900_reaso       reserved tangzech       normal  R        0:01      1      gpu:1 SH-IDC1-10-140-24-64                    
+           5051709          belt_road 11900_reas       reserved tangzech       normal  R        0:01      1      gpu:1 SH-IDC1-10-140-24-64                    
+           5051576          belt_road tmp_infere       reserved tangzech       normal  R       57:07      1      gpu:2 SH-IDC1-10-140-24-130                   
+           5049764          belt_road       bash       reserved tangzech       normal  R    10:24:18      1      gpu:0 SH-IDC1-10-140-24-130                   
+           5049576          belt_road baseline_P       reserved tangzech       normal  R    11:26:15      1      gpu:8 SH-IDC1-10-140-24-72                    
+           5048658          belt_road   Long_PPL       reserved tangzech       normal  R    21:48:14      1      gpu:8 SH-IDC1-10-140-24-86                    
+           5048503          belt_road saliency_s       reserved tangzech       normal  R  1-00:43:25      1      gpu:8 SH-IDC1-10-140-24-35                    
 [31m🛑 远程桶未挂载，请使用 quick_mount 命令进行挂载。 [0m
-ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-21 03:23:52
-ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-21 03:24:01
-ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-21 03:24:12
-begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 247.16 KB | file type: jsonl
-begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 247.16 KB | file type: jsonl
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-21 05:30:47
 begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 247.16 KB | file type: jsonl
