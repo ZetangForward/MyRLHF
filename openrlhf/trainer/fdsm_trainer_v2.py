@@ -52,8 +52,6 @@ def perturb_partial_sequence(sequence, epsilon, perturb_positions):
 
 
 
-
-
 class FDSMTrainerV2(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
@@ -237,9 +235,11 @@ class FDSMTrainerV2(ABC):
                 for param in self.model.model.parameters():
                     param.requires_grad = False
 
-                self.model.model.base_model.disable_adapter_layers()
-
-                embedding_layer = self.model.model.base_model.model.get_input_embeddings()
+                if self.args.lora_rank != 0:
+                    self.model.model.base_model.disable_adapter_layers()
+                    embedding_layer = self.model.model.base_model.model.get_input_embeddings()
+                else:
+                    embedding_layer = self.model.model.get_input_embeddings()
                 embeddings = embedding_layer(inputs)
                 embeddings.requires_grad = True
                 
@@ -254,7 +254,8 @@ class FDSMTrainerV2(ABC):
                 adv_loss = self.loss_fn(adv_output.logits, labels)
                 adv_loss.backward()
 
-                self.model.model.base_model.enable_adapter_layers()
+                if self.args.lora_rank != 0:
+                    self.model.model.base_model.enable_adapter_layers()
 
                 if not self.pretrain_mode:
                     adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
