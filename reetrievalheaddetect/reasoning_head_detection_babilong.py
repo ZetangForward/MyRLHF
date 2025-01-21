@@ -10,14 +10,27 @@ import datasets
 import itertools
 import nltk
 import torch
+import emoji
 import random
-from rouge_score import rouge_scorer
 from collections import defaultdict
 from typing import List, Tuple, Optional, Dict
 from tqdm import tqdm
 from loguru import logger
 from modelzipper.tutils import *
-from .utils import get_random_emoji
+
+
+def get_random_emoji(tokenizer, num=50, return_idx=True):
+    all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
+    random_emojis = random.sample(all_emojis, num)
+    print(f"your chose emoji: {random_emojis}")
+
+    if return_idx:
+        index_emojis = []
+        for e in random_emojis:
+            index_emojis.append(tokenizer(e, add_special_tokens=False).input_ids)
+        return index_emojis
+
+    return random_emojis
 
 
 def random_combine(ref:list, att:list):
@@ -376,6 +389,10 @@ class LLMNeedleHaystackTester:
             self.selected_idx = range(len(needle_list))
         
         for context_length in tqdm(self.context_lengths):
+            
+            if context_length == 0:
+                self.inject_emoji_num = 0  # if there is no background text, do not inject emoji
+
             for task_tag in tqdm(["3-hop", "4-hop"]):
                 for s_id in self.selected_idx:
                     if tags[s_id] != task_tag:
@@ -447,7 +464,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
-    parser.add_argument('--inject_emoji_num', type=int, default=0, help='A list of integers')
+    parser.add_argument('--inject_emoji_num', type=int, default=10, help='A list of integers')
     args = parser.parse_args()
 
     ht = LLMNeedleHaystackTester(
