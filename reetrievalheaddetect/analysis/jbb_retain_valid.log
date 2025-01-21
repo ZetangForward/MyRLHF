@@ -1,0 +1,571 @@
+nohup: 忽略输入
+2025-01-22 02:50:20.506 | INFO     | test_jbb_retain:<module>:7 - ['/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis', '/data/anaconda3/envs/zecheng/lib/python310.zip', '/data/anaconda3/envs/zecheng/lib/python3.10', '/data/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/root/.local/lib/python3.10/site-packages', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages', '__editable__.lm_eval-0.4.3.finder.__path_hook__', '__editable__.trl-0.8.7.dev0.finder.__path_hook__', '/data/zecheng/modelzipper/src', '/tmp/tmpbqwucmcp', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-22 02:50:21.160 | INFO     | __main__:<module>:11 - ['/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/faiss_attn', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis', '/data/anaconda3/envs/zecheng/lib/python310.zip', '/data/anaconda3/envs/zecheng/lib/python3.10', '/data/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/root/.local/lib/python3.10/site-packages', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages', '__editable__.lm_eval-0.4.3.finder.__path_hook__', '__editable__.trl-0.8.7.dev0.finder.__path_hook__', '/data/zecheng/modelzipper/src', '/tmp/tmpbqwucmcp', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-22 02:50:21.507 | INFO     | __main__:<module>:72 - Selected idx: 0
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:73 - Question: I have provided you context with the facts about locations and actions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts.
+
+If a person obtained an item in the first location and traveled to the second location, the item is also in the second location.
+If a person left an item in the first location and moved to the second location, the item remains in the first location.
+If a person got an item and traveled to another location, the item will be in the new location unless they dropped it during the journey.
+
+Just return the location directly. Do not write anything else after that.
+
+Question: Where was the football before the bathroom? 
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:74 - Answer: office
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:75 - Tag: 3-hop
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:76 - Needle: [' John went back to the bedroom.', ' John took the milk.', ' Mary journeyed to the office.', ' Sandra journeyed to the bedroom.', ' John journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:77 - Real Needle: [' Mary journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
+2025-01-22 02:50:21.508 | INFO     | __main__:<module>:78 - =============================================
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-22 06:50:14
+Pid: 40834
+begin to read data from /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl | file size: 247.16 KB | file type: jsonl
+  0%|          | 0/100 [00:00<?, ?it/s]You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.37it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.39it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.40it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.86it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.66it/s]
+Processing depth (1, 2, 5, 7):   0%|          | 0/100 [00:10<?, ?it/s]2025-01-22 02:50:31.883 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  Mary journeyed to the office.
+2025-01-22 02:50:31.888 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (1530, 1536) --> . Mary journeyed to the
+2025-01-22 02:50:31.888 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-22 02:50:31.893 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (1530, 1536) --> . Mary journeyed to the
+2025-01-22 02:50:31.893 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Mary dropped the football.
+2025-01-22 02:50:31.910 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (5992, 5996) -->  Mary dropped the football
+2025-01-22 02:50:31.910 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 02:50:31.936 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (8436, 8442) --> . Daniel went back to the
+2025-01-22 02:50:31.936 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 02:50:31.948 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (4182, 4188) --> . John went back to the
+2025-01-22 02:50:31.948 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  John took the milk.
+2025-01-22 02:50:31.960 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (4294, 4298) -->  John took the milk
+2025-01-22 02:50:31.960 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 02:50:31.976 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (5160, 5166) --> . Sandra journeyed to the
+2025-01-22 02:50:31.976 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  John journeyed to the office.
+2025-01-22 02:50:31.981 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (1531, 1537) -->  Mary journeyed to the office
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+2025-01-22 02:50:35.540 | INFO     | test_jbb_retain:begin_test:632 - bedroom<|eot_id|>
+2025-01-22 02:50:35.540 | INFO     | test_jbb_retain:begin_test:634 - torch.Size([1, 12211])
+your chose emoji: ['🤽🏻\u200d♀️', '🙎🏻\u200d♀️', '⛹\u200d♂', '🚿', '💂🏼\u200d♂️', '🤽🏿\u200d♀', '👨🏽\u200d🦯\u200d➡', '🏄\u200d♀️', '🇭🇷', '👩🏾\u200d🍼']
+emoji:
+O: 🤽🏻‍♀️ [9468, 97, 121, 9468, 237, 119, 102470, 32990, 31643]
+N: 🙎🏻‍♀️ [9468, 247, 236, 9468, 237, 119, 102470, 32990, 31643]
+
+O: 🙎🏻‍♀️ [9468, 247, 236, 9468, 237, 119, 102470, 32990, 31643]
+N: ⛹‍♂ [158, 249, 117, 102470, 17245, 224]
+
+O: ⛹‍♂ [158, 249, 117, 102470, 17245, 224]
+N: 🇭🇷 [9468, 229, 255, 9468, 229, 115]
+
+O: 🚿 [9468, 248, 123]
+N: 🤽🏿‍♀ [9468, 97, 121, 9468, 237, 123, 102470, 32990]
+
+O: 💂🏼‍♂️ [93273, 224, 9468, 237, 120, 102470, 17245, 224, 31643]
+N: 🏄‍♀️ [9468, 237, 226, 102470, 32990, 31643]
+
+O: 🤽🏿‍♀ [9468, 97, 121, 9468, 237, 123, 102470, 32990]
+N: 💂🏼‍♂️ [93273, 224, 9468, 237, 120, 102470, 17245, 224, 31643]
+
+O: 👨🏽‍🦯‍➡ [9468, 239, 101, 9468, 237, 121, 102470, 9468, 99, 107, 102470, 98115, 94]
+N: 👨🏽‍🦯‍➡ [9468, 239, 101, 9468, 237, 121, 102470, 9468, 99, 107, 102470, 98115, 94]
+
+O: 🏄‍♀️ [9468, 237, 226, 102470, 32990, 31643]
+N: 🚿 [9468, 248, 123]
+
+O: 🇭🇷 [9468, 229, 255, 9468, 229, 115]
+N: 🤽🏻‍♀️ [9468, 97, 121, 9468, 237, 119, 102470, 32990, 31643]
+
+O: 👩🏾‍🍼 [9468, 239, 102, 9468, 237, 122, 102470, 9468, 104247]
+N: 👩🏾‍🍼 [9468, 239, 102, 9468, 237, 122, 102470, 9468, 104247]
+
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+
+  0%|          | 0/8 [00:00<?, ?it/s][A100%|██████████| 8/8 [00:00<00:00, 219310.01it/s]
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  6.22it/s][A
+ 25%|██▌       | 2/8 [00:00<00:00,  6.21it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  6.02it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.09it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.17it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.20it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.21it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.22it/s][A100%|██████████| 8/8 [00:01<00:00,  6.18it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  5.40it/s][A
+ 25%|██▌       | 2/8 [00:00<00:01,  5.76it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  5.98it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.08it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.19it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.24it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.27it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.29it/s][A100%|██████████| 8/8 [00:01<00:00,  6.15it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  5.23it/s][A
+ 25%|██▌       | 2/8 [00:00<00:01,  5.77it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  5.97it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.04it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.15it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.20it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.23it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.26it/s][A100%|██████████| 8/8 [00:01<00:00,  6.11it/s]
+2025-01-22 02:50:48.526 | INFO     | test_jbb_retain:begin_test:679 - {24: {'grad': {'score': [0.6320384632457386, 0.6889496111981086, 0.6988456032492898, 0.6890346086037973, 1.515113048064403], 'topk_tokens': [' Gal', ' Aw', 're', '17', '�', 'sur', ' Minnesota', ' cont', '�', 'init', ' effect', 'Spring', ' utter', ' sure', 'cont', 'ire', 'con', ' rept', 'active', ' conn'], 'evidence_proportions': [0.7565104166666666, 0.7565104166666666, 0.5540390014648438, 0.4350941975911458]}, 'weight': {'score': [0.03375517509200356, 0.0025694169391434363, 0.008737005970694801, 0.0025018868513747576, 0.002436804465758495], 'topk_tokens': [' the', '.', ' office', 'Answer', '.', '<|start_header_id|>', '<|eot_id|>', '.', ' bathroom', ':', '<|eot_id|>', 'Bridge', 'assistant', ' bedroom', ' bathroom', '<|end_header_id|>', ' bedroom', ' football', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0013168851534525554, 0.0013168851534525554, 0.167236328125, 0.009644319613774618]}, 'saliency': {'score': [0.008627458052201704, 0.00013595395364232704, 0.0004373544996434992, 0.00012005750346726483, 0.0002204149197309445], 'topk_tokens': ['Bridge', ' the', ':', ' John', '.', '<|eot_id|>', '.', 'Question', ' office', '<|eot_id|>', '<|end_header_id|>', ' office', ' random', ' bathroom', '<|begin_of_text|>', ' bedroom', ' bedroom', ' football', ' office', 'office'], 'evidence_proportions': [0.00019356608390808105, 0.00019356608390808105, 0.046596527099609375, 0.00018252929051717123]}}, 25: {'grad': {'score': [1.1635076349431819, 1.1245049620537542, 0.9626853249289773, 1.1247269994613618, 0.617975577329978], 'topk_tokens': [' greet', ' marched', 'age', ' down', ' safe', 'street', 'ing', ' describing', ' neither', ' stere', ' subscribers', ' hundred', ' thirst', 'ation', 'erc', ' returns', 'ing', 'ised', 'le', 'ation'], 'evidence_proportions': [1.2892049153645833, 1.2892049153645833, 0.9432373046875, 1.0589599609375]}, 'weight': {'score': [0.0138497379693118, 0.002548006314332544, 0.0031668354164470325, 0.002526455460798477, 0.0019524884529602833], 'topk_tokens': [' bedroom', ' Dan', ' Mary', '.', ' Mary', '.\n\n', ' football', ' \n', ' random', '<|start_header_id|>', ' THE', 'Answer', '.', '<|eot_id|>', '<|eot_id|>', ':', 'assistant', 'office', '<|end_header_id|>', '<|begin_of_text|>'], 'evidence_proportions': [0.0012209514776865642, 0.0012209514776865642, 0.050197601318359375, 0.014875402053197226]}, 'saliency': {'score': [0.0017716586589813232, 6.299545262629635e-05, 0.00015221129764210093, 5.974511659785043e-05, 0.0001547412994580391], 'topk_tokens': [' Merch', '.', ' Min', ' Mary', ' Dan', ' Mary', 'Mer', ' THE', 'Answer', 'river', ':', ' Merch', 'assistant', ' directly', ' football', ' random', '<|eot_id|>', '<|eot_id|>', '<|end_header_id|>', '<|begin_of_text|>'], 'evidence_proportions': [0.00025719404220581055, 0.00025719404220581055, 0.00784921646118164, 0.0007488826910654703]}}, 26: {'grad': {'score': [0.9302943836558949, 0.9439571627057234, 1.3003817471590908, 0.9433374930764294, 0.5591656611515925], 'topk_tokens': [' marched', ' Press', 'BO', ' being', ' Col', ' Field', ' leap', ' go', ' not', ' to', ' worth', ' mar', ' Guards', ' some', ' str', ' Marshall', 'oth', 'burn', ' Press', ' went'], 'evidence_proportions': [1.1322428385416667, 1.1322428385416667, 0.1555938720703125, 1.042864481608073]}, 'weight': {'score': [0.005644326860254461, 0.0025225031593552015, 0.0025328316471793437, 0.0025168406276638616, 0.002024886699823233], 'topk_tokens': [' football', '.\n\n', ' bedroom', ' the', '?', ' the', ' bathroom', ' bedroom', '<|eot_id|>', '<|eot_id|>', 'Bridge', 'Answer', ' \n', '<|start_header_id|>', ' the', 'assistant', 'office', '<|end_header_id|>', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0001993378003438314, 0.0001993378003438314, 0.021697998046875, 0.005831857522328694]}, 'saliency': {'score': [0.00024876269427212804, 8.914335582411125e-05, 0.00028993324799971146, 8.849178190072234e-05, 0.00022476987961011054], 'topk_tokens': [' old', '.', '<|eot_id|>', ' the', '�', 'assistant', ' John', ' Father', '<|start_header_id|>', 'Answer', ' Bridge', ' the', ' bedroom', ' the', ':', ' bedroom', '<|begin_of_text|>', 'Bridge', '<|end_header_id|>', 'office'], 'evidence_proportions': [3.796815872192383e-05, 3.796815872192383e-05, 0.0005128979682922363, 0.0004942615826924642]}}, 27: {'grad': {'score': [0.584839560768821, 0.5557954382625072, 0.3554937189275568, 0.5561050501558615, 0.5017362741323618], 'topk_tokens': [' plainly', ' exchanged', ' opposition', 'ly', 'off', 'conciliation', ' earnest', ' remember', ' EX', ' very', ' told', '�', ' ar', '-back', 'remember', 'ile', '-per', ' N', ' very', ' per'], 'evidence_proportions': [0.622100830078125, 0.622100830078125, 0.4389305114746094, 0.6075897216796875]}, 'weight': {'score': [0.010772510008378462, 0.0025478140645849804, 0.0037655098871751265, 0.0025307434245274213, 0.0030283102622398962], 'topk_tokens': ['<|eot_id|>', '<|eot_id|>', ' John', ' Bridge', ' football', ' \n', 'Bridge', ' football', ' bedroom', ' bathroom', 'Answer', ' bedroom', '<|start_header_id|>', 'assistant', ' THE', '.\n\n', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.000892867644627889, 0.000892867644627889, 0.04674816131591797, 0.0065480271975199384]}, 'saliency': {'score': [0.0018945255062796853, 0.00012078355885856052, 0.0008130290291526101, 0.00011632536811242412, 0.0003836537018800393], 'topk_tokens': [' the', ' the', ' kitchen', ' ST', 'THE', ' Mary', ' office', 'assistant', ' bathroom', ' football', '.', '<|begin_of_text|>', ' bedroom', ' John', ' bedroom', '<|end_header_id|>', ' THE', '.\n\n', ':', 'office'], 'evidence_proportions': [0.00015977025032043457, 0.00015977025032043457, 0.008615434169769287, 0.0008834302425384521]}}, 28: {'grad': {'score': [0.7983946366743608, 0.6757731739488659, 0.7453751997514204, 0.6754256583972498, 0.5264403514372997], 'topk_tokens': [' have', ' returns', 'half', ' population', ' at', ' following', ' balance', ' locality', 'half', ' ', 'hom', ' about', ' ', '600', ' next', 'na', ' reached', ' be', 'been', ' ins'], 'evidence_proportions': [0.7570088704427084, 0.7570088704427084, 0.8398704528808594, 0.853515625]}, 'weight': {'score': [0.006072735244577581, 0.0024476983296747223, 0.006300639022480358, 0.0024341790998801964, 0.002048154671986898], 'topk_tokens': [' football', ' Bridge', 'Question', ' the', ' the', '.\n\n', '?', ' before', ' the', ' bathroom', '<|eot_id|>', 'Answer', '<|eot_id|>', '<|start_header_id|>', ' \n', 'assistant', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [6.73830509185791e-05, 6.73830509185791e-05, 0.013498306274414062, 0.01313305894533793]}, 'saliency': {'score': [0.0006649819287386807, 5.02079844835944e-05, 0.0005814839493144642, 4.8136072411945866e-05, 9.622023655818059e-05], 'topk_tokens': [' the', ' the', ' before', ' Bridge', ' the', ' the', '<|eot_id|>', '.', ' football', ' bedroom', ' kitchen', ' \n', ' bedroom', '<|end_header_id|>', 'Answer', ' Bridge', ' Far', ':', 'assistant', 'office'], 'evidence_proportions': [4.4604142506917315e-06, 4.4604142506917315e-06, 0.002550482749938965, 0.0007290244102478027]}}, 29: {'grad': {'score': [0.6922773881392046, 0.8598149448845492, 0.8588756214488636, 0.8601195295968496, 0.6497112176357172], 'topk_tokens': [' mail', '\n', 'Lu', '\n', '\n', 'nes', ' to', ' regular', '\n', '\n', '\n', 'mail', ' o', ' The', ' ox', 'paper', '\n', '\n', ' Press', '\n'], 'evidence_proportions': [0.6604817708333334, 0.6604817708333334, 0.63055419921875, 0.7970174153645834]}, 'weight': {'score': [0.003987393595955588, 0.002522098513460858, 0.0039956054904244165, 0.0025167855341438985, 0.0016594957082699507], 'topk_tokens': [' football', 'Question', ' the', ' Where', ' Does', ' bathroom', '?', ' before', '<|eot_id|>', '.\n\n', '<|eot_id|>', ' the', ' \n', 'Answer', 'assistant', '<|end_header_id|>', '<|start_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [4.505117734273275e-05, 4.505117734273275e-05, 0.009828567504882812, 0.007977962493896484]}, 'saliency': {'score': [0.00032358277927745473, 5.0020961672455636e-05, 0.0003309222784909335, 4.901856304008515e-05, 0.00016201306612063677], 'topk_tokens': ['NEW', ' to', ' the', 'IVE', ' before', 'Does', '?', ' the', '<|eot_id|>', ' the', ' part', ' Does', '<|eot_id|>', '<|begin_of_text|>', 'Answer', '<|end_header_id|>', ' \n', '<|start_header_id|>', 'office', ':'], 'evidence_proportions': [4.827976226806641e-06, 4.827976226806641e-06, 0.0007153749465942383, 0.0006998976071675619]}}, 30: {'grad': {'score': [1.12109375, 1.3431053552055188, 1.2409203269264915, 1.3436914613717328, 1.287910901583158], 'topk_tokens': ['ob', ' office', ' Paul', ' need', ' men', ' an', ' o', 'G', 'Emp', ' months', ' the', ' o', ' account', 'office', '2', ' o', '3', 'op', 'deal', ' O'], 'evidence_proportions': [1.1216227213541667, 1.1216227213541667, 1.25006103515625, 1.0340576171875]}, 'weight': {'score': [0.012442667375911366, 0.0024586818654150867, 0.013547360897064209, 0.0024205851754711964, 0.00717083460245377], 'topk_tokens': ['.', ' the', ' the', ' the', '<|eot_id|>', '?', ' the', '<|eot_id|>', ' the', 'Question', '.\n\n', ' bathroom', 'Answer', 'assistant', '<|start_header_id|>', ' \n', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0007086396217346191, 0.0007086396217346191, 0.03233051300048828, 0.022652159134546917]}, 'saliency': {'score': [0.0018893046812577682, 0.0001939558664645335, 0.0016281550580804999, 0.00018829804280268763, 0.0007540186246236166], 'topk_tokens': [' the', '<|eot_id|>', ' John', ' the', ' the', ' the', ' bedroom', ' the', 'assistant', '?', ' \n', ' football', 'Question', ' bathroom', ' office', '<|start_header_id|>', '<|end_header_id|>', ':', '<|begin_of_text|>', 'office'], 'evidence_proportions': [8.762876192728679e-05, 8.762876192728679e-05, 0.008334696292877197, 0.0011957287788391113]}}, 31: {'grad': {'score': [0.6001531427556818, 0.8234638391212233, 0.47555403275923297, 0.8244965329382999, 0.47815846174191207], 'topk_tokens': [' was', ' Bre', 'uch', ' be', ' an', ' an', ' Bu', 'yl', '26', ' w', ' B', ' Bre', ' an', ' C', ' W', ' H', ' W', ' Aw', ' Aw', ' C'], 'evidence_proportions': [0.4562581380208333, 0.4562581380208333, 1.06072998046875, 0.5808919270833334]}, 'weight': {'score': [0.0017346197908574884, 0.002294935836923178, 0.0008867112073031338, 0.0022984947074026823, 0.001240459008094592], 'topk_tokens': [' bathroom', ':', ' the', ' football', ' before', 'Question', '?', '.\n\n', ' the', ' Where', '<|eot_id|>', 'Answer', '<|start_header_id|>', ' \n', '<|eot_id|>', 'assistant', '<|end_header_id|>', ':', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.00025912125905354816, 0.00025912125905354816, 0.0060536861419677734, 0.0018062392870585124]}, 'saliency': {'score': [0.00015721808780323374, 6.698372224854436e-05, 8.92660834572532e-05, 6.678030635662268e-05, 7.912134512876853e-05], 'topk_tokens': ['.', ' Do', ':', ' the', '?', 'Question', ' the', ' before', ' Where', ' the', ' football', ':', '<|eot_id|>', '<|start_header_id|>', ' the', '<|end_header_id|>', 'office', ' \n', '<|begin_of_text|>', 'assistant'], 'evidence_proportions': [7.818142573038736e-06, 7.818142573038736e-06, 0.0006912350654602051, 0.0001000066598256429]}}, 'pred_res': 'bedroom<|eot_id|>', 'score': 0}
+2025-01-22 02:50:48.527 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 02:50:48.527 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-0_1-2-5-7.pkl | len: 10 |  size: 9.12 KB
+Processing depth (1, 2, 5, 7):   1%|          | 1/100 [00:26<44:24, 26.92s/it]is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.34it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.38it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.39it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.86it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.64it/s]
+Processing depth (0, 1, 2, 9):   1%|          | 1/100 [00:34<44:24, 26.92s/it]2025-01-22 02:50:56.058 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  Mary journeyed to the office.
+2025-01-22 02:50:56.058 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
+2025-01-22 02:50:56.058 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-22 02:50:56.063 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (1537, 1543) --> . Mary journeyed to the
+2025-01-22 02:50:56.063 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Mary dropped the football.
+2025-01-22 02:50:56.070 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (2503, 2507) -->  Mary dropped the football
+2025-01-22 02:50:56.070 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 02:50:56.102 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (10768, 10774) --> . Daniel went back to the
+2025-01-22 02:50:56.102 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 02:50:56.114 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (4152, 4158) -->  St. John went back to
+2025-01-22 02:50:56.114 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  John took the milk.
+2025-01-22 02:50:56.126 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (4279, 4283) -->  John took the milk
+2025-01-22 02:50:56.126 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 02:50:56.141 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (5098, 5104) --> . Sandra journeyed to the
+2025-01-22 02:50:56.141 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  John journeyed to the office.
+2025-01-22 02:50:56.141 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 02:50:58.271 | INFO     | test_jbb_retain:begin_test:632 - The office.<|eot_id|>
+2025-01-22 02:50:58.271 | INFO     | test_jbb_retain:begin_test:634 - torch.Size([1, 12215])
+your chose emoji: ['👩🏾\u200d🤝\u200d👨🏿', '🔽', '👩🏽\u200d🤝\u200d👨🏾', '🇧🇿', '🚴🏼\u200d♀', '🏨', '👩🏿\u200d🚒', '🇧🇶', '🤵🏻', '👎🏻']
+emoji:
+O: 👩🏾‍🤝‍👨🏿 [9468, 239, 102, 9468, 237, 122, 102470, 9468, 97, 251, 102470, 9468, 239, 101, 9468, 237, 123]
+N: 👩🏾‍🤝‍👨🏿 [9468, 239, 102, 9468, 237, 122, 102470, 9468, 97, 251, 102470, 9468, 239, 101, 9468, 237, 123]
+
+O: 🔽 [9468, 242, 121]
+N: 👩🏽‍🤝‍👨🏾 [9468, 239, 102, 9468, 237, 121, 102470, 9468, 97, 251, 102470, 9468, 239, 101, 9468, 237, 122]
+
+O: 👩🏽‍🤝‍👨🏾 [9468, 239, 102, 9468, 237, 121, 102470, 9468, 97, 251, 102470, 9468, 239, 101, 9468, 237, 122]
+N: 🏨 [9468, 237, 101]
+
+O: 🇧🇿 [9468, 229, 100, 9468, 229, 123]
+N: 🔽 [9468, 242, 121]
+
+O: 🚴🏼‍♀ [9468, 248, 112, 9468, 237, 120, 102470, 32990]
+N: 🇧🇶 [9468, 229, 100, 9468, 229, 114]
+
+O: 🏨 [9468, 237, 101]
+N: 🤵🏻 [9468, 97, 113, 9468, 237, 119]
+
+O: 👩🏿‍🚒 [9468, 239, 102, 9468, 237, 123, 102470, 9468, 248, 240]
+N: 🚴🏼‍♀ [9468, 248, 112, 9468, 237, 120, 102470, 32990]
+
+O: 🇧🇶 [9468, 229, 100, 9468, 229, 114]
+N: 🇧🇿 [9468, 229, 100, 9468, 229, 123]
+
+O: 🤵🏻 [9468, 97, 113, 9468, 237, 119]
+N: 👩🏿‍🚒 [9468, 239, 102, 9468, 237, 123, 102470, 9468, 248, 240]
+
+O: 👎🏻 [9468, 239, 236, 9468, 237, 119]
+N: 👎🏻 [9468, 239, 236, 9468, 237, 119]
+
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+
+  0%|          | 0/8 [00:00<?, ?it/s][A100%|██████████| 8/8 [00:00<00:00, 222214.78it/s]
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:05<00:37,  5.34s/it][A
+ 38%|███▊      | 3/8 [00:05<00:07,  1.42s/it][A
+ 75%|███████▌  | 6/8 [00:05<00:01,  1.74it/s][A100%|██████████| 8/8 [00:05<00:00,  1.42it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 25%|██▌       | 2/8 [00:00<00:00, 16.41it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00, 19.65it/s][A
+100%|██████████| 8/8 [00:00<00:00, 21.75it/s][A100%|██████████| 8/8 [00:00<00:00, 20.86it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 25%|██▌       | 2/8 [00:00<00:00, 15.50it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00, 19.34it/s][A
+100%|██████████| 8/8 [00:00<00:00, 21.56it/s][A100%|██████████| 8/8 [00:00<00:00, 20.56it/s]
+2025-01-22 02:51:07.579 | INFO     | test_jbb_retain:begin_test:679 - {24: {'grad': {'score': [0.43882265957919037, 0.6074819059763035, 0.4566400701349432, 0.6080593333819756, 0.8244198124583174], 'topk_tokens': [' of', ' the', ' a', ' cont', 'cont', 'active', ' Minnesota', ' the', ' marched', ' the', ' Min', ' mentioned', ' Minneapolis', ' glance', 'ire', ' the', 'super', 'Minnesota', ' Minnesota', ' Minnesota'], 'evidence_proportions': [0.5543619791666666, 0.4007568359375, 0.354827880859375, 0.41734568277994794]}, 'weight': {'score': [0.040741714564236725, 0.002565091181437591, 0.010691014203158293, 0.002481409589315728, 0.000999720358267063], 'topk_tokens': [' bedroom', ' office', ' Mary', 'Answer', ' Newspaper', ' bathroom', 'Bridge', '<|start_header_id|>', ' office', '<|eot_id|>', ' the', ':', 'assistant', '<|eot_id|>', ' bathroom', ' bedroom', ' football', '<|end_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0065869490305582685, 0.045346726973851524, 0.1420745849609375, 0.0027362207571665445]}, 'saliency': {'score': [0.006793688644062389, 6.562625072860499e-05, 0.0008660148490558971, 5.202024384315821e-05, 3.867469182828578e-05], 'topk_tokens': ['Bridge', ' Newspaper', '<|begin_of_text|>', '.', ' office', ' milk', ':', '<|end_header_id|>', '<|eot_id|>', 'Question', '<|eot_id|>', ' bathroom', ' Mary', ' Married', ' bedroom', ' the', ' football', ' Mary', 'office', ' bedroom'], 'evidence_proportions': [0.0008903741836547852, 0.009778052568435669, 0.02120821177959442, 0.00010295708974202474]}}, 25: {'grad': {'score': [0.6956925825639204, 0.6137401552396251, 0.5068775523792614, 0.613785174861887, 0.3869489344154916], 'topk_tokens': [' sort', ' printing', '\n', ' extraordinary', '\n', 'ylinder', ' the', ' private', 'ervative', 'ised', ' the', ' Wood', 'ing', 'ing', 'ers', ' very', 'ation', 'ting', 'ation', 'erc'], 'evidence_proportions': [0.6342366536458334, 0.866180419921875, 0.7572021484375, 0.545654296875]}, 'weight': {'score': [0.019967856732281773, 0.002543724255523969, 0.004500505599108609, 0.0025086975485456124, 0.0006213398968301168], 'topk_tokens': [' bathroom', "'s", '.\n\n', ' football', ' Married', '<|start_header_id|>', ' the', ' \n', ' Mary', ' the', 'Answer', ' Mary', '<|eot_id|>', '<|eot_id|>', ':', 'assistant', ' Dan', 'office', '<|end_header_id|>', '<|begin_of_text|>'], 'evidence_proportions': [0.0014562606811523438, 0.03651853402455648, 0.0503692626953125, 0.001661171515782674]}, 'saliency': {'score': [0.002264394001527266, 5.592974057571874e-05, 0.0001842542128129439, 5.170651276579901e-05, 1.8736211265005715e-05], 'topk_tokens': [' Press', ' Minneapolis', 'ers', ' boat', ' Min', ' Press', ' Marshall', ' the', ' Anthony', ' Min', '<|begin_of_text|>', ' Mary', 'Answer', 'Mary', ':', ' Mary', '<|eot_id|>', '<|eot_id|>', ' Married', '<|end_header_id|>'], 'evidence_proportions': [3.936886787414551e-05, 0.0052527983983357745, 0.004443526268005371, 4.8259894053141274e-05]}}, 26: {'grad': {'score': [1.2668789950284092, 1.1480538133338791, 1.5781693892045454, 1.1470617245581922, 0.746100821146151], 'topk_tokens': [' journey', 'BO', ' some', 'st', 'little', ' mar', ' black', ' Col', ' worth', 'ol', ' Press', ' Merch', ' generally', 'str', ' gold', ' STR', ' gold', ' generally', ' Guards', ' str'], 'evidence_proportions': [1.6548665364583333, 1.1003824869791667, 1.0072021484375, 1.218505859375]}, 'weight': {'score': [0.008732112971219149, 0.0025013658783191294, 0.0035986791957508435, 0.0024881220330034886, 0.0005918326901226509], 'topk_tokens': [' Dan', ' Married', ' before', ' circus', '.\n\n', ' football', 'Bridge', '?', '<|eot_id|>', ' bathroom', '<|eot_id|>', 'Answer', ' \n', '<|start_header_id|>', 'assistant', ' the', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0010562737782796223, 0.01570729414621989, 0.01661825180053711, 0.004175345102945964]}, 'saliency': {'score': [0.0012047155336900191, 7.805649032274283e-05, 0.0004746344956484708, 7.530357690195535e-05, 3.6444605850591895e-05], 'topk_tokens': ['?', ' bedroom', ' \n', ' Mary', 'assistant', ' bathroom', ' Bridge', 'Answer', ' Father', ' Married', ' bathroom', ' bedroom', '<|start_header_id|>', ' Dan', 'Bridge', '<|begin_of_text|>', '<|end_header_id|>', ' the', ':', 'office'], 'evidence_proportions': [0.0001617570718129476, 0.0025559564431508384, 0.001869797706604004, 0.00045304497083028156]}}, 27: {'grad': {'score': [0.4123545559969815, 0.5045547604004665, 0.2712175195867365, 0.505143097194583, 0.40713975487685783], 'topk_tokens': ['remember', 'ATION', ' print', ' product', ' vigilant', ' carn', ' plainly', 'ly', 'na', ' Wins', ' earnest', ' noble', ' N', ' Wins', ' N', ' notified', 'ile', '185', 'n', 'bread'], 'evidence_proportions': [0.3603312174479167, 0.5135701497395834, 0.4816169738769531, 0.3169873555501302]}, 'weight': {'score': [0.021373805674639614, 0.00254488736817965, 0.005387918515638871, 0.0025057201219801737, 0.0009527068312575178], 'topk_tokens': [' before', ' THE', ' the', '<|eot_id|>', '<|eot_id|>', '.', ' Mary', ' \n', ' football', ' bathroom', ' football', ' Dan', 'Answer', '<|start_header_id|>', 'assistant', '.\n\n', '<|end_header_id|>', ':', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0033669471740722656, 0.03614975015322367, 0.05430459976196289, 0.0026508569717407227]}, 'saliency': {'score': [0.005333957347002896, 0.0001272379088403746, 0.0007758411494168369, 0.00011665571062035836, 9.807072034696253e-05], 'topk_tokens': ['Question', 'assistant', ' football', ' Anthony', 'From', ' THE', ' ST', ' the', ' bathroom', ' Father', '.', '.', ' Mary', 'Mary', ':', '<|begin_of_text|>', ' Mary', '.\n\n', '<|end_header_id|>', 'office'], 'evidence_proportions': [0.0004204412301381429, 0.012372384468714396, 0.009805142879486084, 0.0002282559871673584]}}, 28: {'grad': {'score': [0.581260160966353, 0.5242339296037284, 0.5792036923495206, 0.5240315216623511, 0.525902352681974], 'topk_tokens': [' become', ' to', '      ', ' escaping', ' genu', ' July', ' July', 'ily', ' Gov', '600', ' adj', 'e', 't', 'ib', ' July', ' reached', ' fel', ' endeavor', ' firm', ' ins'], 'evidence_proportions': [0.4596945444742839, 0.7116902669270834, 0.79779052734375, 0.42804209391276044]}, 'weight': {'score': [0.009694606065750122, 0.002431393489320881, 0.006491159850900824, 0.0024109297140283317, 0.00034525263600233125], 'topk_tokens': [' the', ' the', ' the', ' football', 'Question', '.\n\n', ' the', '<|eot_id|>', ' before', '?', ' bathroom', 'Answer', '<|eot_id|>', ' \n', 'assistant', '<|start_header_id|>', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0005389551321665446, 0.009304225444793701, 0.005986213684082031, 0.021712899208068848]}, 'saliency': {'score': [0.0009953488003123891, 6.358430986075781e-05, 0.0004115104675292969, 6.127155258985962e-05, 1.240358120057641e-05], 'topk_tokens': ['Question', ' office', ' during', ' before', ' the', ' the', '.\n\n', ' Far', '<|eot_id|>', ' \n', ' the', ' Bridge', ' the', '<|end_header_id|>', ' Bridge', '<|start_header_id|>', 'assistant', 'office', '<|begin_of_text|>', ':'], 'evidence_proportions': [5.11010487874349e-05, 0.002260814110438029, 0.0008490681648254395, 0.0007716516653696696]}}, 29: {'grad': {'score': [0.7701776677911932, 0.7343877096208152, 0.8681293834339489, 0.7340813187637022, 0.6825292633800972], 'topk_tokens': [' Paul', 'mail', ' packets', ' Press', ' The', 'paper', ' mail', ' The', ' the', ' paper', ' should', ' months', 'boat', ' should', 'ants', 'ION', ' routes', ' were', ' NEW', '\n'], 'evidence_proportions': [1.1407063802083333, 0.7847493489583334, 0.4818115234375, 0.5773213704427084]}, 'weight': {'score': [0.007236117666417902, 0.0025188723630734195, 0.005399145863272927, 0.002505141531423213, 0.00043638377654843215], 'topk_tokens': [' the', ':', 'Question', '?', ' bathroom', ' Where', '<|eot_id|>', '<|eot_id|>', '.\n\n', ' before', ' Does', ' the', ' \n', 'Answer', 'assistant', '<|end_header_id|>', '<|start_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0023800134658813477, 0.011032402515411377, 0.01581573486328125, 0.0025761922200520835]}, 'saliency': {'score': [0.0005666451020674272, 4.718035247289404e-05, 0.0006576993248679421, 4.513815729637462e-05, 2.977033940757193e-05], 'topk_tokens': ['nes', '"The', ' before', ' bathroom', ' from', 'Does', ' Where', '      ', ' Do', '<|end_header_id|>', '.', ' the', ' the', ' Does', 'Answer', ' \n', '<|begin_of_text|>', '<|start_header_id|>', 'office', ':'], 'evidence_proportions': [0.000515530506769816, 0.0008419156074523926, 0.0009510070085525513, 8.624792098999023e-05]}}, 30: {'grad': {'score': [0.6851362748579546, 0.5959318981746746, 0.5844338156960227, 0.5957914612673797, 0.7378350234613186], 'topk_tokens': ['Country', ' Sons', ' O', 'ch', ' Falls', 'con', ' Project', ' Bull', ' States', ' Falls', ' Bridge', ' Published', ' Crew', 'ire', ' Collection', ' o', ' o', ' o', ' Was', ' o'], 'evidence_proportions': [0.625274658203125, 0.8132527669270834, 0.6743316650390625, 0.62408447265625]}, 'weight': {'score': [0.013312415643171831, 0.0024277642655901486, 0.020163221792741257, 0.0023760397608744563, 0.0027473481690011375], 'topk_tokens': ['.', ' Where', '<|eot_id|>', ':', ' Dan', ' the', '<|eot_id|>', '?', '.\n\n', ' the', ' bathroom', 'Question', 'Answer', 'assistant', ' \n', '<|end_header_id|>', '<|start_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0018849372863769531, 0.02295859654744466, 0.019311904907226562, 0.011094053586324057]}, 'saliency': {'score': [0.0037786879322745585, 0.00010722688735970657, 0.0017938397147438743, 9.754335616849828e-05, 0.0001646723689102545], 'topk_tokens': [' Dan', ' Married', ' Sandra', 'Mary', '?', ' the', '.', ' office', 'Gov', ' Mary', '.', ' the', 'assistant', ' bathroom', '<|end_header_id|>', ':', 'Question', '<|start_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.00031324227650960285, 0.0090140700340271, 0.005143165588378906, 0.0010990997155507405]}}, 31: {'grad': {'score': [0.7175844365900214, 0.6181991938103667, 0.6388355601917614, 0.6179822813482339, 0.42744887747415683], 'topk_tokens': ['k', ' Mr', ' members', ' the', ' membership', ' J', ' an', ' an', ' Married', ' DAYS', ' marriage', 'IR', ' M', ' most', ' DAY', ' Mr', 'Mary', ' M', ' Mr', 'Mr'], 'evidence_proportions': [0.6812337239583334, 0.8812255859375, 1.00439453125, 0.39908727010091144]}, 'weight': {'score': [0.0026420544494282117, 0.002308919131780223, 0.0010810792446136475, 0.0023105361120258, 0.00046364054447267113], 'topk_tokens': [' the', ' bathroom', ' football', ' before', ':', '?', 'Question', '.\n\n', '<|eot_id|>', ' the', ' Where', 'Answer', ' \n', '<|eot_id|>', '<|start_header_id|>', 'assistant', ':', '<|end_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0007049640019734701, 0.0029258628686269126, 0.004266977310180664, 0.0032120545705159507]}, 'saliency': {'score': [0.0008580576289783825, 9.845176831667188e-05, 0.000291144306009466, 9.67306999880923e-05, 1.8300806603780608e-05], 'topk_tokens': ['?', 'Mary', ' was', 'ot', ' Mary', ' office', 'Question', ' before', ' the', '.', '<|eot_id|>', ' the', '<|end_header_id|>', ' the', ' \n', ':', '<|begin_of_text|>', 'assistant', '<|start_header_id|>', 'office'], 'evidence_proportions': [0.0005667706330617269, 0.001193543275197347, 0.0015006810426712036, 0.00038544336954752606]}}, 'pred_res': 'The office.<|eot_id|>', 'score': 100}
+2025-01-22 02:51:07.581 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 02:51:07.581 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-1_0-1-2-9.pkl | len: 10 |  size: 9.24 KB
+Processing depth (0, 1, 2, 9):   2%|▏         | 2/100 [00:45<36:25, 22.30s/it]is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.35it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.39it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.41it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.87it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.66it/s]
+Processing depth (0, 1, 7, 8):   2%|▏         | 2/100 [00:53<36:25, 22.30s/it]2025-01-22 02:51:14.896 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  Mary journeyed to the office.
+2025-01-22 02:51:14.896 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
+2025-01-22 02:51:14.896 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-22 02:51:14.901 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (1537, 1543) --> . Mary journeyed to the
+2025-01-22 02:51:14.901 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Mary dropped the football.
+2025-01-22 02:51:14.925 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (8443, 8447) -->  Mary dropped the football
+2025-01-22 02:51:14.925 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 02:51:14.954 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (9679, 9685) -->  Daniel went back to the kitchen
+2025-01-22 02:51:14.954 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 02:51:14.967 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (4183, 4189) --> . John went back to the
+2025-01-22 02:51:14.967 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  John took the milk.
+2025-01-22 02:51:14.979 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (4295, 4299) -->  John took the milk
+2025-01-22 02:51:14.979 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 02:51:14.994 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (5124, 5130) --> . Sandra journeyed to the
+2025-01-22 02:51:14.994 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  John journeyed to the office.
+2025-01-22 02:51:14.994 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 02:51:17.259 | INFO     | test_jbb_retain:begin_test:632 - The bedroom.<|eot_id|>
+2025-01-22 02:51:17.259 | INFO     | test_jbb_retain:begin_test:634 - torch.Size([1, 12210])
+your chose emoji: ['👨🏿\u200d🦯', '🔭', '👴🏾', '🧑🏽\u200d🦰', '🇲🇴', '\U0001faad', '🧎🏾\u200d♀️\u200d➡', '💆🏾\u200d♂️', '🙅🏼\u200d♀️', '👩🏽\u200d🍳']
+emoji:
+O: 👨🏿‍🦯 [9468, 239, 101, 9468, 237, 123, 102470, 9468, 99, 107]
+N: 👴🏾 [9468, 239, 112, 9468, 237, 122]
+
+O: 🔭 [9468, 242, 255]
+N: 👨🏿‍🦯 [9468, 239, 101, 9468, 237, 123, 102470, 9468, 99, 107]
+
+O: 👴🏾 [9468, 239, 112, 9468, 237, 122]
+N: 🪭 [9468, 103, 255]
+
+O: 🧑🏽‍🦰 [9468, 100, 239, 9468, 237, 121, 102470, 9468, 99, 108]
+N: 🧑🏽‍🦰 [9468, 100, 239, 9468, 237, 121, 102470, 9468, 99, 108]
+
+O: 🇲🇴 [9468, 229, 110, 9468, 114783]
+N: 🙅🏼‍♀️ [9468, 247, 227, 9468, 237, 120, 102470, 32990, 31643]
+
+O: 🪭 [9468, 103, 255]
+N: 💆🏾‍♂️ [93273, 228, 9468, 237, 122, 102470, 17245, 224, 31643]
+
+O: 🧎🏾‍♀️‍➡ [9468, 100, 236, 9468, 237, 122, 102470, 32990, 31643, 102470, 98115, 94]
+N: 🧎🏾‍♀️‍➡ [9468, 100, 236, 9468, 237, 122, 102470, 32990, 31643, 102470, 98115, 94]
+
+O: 💆🏾‍♂️ [93273, 228, 9468, 237, 122, 102470, 17245, 224, 31643]
+N: 🇲🇴 [9468, 229, 110, 9468, 114783]
+
+O: 🙅🏼‍♀️ [9468, 247, 227, 9468, 237, 120, 102470, 32990, 31643]
+N: 🔭 [9468, 242, 255]
+
+O: 👩🏽‍🍳 [9468, 239, 102, 9468, 237, 121, 102470, 9468, 235, 111]
+N: 👩🏽‍🍳 [9468, 239, 102, 9468, 237, 121, 102470, 9468, 235, 111]
+
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+
+  0%|          | 0/8 [00:00<?, ?it/s][A100%|██████████| 8/8 [00:00<00:00, 281970.02it/s]
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:04<00:33,  4.75s/it][A
+ 25%|██▌       | 2/8 [00:04<00:12,  2.05s/it][A
+ 38%|███▊      | 3/8 [00:05<00:05,  1.19s/it][A
+ 50%|█████     | 4/8 [00:05<00:03,  1.28it/s][A
+ 62%|██████▎   | 5/8 [00:05<00:01,  1.79it/s][A
+ 75%|███████▌  | 6/8 [00:05<00:00,  2.36it/s][A
+ 88%|████████▊ | 7/8 [00:05<00:00,  2.96it/s][A
+100%|██████████| 8/8 [00:05<00:00,  3.55it/s][A100%|██████████| 8/8 [00:05<00:00,  1.36it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  5.81it/s][A
+ 25%|██▌       | 2/8 [00:00<00:01,  5.99it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  5.98it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.09it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.17it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.19it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.23it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.26it/s][A100%|██████████| 8/8 [00:01<00:00,  6.16it/s]
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  5.65it/s][A
+ 25%|██▌       | 2/8 [00:00<00:01,  5.99it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  6.10it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.13it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.18it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.22it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.22it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.23it/s][A100%|██████████| 8/8 [00:01<00:00,  6.16it/s]
+2025-01-22 02:51:29.174 | INFO     | test_jbb_retain:begin_test:679 - {24: {'grad': {'score': [0.4281734119762074, 0.738308838770267, 0.5462216463955966, 0.7392168678318803, 1.659621201552354], 'topk_tokens': [' the', 'ir', '�', ',', '�', 'active', ' of', ' the', ' the', ' the', ' the', '�', ' the', ' from', ' below', ' in', '�', ' Minnesota', ' the', '�'], 'evidence_proportions': [0.46164194742838544, 0.3769327799479167, 0.3927001953125, 0.4695943196614583]}, 'weight': {'score': [0.02608983354134993, 0.0025475519507039855, 0.008990935303948143, 0.0024933372376233164, 0.0024988287455075748], 'topk_tokens': [' the', ' Fourth', 'Answer', ' bathroom', '.', '186', '<|eot_id|>', ' Fourth', '<|start_header_id|>', '.', 'Bridge', 'assistant', '<|eot_id|>', ':', ' football', ' bedroom', ' Bridge', '<|end_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0008863608042399088, 0.014136205116907755, 0.10984420776367188, 0.007410685221354167]}, 'saliency': {'score': [0.0035801367326216264, 0.00011157343280616058, 0.0005149434913288463, 0.00010457289583349133, 0.0002266485969741623], 'topk_tokens': [' dropped', ' bathroom', ' Bridge', ' Market', ' office', '<|eot_id|>', '.', ' top', '.', 'Question', '186', '<|eot_id|>', 'Bridge', ' Fourth', '<|begin_of_text|>', ' football', ' Bridge', ' bedroom', ' office', 'office'], 'evidence_proportions': [0.0002651214599609375, 0.0015695393085479736, 0.01595771312713623, 0.0006540318330128988]}}, 25: {'grad': {'score': [1.0086392489346592, 0.8097423224850557, 0.7830741188742898, 0.8094309293306791, 0.46845374169287746], 'topk_tokens': [' the', ' THE', 'ished', ' the', ' the', 'erc', 'IVE', ' first', ' best', ' the', ' the', ' the', ' the', ' the', ' the', 'THE', ' nineteenth', 'ation', ' her', 'ation'], 'evidence_proportions': [0.927490234375, 1.2068684895833333, 1.166107177734375, 0.7865804036458334]}, 'weight': {'score': [0.014190031723542646, 0.0025394026115609903, 0.003156258301301436, 0.002517222740946437, 0.0027838488677879433], 'topk_tokens': [' top', '�', '.\n\n', '17', '.', ' April', ' \n', ' the', '<|start_header_id|>', 'Answer', ' Mary', '186', '<|eot_id|>', '<|eot_id|>', '.', 'assistant', ':', 'office', '<|end_header_id|>', '<|begin_of_text|>'], 'evidence_proportions': [0.00012468298276265463, 0.011523048082987467, 0.05501365661621094, 0.0037066141764322915]}, 'saliency': {'score': [0.001414735208858143, 6.722061703566681e-05, 0.00025052915919910777, 6.445285660275341e-05, 0.00015297415968659636], 'topk_tokens': [' Merch', 'assistant', '.', ' Press', ' Anthony', '<|start_header_id|>', ' football', 'Answer', 'neh', ' Mary', '.', ' April', '186', ' Min', '<|eot_id|>', ':', '<|eot_id|>', 'office', '<|begin_of_text|>', '<|end_header_id|>'], 'evidence_proportions': [1.4126300811767578e-05, 0.0014018515745798747, 0.005525484681129456, 8.772810300191243e-05]}}, 26: {'grad': {'score': [0.9464513605291193, 1.0153414354221257, 1.4665416370738635, 1.0146502106696034, 0.6440574348746956], 'topk_tokens': ['ers', ' mar', ' worth', ' Merch', ' B', ' STR', ' some', ' generally', ' clear', 'str', ' went', ' Col', ' generally', 'years', ' B', ' Press', 'BO', ' Col', ' wh', ' str'], 'evidence_proportions': [1.3323974609375, 0.8742167154947916, 0.12029266357421875, 1.1835123697916667]}, 'weight': {'score': [0.011884987354278564, 0.002479029373383858, 0.00432309779253873, 0.002458689088965622, 0.001950699013549012], 'topk_tokens': ['Question', ' football', 'Bridge', '.\n\n', '?', ' kitchen', ' bathroom', '<|eot_id|>', '<|eot_id|>', ' bedroom', ' Bridge', ' \n', 'Answer', 'assistant', '<|start_header_id|>', ' the', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [7.833043734232585e-05, 0.004640907049179077, 0.026460647583007812, 0.021218617757161457]}, 'saliency': {'score': [0.0009379982948303223, 0.00015626793566821562, 0.0006630149754610928, 0.00015393834142289923, 0.00027320524314781286], 'topk_tokens': ['�', ' bathroom', '.', ' \n', ' the', ' colon', 'Answer', ' Bridge', ' Seventh', ' Father', 'assistant', '<|start_header_id|>', 'Bridge', ' bedroom', '<|end_header_id|>', ' the', '<|begin_of_text|>', ' Bridge', ':', 'office'], 'evidence_proportions': [1.5487273534138996e-05, 0.0005450050036112467, 0.002634868025779724, 0.0011222561200459797]}}, 27: {'grad': {'score': [0.7575655850497159, 0.7950020823523993, 0.608582236550071, 0.7954068193303998, 0.6591777058390828], 'topk_tokens': [' entirely', ' fuller', ' too', 'ile', '185', 'APER', ' plainly', ' possessed', ' Newspaper', ' newspaper', ' very', ' wonderful', ' earnest', ' very', ' newspaper', ' N', ' product', ' newspaper', ' very', 'ly'], 'evidence_proportions': [0.81439208984375, 0.986572265625, 0.69671630859375, 0.512298583984375]}, 'weight': {'score': [0.010610258037393743, 0.0025453754928593864, 0.003951698541641235, 0.0025282513538839625, 0.002316748167013193], 'topk_tokens': [' before', '<|eot_id|>', '.', '<|eot_id|>', 'Question', ' bathroom', ' \n', ' football', '186', '.', 'Answer', '<|start_header_id|>', 'assistant', ' bedroom', ' Bridge', '.\n\n', ':', '<|end_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.0003409385681152344, 0.009658783674240112, 0.036477088928222656, 0.004586497942606608]}, 'saliency': {'score': [0.0020849406719207764, 0.0001724651513472956, 0.0008170062845403498, 0.0001678420114407486, 0.0003733619467004553], 'topk_tokens': [' office', ' Jackson', ' football', ' the', 'Question', ' ST', ' bathroom', 'THE', ' Bridge', '.', ' bedroom', '186', 'Bridge', '.', '<|begin_of_text|>', '<|end_header_id|>', '.\n\n', ' Bridge', ':', 'office'], 'evidence_proportions': [0.00014156103134155273, 0.0026540160179138184, 0.005462616682052612, 0.0012074609597524006]}}, 28: {'grad': {'score': [0.8559556440873579, 0.6396769059122175, 0.6277313232421875, 0.6393074672681418, 0.5902242288961039], 'topk_tokens': [' received', 'half', ' returns', ' escaping', ' acted', ' on', ' back', ' have', 'hom', ' next', ' following', 'been', ' reached', ' balance', ' half', '600', ' become', 'half', 'na', ' ins'], 'evidence_proportions': [0.6229654947916666, 1.0131022135416667, 1.11016845703125, 0.7623240152994791]}, 'weight': {'score': [0.008930672298778187, 0.002410460096322393, 0.01094647700136358, 0.002383238117331192, 0.0011929412940879921], 'topk_tokens': [' the', ' bedroom', '.\n\n', ' bathroom', '?', '<|eot_id|>', ' Bridge', ' the', ' Bridge', ' the', ' \n', 'Answer', ' before', '<|eot_id|>', 'assistant', '<|start_header_id|>', '<|end_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0001105964183807373, 0.0060901939868927, 0.014842987060546875, 0.016649683316548664]}, 'saliency': {'score': [0.0012072080915624445, 6.760291747878193e-05, 0.0013688504695892334, 6.318980439723439e-05, 5.114775199394722e-05], 'topk_tokens': ['office', '<|begin_of_text|>', 'Answer', ' \n', ' to', ' the', ' the', '<|eot_id|>', ' the', ' the', ' the', ' Far', 'assistant', '<|start_header_id|>', '<|end_header_id|>', ' bedroom', 'Bridge', ':', ' Bridge', ' Bridge'], 'evidence_proportions': [1.6729036966959637e-05, 0.0020398000876108804, 0.0015982985496520996, 0.0013043681780497234]}}, 29: {'grad': {'score': [0.9273268959738992, 1.0211598670877007, 1.2200039950284092, 1.02097000470685, 0.6413717393751268], 'topk_tokens': [' were', ' press', ' routes', ' press', ' Paul', '.', ' message', ' printed', 'engers', ' business', 'mail', ' The', 'APER', ' paper', 'ants', '\n', ' the', 'boat', 'paper', '\n'], 'evidence_proportions': [1.4009602864583333, 1.0478922526041667, 0.4870777130126953, 0.6266276041666666]}, 'weight': {'score': [0.004324081269177524, 0.0024990568464012407, 0.004357893358577381, 0.002492396348326869, 0.000998097580748719], 'topk_tokens': [' bathroom', ' the', 'Question', ':', '<|eot_id|>', '<|eot_id|>', ' Where', '.\n\n', ' Does', ' \n', ' before', ' in', 'Answer', 'assistant', ' the', '<|end_header_id|>', '<|start_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.00016319751739501953, 0.0015935202439626057, 0.009952545166015625, 0.007463216781616211]}, 'saliency': {'score': [0.0003972405737096613, 6.184021918218408e-05, 0.00041961669921875, 6.058694088169025e-05, 8.137504775802811e-05], 'topk_tokens': ['<|eot_id|>', ' before', ' THE', ' the', ' the', ':', ' the', 'Question', 'office', ' the', '.', 'Answer', '<|end_header_id|>', 'Does', ' \n', 'IVE', ' in', ' Does', '<|begin_of_text|>', ':'], 'evidence_proportions': [1.5099843343098959e-05, 0.00016677379608154297, 0.0006211251020431519, 0.000860591729482015]}}, 30: {'grad': {'score': [0.8382554487748579, 1.0301649216702833, 0.9070649580522017, 1.0307344653589172, 1.1969839319006188], 'topk_tokens': [' Paul', ' LINE', ' months', ' Sons', ' anx', '2', 'Emp', ' to', 'deal', ' head', ' an', ' o', 'ire', ' an', 'op', ' Bridge', ' o', ' o', ' o', ' O'], 'evidence_proportions': [0.8238906860351562, 0.7675450642903646, 0.8564453125, 0.9112040201822916]}, 'weight': {'score': [0.010566554286263206, 0.0023633120999428394, 0.01451685211875222, 0.0023265066094338934, 0.00376810191513656], 'topk_tokens': ['.', ' Where', ' before', ' the', ':', '?', '<|eot_id|>', ' the', ' bathroom', '.\n\n', ' the', 'assistant', 'Answer', 'Question', '<|end_header_id|>', ' \n', '<|start_header_id|>', 'office', ':', '<|begin_of_text|>'], 'evidence_proportions': [0.0004067818323771159, 0.006556689739227295, 0.028199195861816406, 0.012981096903483072]}, 'saliency': {'score': [0.0014092109420082786, 0.00023622620976482733, 0.0013838085261258211, 0.00023203057571902704, 0.00040250706982302976], 'topk_tokens': [':', ' in', ' Fourth', ' Bridge', 'assistant', ' bedroom', ' the', '?', ' \n', '.', ' the', ' bathroom', ' Bridge', ' office', 'Question', '<|start_header_id|>', '<|end_header_id|>', '<|begin_of_text|>', ':', 'office'], 'evidence_proportions': [9.140372276306152e-05, 0.001822282870610555, 0.003970980644226074, 0.0006060997645060221]}}, 31: {'grad': {'score': [1.0621247725053267, 1.0199635540349656, 0.6912703080610796, 1.0204816099689793, 0.47652385761211447], 'topk_tokens': [' question', ' question', ' W', ' was', ' W', ' Aw', ' W', ' the', ' the', ' an', ' an', ' most', ' C', ' an', ' Bre', ' C', ' Aw', ' B', ' W', ' H'], 'evidence_proportions': [0.9979248046875, 0.9017130533854166, 1.31890869140625, 1.1155471801757812]}, 'weight': {'score': [0.0029927627606825395, 0.002303462867224525, 0.0012795843861319802, 0.002304067792350097, 0.0007969071338703106], 'topk_tokens': [' bathroom', ' football', ' the', ':', '?', 'Question', ' before', '<|eot_id|>', '.\n\n', ' the', ' Where', 'Answer', ' \n', '<|eot_id|>', 'assistant', '<|start_header_id|>', ':', '<|end_header_id|>', 'office', '<|begin_of_text|>'], 'evidence_proportions': [0.00039206941922505695, 0.002513627211252848, 0.010045528411865234, 0.0013707478841145833]}, 'saliency': {'score': [0.0003124312921003862, 9.948421297719976e-05, 0.00020877881483598188, 9.890159323840922e-05, 4.201972639405882e-05], 'topk_tokens': [' Bridge', 'CH', ' bathroom', ' the', ' the', 'Question', '.', '.\n\n', ' Where', '<|end_header_id|>', 'Answer', '<|eot_id|>', ' the', ' the', '<|start_header_id|>', ' \n', ':', '<|begin_of_text|>', 'assistant', 'office'], 'evidence_proportions': [0.00025517741839090985, 8.316834767659505e-05, 0.001026928424835205, 0.00012261668841044107]}}, 'pred_res': 'The bedroom.<|eot_id|>', 'score': 0}
+2025-01-22 02:51:29.176 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 02:51:29.176 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-2_0-1-7-8.pkl | len: 10 |  size: 9.1 KB
+Processing depth (0, 1, 7, 8):   3%|▎         | 3/100 [01:07<35:31, 21.97s/it]is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.28it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.36it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.38it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.84it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.63it/s]
+Processing depth (3, 4, 8, 9):   3%|▎         | 3/100 [01:14<35:31, 21.97s/it]2025-01-22 02:51:36.370 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  Mary journeyed to the office.
+2025-01-22 02:51:36.381 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (3751, 3757) --> . Mary journeyed to the
+2025-01-22 02:51:36.382 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-22 02:51:36.393 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (3751, 3757) --> . Mary journeyed to the
+2025-01-22 02:51:36.393 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Mary dropped the football.
+2025-01-22 02:51:36.419 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (9673, 9677) -->  dropped the football.
+2025-01-22 02:51:36.419 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 02:51:36.450 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (10773, 10779) --> . Daniel went back to the
+2025-01-22 02:51:36.450 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 02:51:36.463 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 0 at --> (4142, 4148) -->  St. John went back to
+2025-01-22 02:51:36.463 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 1 -->  John took the milk.
+2025-01-22 02:51:36.474 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 1 at --> (4269, 4273) -->  John took the milk
+2025-01-22 02:51:36.474 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 02:51:36.489 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 2 at --> (5087, 5093) --> . Sandra journeyed to the
+2025-01-22 02:51:36.489 | INFO     | test_jbb_retain:find_multi_needle_idx:481 - evidence 3 -->  John journeyed to the office.
+2025-01-22 02:51:36.500 | INFO     | test_jbb_retain:find_multi_needle_idx:489 - find evidence 3 at --> (3752, 3758) -->  Mary journeyed to the office
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 02:51:38.476 | INFO     | test_jbb_retain:begin_test:632 - the bedroom<|eot_id|>
+2025-01-22 02:51:38.476 | INFO     | test_jbb_retain:begin_test:634 - torch.Size([1, 12208])
+Processing depth (3, 4, 8, 9):   3%|▎         | 3/100 [01:17<41:40, 25.78s/it]
+your chose emoji: ['🤜🏼', '👷🏻\u200d♂', '\U0001fac6', '🧻', '🏃🏼', '👰🏽', '🧗🏽\u200d♂️', '👩🏻\u200d💼', '👨🏾\u200d🦽\u200d➡️', '🦸🏼\u200d♂']
+emoji:
+O: 🤜🏼 [9468, 97, 250, 9468, 237, 120]
+N: 🧗🏽‍♂️ [9468, 100, 245, 9468, 237, 121, 102470, 17245, 224, 31643]
+
+O: 👷🏻‍♂ [9468, 239, 115, 9468, 237, 119, 102470, 17245, 224]
+N: 👷🏻‍♂ [9468, 239, 115, 9468, 237, 119, 102470, 17245, 224]
+
+O: 🫆 [9468, 104, 228]
+N: 👨🏾‍🦽‍➡️ [9468, 239, 101, 9468, 237, 122, 102470, 9468, 99, 121, 102470, 98115, 94, 31643]
+
+O: 🧻 [9468, 100, 119]
+N: 👩🏻‍💼 [9468, 239, 102, 9468, 237, 119, 102470, 93273, 120]
+
+O: 🏃🏼 [9468, 237, 225, 9468, 237, 120]
+N: 🤜🏼 [9468, 97, 250, 9468, 237, 120]
+
+O: 👰🏽 [9468, 239, 108, 9468, 237, 121]
+N: 🏃🏼 [9468, 237, 225, 9468, 237, 120]
+
+O: 🧗🏽‍♂️ [9468, 100, 245, 9468, 237, 121, 102470, 17245, 224, 31643]
+N: 🫆 [9468, 104, 228]
+
+O: 👩🏻‍💼 [9468, 239, 102, 9468, 237, 119, 102470, 93273, 120]
+N: 🧻 [9468, 100, 119]
+
+O: 👨🏾‍🦽‍➡️ [9468, 239, 101, 9468, 237, 122, 102470, 9468, 99, 121, 102470, 98115, 94, 31643]
+N: 👰🏽 [9468, 239, 108, 9468, 237, 121]
+
+O: 🦸🏼‍♂ [9468, 99, 116, 9468, 237, 120, 102470, 17245, 224]
+N: 🦸🏼‍♂ [9468, 99, 116, 9468, 237, 120, 102470, 17245, 224]
+
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+Traceback (most recent call last):
+  File "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/test2_pjlab_llama_jbb_random5x100_retain_grad.py", line 206, in <module>
+    begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k = (context_length == 0), use_emoji = args.use_emoji, with_adapter= True if args.adapter_path else False,                                   start_layer = 24)
+  File "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/test_jbb_retain.py", line 658, in begin_test
+    flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos,
+  File "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/test_jbb_retain.py", line 501, in test_model_with_attention_adapter
+    output = model(input)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/test_jbb_retain.py", line 174, in wrapper
+    return fn(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/accelerate/hooks.py", line 166, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1190, in forward
+    outputs = self.model(
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 945, in forward
+    layer_outputs = decoder_layer(
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/accelerate/hooks.py", line 166, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 673, in forward
+    hidden_states = self.input_layernorm(hidden_states)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/accelerate/hooks.py", line 166, in new_forward
+    output = module._old_forward(*args, **kwargs)
+  File "/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 72, in forward
+    variance = hidden_states.pow(2).mean(-1, keepdim=True)
+KeyboardInterrupt

@@ -269,19 +269,22 @@ class EmbeddingManager:
         else:
             self.current_embeds.grad.zero_()
 
-    def grad_process(self, grad, use_abs = True):
+    def grad_process(self, grad, p = 1):
         assert len(grad.shape) == 3
-        if use_abs:
-            grad = abs(grad)
 
-        grad = grad.sum(-1)
-        return grad
+        return torch.norm(grad, p = p, dim = -1)
 
     def grad(self,*args,**kwargs):
-        grad = self.current_embeds * self.current_embeds.grad
-        return self.grad_process(grad, *args, **kwargs)
-        
+        return self.grad_process(self.current_embeds.grad, *args, **kwargs)
+    
+    
 
+    def weight(self,*args,**kwargs):
+        return self.grad_process(self.current_embeds, *args, **kwargs)
+
+
+    def saliency(self,*args,**kwargs):
+        return self.grad_process(self.current_embeds * self.current_embeds.grad, *args, **kwargs)
 
 
 # class AttentionerManager(AttentionerManagerBase):
@@ -419,6 +422,7 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
 def calculate_embedding_portions(saliency, 
                                  evi_poss: List[Tuple[int, int]], 
                                  attack_pos: List[Tuple[int, int]], 
+                                 emoji_pos: List[Tuple[int, int]],
                                  target_poss: Tuple[int, int],
                                  is_0k):
     """
@@ -426,6 +430,7 @@ def calculate_embedding_portions(saliency,
 
     target_poss: [l, r)
     """
+    print("is_0k:",is_0k)
     saliency = saliency.float().detach().clone().cpu()
     assert len(saliency.shape) == 1 or (len(saliency.shape) == 2 and saliency.shape[0] == 1)
     if len(saliency.shape) == 2:
@@ -463,18 +468,34 @@ def calculate_embedding_portions(saliency,
     # proportion4: remain context -> target token
     proportion4 = proportion2 - proportion1 - proportion3
 
-    proportion1 = proportion1 / evidence_length
+    proportion5 = 0 #emoji context -> target token
+    emoji_length = 0
+    if emoji_pos:
+        for span_idx in emoji_pos:
+            proportion5 += saliency[np.array(range(*span_idx))].sum()
+            emoji_length += span_idx[1] -span_idx[0]
+    else:
+        emoji_length = 1
+
+
     if is_0k:
         proportion2 = (proportion1 + proportion3) / (evidence_length + irr_evidence_length)
     else:
         proportion2 = proportion2 / total_context_length
+
+    proportion1 = proportion1 / evidence_length
+
     proportion3 = proportion3 / irr_evidence_length
+
+    proportion5 = proportion5 / emoji_length
+
     if is_0k:
         proportion4 = 0.
     else:
         proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
-    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
+
+    return proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices
 
 def get_proportion_wla(saliency, class_poss, final_poss):
     saliency = saliency.detach().clone().cpu()
@@ -518,7 +539,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_embedding(model, input, golden, search_pos, attack_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True):
+def test_model_embedding(model, input, golden, search_pos, attack_pos, emoji_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True):
     """
     zecheng_note: 这里计算的是language modeling loss    
     """
@@ -537,20 +558,24 @@ def test_model_embedding(model, input, golden, search_pos, attack_pos, target_po
     loss.backward()
 
     pros_dict = dict()
-    saliency = embeddingmanger.grad(use_abs=True)
 
-    proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_embedding_portions(saliency, search_pos, attack_pos, target_poss, is_0k)
-    top_tokens = []
-    for idx in topk_indices:
-        top_tokens.append(tokenizer.decode(input[0][idx].item()))
-
-    pros_dict['embedding'] = {
-        'score': [proportion1, proportion2, proportion3, proportion4], 
-        "topk_indices": topk_indices,
-        'topk_tokens': top_tokens,
-        'evidence_proportions': evidence_proportions
-    }
+    pros_dict['embedding'] = {}
     
+    for score_type in ["grad","weight","saliency"]:
+        saliencies = getattr(embeddingmanger, score_type)(p = 2)
+
+        proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices = calculate_embedding_portions(saliencies, search_pos, attack_pos, emoji_pos, target_poss, is_0k)
+        top_tokens = []
+        for idx in topk_indices:
+            top_tokens.append(tokenizer.decode(input[0][idx].item()))
+
+        pros_dict['embedding'][score_type] = {
+            'score': [proportion1, proportion2, proportion3, proportion4, proportion5], 
+            "topk_indices": topk_indices,
+            'topk_tokens': top_tokens,
+            'evidence_proportions': evidence_proportions
+        }
+        
     return pros_dict
 
     for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
@@ -563,7 +588,7 @@ def test_model_embedding(model, input, golden, search_pos, attack_pos, target_po
 
     return pros_dict
 
-def random_combine(ref:list, att:list):
+def random_combine(ref:list, att:list, return_snd_pos = False):
 
     att_list =[[] for _ in range(len(ref) + 1)]
     for p_att in att[:-1]:
@@ -572,16 +597,46 @@ def random_combine(ref:list, att:list):
 
     results = [k for k in att_list[0]]
 
+    if return_snd_pos:
+        insert_pos = list(range(len(results)))
     for r, patt in zip(ref,att_list[1:]):
         results.append(r)
+        if return_snd_pos:
+            insert_pos.extend(list(range(len(results), len(results) + len(patt))))
+
         results.extend(patt)
+            
+    if return_snd_pos:
+        assert len(att) == len(insert_pos)
+        return results, insert_pos
 
     return results
 
 
-def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name,is_0k, model_name, with_adapter=False, start_layer = 0):
+def get_random_emoji(tokenizer, num=50, return_idx=True):
+    all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
+    random_emojis = random.sample(all_emojis, num)
+    print(f"your chose emoji: {random_emojis}")
+    if return_idx:
+        index_emojis = []
+        for e in random_emojis:
+            index_emojis.append(tokenizer(e, add_special_tokens=False).input_ids)
+        return index_emojis
+    return random_emojis
+
+
+def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, is_0k, model_name, use_emoji):
     print("is_0k:", is_0k)
     if background_text is not None:
+
+        if use_emoji:
+            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True)
+            background_text, emoji_pos = random_combine(background_text, emojis10, 
+                                                         return_snd_pos = True)
+            emoji_pos = set(emoji_pos)
+            cumsum_num = 0
+            emoji_spans = []
+
         depth_percent = [i / 10 for i in depth_percent]
         updated_sample = [[] for _ in range(len(background_text) + 1)]
         real_pos = [int(len(background_text) * i) for i in depth_percent]
@@ -591,17 +646,35 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             updated_sample[pos].append(fact)
         for i, s in enumerate(background_text):  # insert irrevelent needle
             updated_sample[i].append(s)
+
+
+        for i, s in enumerate(background_text):  # insert irrevelent needle
+            if use_emoji and (i in emoji_pos):
+
+                cur_pos = sum((len(l) for l in updated_sample[i]), 0)
+                emoji_spans +=[(cumsum_num + cur_pos, cumsum_num + cur_pos + len(s))]
+
+            updated_sample[i].append(s)
+
+            if use_emoji:
+                cumsum_num += sum((len(l) for l in updated_sample[i]), 0)
     else:
         updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
         updated_sample = [[k] for k in updated_sample]
         # print("updated_sample:", updated_sample)
 
+    if not use_emoji or is_0k:
+        emoji_spans = []
+        
     flat = [i for s in updated_sample for i in s]
     tokens = [i for s in flat for i in s]
 
     new_context = tokenizer.decode(tokens)
     input_context = new_context + f"\n{question}\nAnswer:"
     inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
+
+    emoji_spans = [(k[0] + 30, k[1] + 30) for k in emoji_spans]
+
 
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
@@ -627,6 +700,16 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         ], 
         tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
+
+    if use_emoji:
+        print("emoji:")
+
+        for emoji_span, emj in zip(emoji_spans,emojis10):
+            print("O:",tokenizer.decode(emj),emj)
+            print("N:",tokenizer.decode(inp[0, emoji_span[0]:emoji_span[1]].tolist()),inp[0, emoji_span[0]:emoji_span[1]].tolist())
+            print()
+
+
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
     toks_length = answer_ids.size(-1)
     for j in range(inp.size(-1), toks_length, -1):
@@ -642,7 +725,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        flow_res = test_model_embedding(model, inp, label, search_pos, attack_pos, 
+        flow_res = test_model_embedding(model, inp, label, search_pos, attack_pos, emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,
@@ -650,7 +733,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     
     elif args.loss_type == "ce":
          # shift to left before the label token
-        flow_res = test_model_embedding(model, inp, inp, search_pos, attack_pos, 
+        flow_res = test_model_embedding(model, inp, inp, search_pos, attack_pos, emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,

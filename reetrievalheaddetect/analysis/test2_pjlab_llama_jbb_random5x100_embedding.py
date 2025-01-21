@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     args.dataset_path = "/data/pub_data/pg19-test"
     # args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl"
-    args.save_dir = "/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results"
+    args.save_dir = "/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/gws"
     # args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     # args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
     tags = [l["tag"] for l in needles_and_stacks]
 
+    args.use_emoji = True
 
     for pe,pn in zip(evidence_list, needle_list):
         last_idx = pn.index(pe[-1])
@@ -130,7 +131,7 @@ if __name__ == "__main__":
                             save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_sid-{s_id}_pid-{cnt}_{depth_tag}"
                             
                             begin_test(
-                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, (context_length == 0),model_name
+                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, (context_length == 0), model_name, use_emoji = args.use_emoji
                             )
                             pbar.update(1)
                             cnt += 1

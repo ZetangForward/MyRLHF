@@ -309,7 +309,18 @@ def multi_torch_topk(saliency, target_poss, k):
     return np_topk(values.numpy(), k)
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int], is_0k):
+def cal_temp(saliency, target_poss, span_ids):
+    temp = 0
+    length = 0
+    for span_idx in span_ids:
+        for target_pos in range(*target_poss):
+            temp += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
+
+        length += (span_idx[1] - span_idx[0])
+    return temp/(target_poss[1] - target_poss[0]), length
+
+
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], emoji_pos: List[Tuple[int, int]], target_poss: Tuple[int, int], is_0k):
     """
     saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
 
@@ -352,6 +363,7 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
         evidence_proportions.append(temp_evidence_length/(target_poss[1] - target_poss[0]))
 
     # proportion2: all context -> target token
+
     temp_proportion2 = 0
     for target_pos in range(*target_poss):
         temp_proportion2 +=saliency[target_pos, :].sum()
@@ -369,9 +381,23 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
         
         irr_evidence_length += span_idx[1] - span_idx[0]
 
+
+
     # proportion4: remain context -> target token
     proportion4 = proportion2 - proportion1 - proportion3
 
+    proportion5 = 0 #emoji context -> target token
+    emoji_length = 0
+    if emoji_pos:
+        for span_idx in emoji_pos:
+            temp_proportion5 = 0
+            for target_pos in range(*target_poss):
+                temp_proportion5 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
+            proportion5 += temp_proportion5 / (target_poss[1] - target_poss[0])
+            emoji_length += span_idx[1] -span_idx[0]
+
+    else:
+        emoji_length = 1
 
     if is_0k:
         proportion2 = (proportion1 + proportion3) /(evidence_length + irr_evidence_length)
@@ -383,12 +409,15 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     
     proportion3 = proportion3 / irr_evidence_length# if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
     
+    proportion5 = proportion5 / emoji_length
     if is_0k:
         proportion4 = 0.
     else:
         proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
-    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
+    
+
+    return proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices
 
     # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
     proportion1 = 0
@@ -462,7 +491,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, emoji_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
     """
     zecheng_note: 这里计算的是language modeling loss    
     """
@@ -491,12 +520,12 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
         saliencies = getattr(attentionermanger, score_type)(use_abs=True)
         for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
             saliency = saliencies[i-attentionermanger.start_layer]        
-            proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss, is_0k)
+            proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, emoji_pos, target_poss, is_0k)
             top_tokens = []
             for idx in topk_indices:
                 top_tokens.append(tokenizer.decode(input[0][idx].item()))
 
-            pros_dict[i][score_type] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
+            pros_dict[i][score_type] = {'score': [proportion1, proportion2, proportion3, proportion4, proportion5], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
     return pros_dict
 
 def random_combine(ref:list, att:list, return_snd_pos = False):
@@ -538,6 +567,14 @@ def get_random_emoji(tokenizer, num=50, return_idx=True):
 def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k, use_emoji, with_adapter=False, start_layer = 0):
     if background_text is not None:
 
+        if use_emoji:
+            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True)
+            background_text, emoji_pos = random_combine(background_text, emojis10, 
+                                                         return_snd_pos = True)
+            emoji_pos = set(emoji_pos)
+            cumsum_num = 0
+            emoji_spans = []
+
 
         depth_percent = [i / 10 for i in depth_percent]
         updated_sample = [[] for _ in range(len(background_text) + 1)]
@@ -548,33 +585,43 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             updated_sample[pos].append(fact)
 
 
-        
-        if use_emoji:
-            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True)
-            back_ground_text, emoji_pos = random_combine(background_text, emojis10, 
-                                                         return_snd_pos = True)
-            emoji_pos = set(emoji_pos)
-            cumsum_num = 0
-            emoji_spans = []
+    
         for i, s in enumerate(background_text):  # insert irrevelent needle
             if use_emoji and (i in emoji_pos):
-                emoji_spans +=[(cumsum_num, cumsum_num + len(s))]
+
+                cur_pos = sum((len(l) for l in updated_sample[i]), 0)
+                emoji_spans +=[(cumsum_num + cur_pos, cumsum_num + cur_pos + len(s))]
 
             updated_sample[i].append(s)
 
             if use_emoji:
-                cumsum_num += sum(len(l) for l in updated_sample[i])
+                cumsum_num += sum((len(l) for l in updated_sample[i]), 0)
     else:
         updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
         updated_sample = [[k] for k in updated_sample]
         # print("updated_sample:", updated_sample)
+    
+    if not use_emoji or is_0k:
+        emoji_spans = []
+        
 
     flat = [i for s in updated_sample for i in s]
     tokens = [i for s in flat for i in s]
 
     new_context = tokenizer.decode(tokens)
     input_context = new_context + f"\n{question}\nAnswer:"
+
     inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
+    
+    emoji_spans = [(k[0] + 30, k[1] + 30) for k in emoji_spans]
+    
+    # if use_emoji:
+    #     print("emoji:")
+
+    #     for emoji_span, emj in zip(emoji_spans,emojis10):
+    #         print("O:",tokenizer.decode(emj),emj)
+    #         print("N:",tokenizer.decode(inp[0,emoji_span[0]:emoji_span[1]].tolist()),inp[0,emoji_span[0]:emoji_span[1]].tolist())
+    #         print()
 
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
@@ -609,6 +656,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             label[0, sub_pos] = inp[0, sub_pos]
 
         flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
+                                                     emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,
@@ -618,6 +666,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     elif args.loss_type == "ce":
          # shift to left before the label token
         flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, 
+                                                     emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,
