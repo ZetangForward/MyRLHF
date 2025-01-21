@@ -16,7 +16,9 @@ from accelerate.utils import get_balanced_memory
 
 # nohup python test2_pjlab_llama_jbb_random5x100_embedding.py > jbb_embedding.log
 
-# nohup env CUDA_VISIBLE_DEVICES=6,7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py > logs/embedding_saliency_score2.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=6 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --testing_lengths 3900 > logs/embedding_saliency_score_3900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --testing_lengths 1900 > logs/embedding_saliency_score_1900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --testing_lengths 0 > logs/embedding_saliency_score_0.log 2>&1 &
 if __name__ == "__main__":
     print("Process:",os.getpid())
     parser = argparse.ArgumentParser()
@@ -25,12 +27,14 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
+    parser.add_argument('--testing_lengths', type=int, nargs='+', default=None, help="A list of integers")
+
     args = parser.parse_args()
     args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     args.dataset_path = "/data/pub_data/pg19-test"
     # args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl"
-    args.save_dir = "/data/zecheng/acl2025/tmp_embedding_data"
+    args.save_dir = "/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results"
     # args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     # args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
@@ -56,15 +60,17 @@ if __name__ == "__main__":
         pe += [pn[last_idx + 1]]
     
         # print("evidence:", pe)
-
-    for context_length in [
-        # 15900,
-        # 11900,
-        # 7900,
-        3900,
-        1900,
-        0
-            ]:
+    print(f"begin to testing with {args.testing_lengths}")
+    for context_length in args.testing_lengths:
+        
+        # [
+        # # 15900,
+        # # 11900,
+        # # 7900,
+        # 3900,
+        # 1900,
+        # 0
+        #     ]:
         for loss_type in [ "label" ]:
             args.context_length = context_length
             args.loss_type = loss_type
@@ -124,13 +130,18 @@ if __name__ == "__main__":
                             save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_sid-{s_id}_pid-{cnt}_{depth_tag}"
                             
                             begin_test(
-                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter= True if args.adapter_path else False, start_layer = 24
+                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name
                             )
                             pbar.update(1)
                             cnt += 1
 
-                        except:
-                            continue
+                        except ZeroDivisionError as ze:
+                                # raise ze
+                                continue
+                        except ValueError as e:
+                            if str(e) =="evidence_list and disturb_tok_needles length not match!":
+                                continue
+                            raise e
                     
                     if cnt != 5:
                         print(f"args.context_length: {args.context_length}")
