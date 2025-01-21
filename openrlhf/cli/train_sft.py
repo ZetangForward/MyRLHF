@@ -6,7 +6,7 @@ from datetime import datetime
 from transformers.trainer import get_scheduler
 from openrlhf.datasets import SFTDataset
 from openrlhf.models import Actor
-from openrlhf.trainer import SFTTrainer
+from openrlhf.trainer.sft_trainer_back import SFTTrainer
 from openrlhf.utils import blending_datasets, get_strategy, get_tokenizer
 
 
@@ -31,7 +31,7 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
-        search_clue_seg=True,
+        search_clue_seg=args.search_clue_seg,
     )
     eval_dataset = SFTDataset(
         eval_data,
@@ -42,7 +42,7 @@ def train(args):
         input_template=args.input_template,
         num_processors=args.num_processors,
         multiple_of=args.ring_attn_size,
-        search_clue_seg=True,
+        search_clue_seg=args.search_clue_seg,
     )
 
     # prepare dataloader
@@ -203,9 +203,8 @@ if __name__ == "__main__":
     parser.add_argument("--input_key", type=str, default="input", help="JSON dataset key")
     parser.add_argument("--output_key", type=str, default=None, help="JSON dataset key")
     parser.add_argument("--input_template", type=str, default="User: {}\nAssistant: ")
-    parser.add_argument(
-        "--apply_chat_template", action="store_true", default=False, help="Use HF tokenizer chat template"
-    )
+    parser.add_argument("--apply_chat_template", action="store_true", default=False, help="Use HF tokenizer chat template")
+    parser.add_argument("--search_clue_seg", action="store_true", default=False, help="search short clue context for checking")
     parser.add_argument("--tokenizer_chat_template", type=str, default=None)
     parser.add_argument("--max_samples", type=int, default=1e8, help="Max number of samples")
     parser.add_argument("--max_len", type=int, default=2048, help="Max tokens for the samples")

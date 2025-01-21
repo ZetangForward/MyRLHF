@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from .utils import zero_pad_sequences
 
 
-def preprocess_data(data, input_key="input", output_key=None, apply_chat_template=None, meta_key=None):
+def preprocess_data(data, input_template=None, input_key="input", output_key=None, apply_chat_template=None, meta_key=None):
     if apply_chat_template:
         if output_key:
             prompt_message = data[input_key]
@@ -29,14 +29,12 @@ def preprocess_data(data, input_key="input", output_key=None, apply_chat_templat
                 clue_prompt = instruction_format.format(concat_content=concat_content, q=question)
                 clue_prompt = apply_chat_template([{"role": "user", "content": clue_prompt}], tokenize=False)
     else:
-        ## zecheng_note: 这里只想加入ctx的部分，不是实际的pretrain
-        # prompt = data[input_key]
-        # if input_template:
-        #     prompt = input_template.format(prompt)
-        # # output_key is None for continue pretrain
-        # response = data[output_key] if output_key else ""
-        prompt = apply_chat_template(data[input_key][:-1], tokenize=False, add_generation_prompt=True)
-        response = apply_chat_template(data[input_key], tokenize=False)[len(prompt) :]
+        prompt, response = data[input_key][0]["content"], data[input_key][1]["content"]
+        if input_template:
+            prompt = input_template.format(prompt)
+        # output_key is None for continue pretrain
+        response = data[output_key] if output_key else ""
+
     if meta_key:
         return prompt, response, clue_prompt, data[meta_key]
     return prompt, response, None, None
@@ -110,6 +108,7 @@ class SFTDataset(Dataset):
             meta_key = None
         prompt, response, clue_prompt, clue_list = preprocess_data(
             data,
+            self.input_template,
             self.input_key,
             self.output_key,
             self.apply_chat_template,

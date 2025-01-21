@@ -14,6 +14,7 @@ from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repea
 import numpy as np
 from transformers import PreTrainedModel
 import itertools
+import emoji
 from tqdm import trange
 from transformers.models.llama.modeling_llama import LlamaModel
 from transformers.modeling_outputs import (
@@ -562,7 +563,7 @@ def test_model_embedding(model, input, golden, search_pos, attack_pos, emoji_pos
     pros_dict['embedding'] = {}
     
     for score_type in ["grad","weight","saliency"]:
-        saliencies = getattr(embeddingmanger, score_type)(p = 2)
+        saliencies = getattr(embeddingmanger, score_type)(p = 1)
 
         proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices = calculate_embedding_portions(saliencies, search_pos, attack_pos, emoji_pos, target_poss, is_0k)
         top_tokens = []
@@ -701,13 +702,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         tokenize=True, add_generation_prompt=False, return_tensors='pt'
     ).to(model.device)
 
-    if use_emoji:
-        print("emoji:")
+    # if use_emoji:
+    #     print("emoji:")
 
-        for emoji_span, emj in zip(emoji_spans,emojis10):
-            print("O:",tokenizer.decode(emj),emj)
-            print("N:",tokenizer.decode(inp[0, emoji_span[0]:emoji_span[1]].tolist()),inp[0, emoji_span[0]:emoji_span[1]].tolist())
-            print()
+    #     for emoji_span, emj in zip(emoji_spans,emojis10):
+    #         print("O:",tokenizer.decode(emj),emj)
+    #         print("N:",tokenizer.decode(inp[0, emoji_span[0]:emoji_span[1]].tolist()),inp[0, emoji_span[0]:emoji_span[1]].tolist())
+    #         print()
 
 
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
