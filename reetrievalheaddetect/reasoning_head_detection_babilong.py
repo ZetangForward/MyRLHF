@@ -17,6 +17,8 @@ from typing import List, Tuple, Optional, Dict
 from tqdm import tqdm
 from loguru import logger
 from modelzipper.tutils import *
+from .utils import get_random_emoji
+
 
 def random_combine(ref:list, att:list):
     att_list =[[] for _ in range(len(ref) + 1)]
@@ -106,6 +108,7 @@ class LLMNeedleHaystackTester:
         print_ongoing_status = True,
         selected_idx = None,
         combinations_number=1,
+        inject_emoji_num=0,
     ):
         """
          number of combinations, recommended to be larger since some positions may be failed to create
@@ -116,8 +119,9 @@ class LLMNeedleHaystackTester:
         self.print_ongoing_status = print_ongoing_status
         self.succ_head_counter = defaultdict(lambda: defaultdict(list))
         self.fail_head_counter = defaultdict(lambda: defaultdict(list))
-
+        self.inject_emoji_num = inject_emoji_num
         self.selected_idx = selected_idx
+
         if("/" in model_name):
             self.model_version = model_name.split("/")[-1]
         else: 
@@ -245,7 +249,58 @@ class LLMNeedleHaystackTester:
                     break
         return all_evi_pos   
 
-    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer):
+    def inject_emoji(self, inp, emoji_lst, inject_bound, avoid_pos):
+        """
+        emoji_lst: a list contains all injected emojis -> [[2,2,4], [91,33,11]]
+        inject_bound: a list contains st and ed -> [st, ed]
+        avoid_pos: a list contains all avoid postions -> [0,1,2,9,12,44]
+        """
+        flag = False
+        if inp.dim() > 1:
+            inp = inp.squeeze(0)
+            flag = True
+        inp = inp.tolist()
+        avail_inject_pos = list(set(range(inject_bound[0], inject_bound[1])) - set(avoid_pos))
+        if len(avail_inject_pos) < len(emoji_lst):
+            raise ValueError("There are not enough positions to inject all emojis")
+        random_injected_pos = random.sample(avail_inject_pos, len(emoji_lst))
+        random_injected_pos.sort()
+        
+        result = []
+        prev_pos = 0
+        for pos, emoji in zip(random_injected_pos, emoji_lst):
+            result.extend(inp[prev_pos:pos])
+            result.extend(emoji)
+            prev_pos = pos
+        result.extend(inp[prev_pos:])
+
+        final_inp = torch.tensor(result, dtype=torch.long)
+        if flag:
+            final_inp = final_inp.unsqueeze(0)
+        return final_inp
+
+    def search_pos(self, inp, evidence, disturb):
+        search_pos = self.find_multi_needle_idx(inp[0], evidence)
+        attack_pos = self.find_multi_needle_idx(inp[0], disturb)
+        if (len(search_pos) != len(evidence)) or (len(attack_pos) != len(disturb)):
+            logger.info("length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case")
+            logger.info(f"search_pos length: {len(search_pos)} | evidence length: {len(evidence)}")
+            logger.info(f"attack_pos length: {len(attack_pos)} | attack clues length: {len(disturb)}")
+            return None, None, None
+
+        irrevelant_pos = [(inp == 128007).nonzero(as_tuple=True)[1][1].item(), (inp == 128009).nonzero(as_tuple=True)[1][-1].item()]  # for llama3.1 model, context is wrapped between <|end_header_id|> (128007) and <|eot_id|> (128009) tokens
+        flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
+        flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
+
+        if len(set(flatten_search_pos) & set(flatten_attack_pos)) != 0:
+            logger.info("search_pos and attack_pos should not overlap")
+            logger.info(f"search_pos: {search_pos}")
+            logger.info(f"attack_pos: {attack_pos}")
+            return None, None, None
+
+        return flatten_search_pos, flatten_attack_pos, irrevelant_pos
+
+    def evaluate_and_log(self, background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, injected_emojis):
         
         if background_text is not None:
             depth_percent = [i / 10 for i in depth_percent]
@@ -267,24 +322,18 @@ class LLMNeedleHaystackTester:
         new_context = self.enc.decode(tokens)
         input_context = new_context + f"\nQuestion: {question}\nAnswer:"
         inp = self.enc.apply_chat_template([{"role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
-
-        search_pos = self.find_multi_needle_idx(inp[0], evidence)
-        attack_pos = self.find_multi_needle_idx(inp[0], disturb_tok_needles)
-        irrevelant_pos = [(inp == 128007).nonzero(as_tuple=True)[1][1].item(), (inp == 128009).nonzero(as_tuple=True)[1][-1].item()]  # for llama3.1 model, context is wrapped between <|end_header_id|> (128007) and <|eot_id|> (128009) tokens
-        if (len(search_pos) != len(evidence)) or (len(attack_pos) != len(disturb_tok_needles)):
-            logger.info("length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case")
-            logger.info(f"search_pos length: {len(search_pos)} | evidence length: {len(evidence)}")
-            logger.info(f"attack_pos length: {len(attack_pos)} | attack clues length: {len(disturb_tok_needles)}")
+        
+        flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)
+        if flatten_search_pos is None:  # search failed
             return False
-
-        flatten_search_pos = [num for st, ed in search_pos for num in range(st, ed + 1)]
-        flatten_attack_pos = [num for st, ed in attack_pos for num in range(st, ed + 1)]
-        if len(set(flatten_search_pos) & set(flatten_attack_pos)) != 0:
-            logger.info("search_pos and attack_pos should not overlap")
-            logger.info(f"search_pos: {search_pos}")
-            logger.info(f"attack_pos: {attack_pos}")
+        
+        if len(injected_emojis) > 0:
+            inp = self.inject_emoji(inp, injected_emojis, irrevelant_pos, flatten_search_pos + flatten_attack_pos)
+        
+        flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)  # after injection, re-seach the positions
+        if flatten_search_pos is None:  # search failed
             return False
-            
+        
         inp = inp.to(self.model_to_test.device)
 
         with torch.no_grad():
@@ -308,6 +357,10 @@ class LLMNeedleHaystackTester:
         evidence_list = [l["real_needle"] for l in needles_and_stacks]
         golden_answer_list = [l["golden_answer"] for l in needles_and_stacks]
         tags = [l["tag"] for l in needles_and_stacks]
+        if self.inject_emoji_num != 0:
+            injected_emojis = get_random_emoji(self.enc, self.inject_emoji_num, True)  # list[list]
+        else:
+            injected_emojis = []
 
         if self.selected_idx is None:
             self.selected_idx = range(len(needle_list))
@@ -351,7 +404,7 @@ class LLMNeedleHaystackTester:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
                             pbar.set_description(f"Processing length: {context_length} | task: {task_tag} | depth {depth_percent}")
-                            res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer)
+                            res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, injected_emojis)
                             if res: analysis_sample_nums += 1
                             pbar.update(1)
 
@@ -384,6 +437,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
+    parser.add_argument('--inject_emoji_num', type=int, default=0, help='A list of integers')
     args = parser.parse_args()
 
     ht = LLMNeedleHaystackTester(
@@ -394,6 +448,7 @@ if __name__ == "__main__":
         print_ongoing_status = True,
         # selected_idx=[0],  # for debug
         combinations_number=10,
+        inject_emoji_num=args.inject_emoji_num,
     )
 
     ht.start_test()
