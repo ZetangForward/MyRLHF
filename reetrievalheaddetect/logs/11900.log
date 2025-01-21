@@ -12627,4 +12627,2137 @@ begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file 
 
 Processing length: 11900 | task: 4-hop | depth (1, 5, 8, 9):  20%|██        | 2/10 [00:12<00:50,  6.33s/it][A[A
 
-Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  20%|██        | 2/10 [00:12<00:50,  6.33s/it][A[A
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  20%|██        | 2/10 [00:12<00:50,  6.33s/it][A[A2025-01-21 21:35:07.460 | INFO     | __main__:evaluate_and_log:295 - model response: The garden.
+2025-01-21 21:35:07.460 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  30%|███       | 3/10 [00:20<00:49,  7.09s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 6):  30%|███       | 3/10 [00:20<00:49,  7.09s/it][A[A2025-01-21 21:35:07.780 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:07.780 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:07.780 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 6):  40%|████      | 4/10 [00:20<00:26,  4.42s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 8):  40%|████      | 4/10 [00:20<00:26,  4.42s/it][A[A2025-01-21 21:35:08.068 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:08.068 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:08.068 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 8):  50%|█████     | 5/10 [00:21<00:14,  2.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  50%|█████     | 5/10 [00:21<00:14,  2.93s/it][A[A2025-01-21 21:35:08.351 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:08.351 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:08.351 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  60%|██████    | 6/10 [00:21<00:08,  2.03s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7):  60%|██████    | 6/10 [00:21<00:08,  2.03s/it][A[A2025-01-21 21:35:08.666 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:08.666 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:08.666 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7):  70%|███████   | 7/10 [00:21<00:04,  1.47s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 6, 9):  70%|███████   | 7/10 [00:21<00:04,  1.47s/it][A[A2025-01-21 21:35:15.084 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:35:15.084 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 6, 9):  80%|████████  | 8/10 [00:28<00:06,  3.04s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 7, 8, 9):  80%|████████  | 8/10 [00:28<00:06,  3.04s/it][A[A2025-01-21 21:35:21.453 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:35:21.453 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 7, 8, 9):  90%|█████████ | 9/10 [00:34<00:04,  4.08s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 8):  90%|█████████ | 9/10 [00:34<00:04,  4.08s/it][A[A2025-01-21 21:35:21.791 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:21.791 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:21.791 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 8): 100%|██████████| 10/10 [00:34<00:00,  2.93s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 4, 6, 8): 100%|██████████| 10/10 [00:34<00:00,  3.50s/it]
+2025-01-21 21:35:21.791 | INFO     | __main__:start_test:320 - Selected idx: 145
+2025-01-21 21:35:21.791 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:35:21.791 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:35:21.791 | INFO     | __main__:start_test:323 - Needle: [' John moved to the hallway.', ' Daniel went to the office.', ' Mary got the milk there.', ' Daniel took the apple.', ' Mary put down the milk.', ' Daniel travelled to the bathroom.', ' Daniel put down the apple.', ' Mary moved to the garden.']
+2025-01-21 21:35:21.792 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel went to the office.', ' Daniel took the apple.', ' Daniel travelled to the bathroom.', ' Daniel put down the apple.']
+2025-01-21 21:35:21.792 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:35:21.834 | INFO     | __main__:start_test:347 - [(0, 4, 5, 8), (0, 3, 6, 7), (0, 1, 3, 5), (3, 6, 7, 8), (1, 2, 8, 9), (1, 3, 6, 9), (3, 6, 8, 9), (0, 4, 5, 9), (4, 5, 7, 9), (4, 5, 8, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:35:22.156 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:22.156 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:22.156 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):  10%|█         | 1/10 [00:00<00:02,  3.10it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 7):  10%|█         | 1/10 [00:00<00:02,  3.10it/s][A[A2025-01-21 21:35:22.466 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:22.466 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:22.466 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 7):  20%|██        | 2/10 [00:00<00:02,  3.17it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 5):  20%|██        | 2/10 [00:00<00:02,  3.17it/s][A[A2025-01-21 21:35:22.751 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:22.751 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:22.751 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 5):  30%|███       | 3/10 [00:00<00:02,  3.32it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 7, 8):  30%|███       | 3/10 [00:00<00:02,  3.32it/s][A[A2025-01-21 21:35:28.511 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:35:28.511 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 7, 8):  40%|████      | 4/10 [00:06<00:14,  2.46s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 8, 9):  40%|████      | 4/10 [00:06<00:14,  2.46s/it][A[A2025-01-21 21:35:34.420 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:35:34.421 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 8, 9):  50%|█████     | 5/10 [00:12<00:18,  3.70s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 9):  50%|█████     | 5/10 [00:12<00:18,  3.70s/it][A[A2025-01-21 21:35:40.464 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:35:40.464 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 9):  60%|██████    | 6/10 [00:18<00:17,  4.50s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 8, 9):  60%|██████    | 6/10 [00:18<00:17,  4.50s/it][A[A2025-01-21 21:35:46.407 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:35:46.408 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 8, 9):  70%|███████   | 7/10 [00:24<00:14,  4.97s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  70%|███████   | 7/10 [00:24<00:14,  4.97s/it][A[A2025-01-21 21:35:46.768 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:46.769 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:46.769 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  80%|████████  | 8/10 [00:24<00:07,  3.50s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 9):  80%|████████  | 8/10 [00:24<00:07,  3.50s/it][A[A2025-01-21 21:35:52.567 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:35:52.567 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 9):  90%|█████████ | 9/10 [00:30<00:04,  4.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 8, 9):  90%|█████████ | 9/10 [00:30<00:04,  4.22s/it][A[A2025-01-21 21:35:58.365 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:35:58.366 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 8, 9): 100%|██████████| 10/10 [00:36<00:00,  4.71s/it][A[AProcessing length: 11900 | task: 4-hop | depth (4, 5, 8, 9): 100%|██████████| 10/10 [00:36<00:00,  3.65s/it]
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:320 - Selected idx: 147
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:321 - Answer: hallway
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:323 - Needle: [' Mary got the milk there.', ' Mary put down the milk.', ' Daniel moved to the hallway.', ' Daniel got the football there.', ' John moved to the hallway.', ' Daniel moved to the kitchen.', ' Daniel dropped the football.', ' Mary moved to the garden.']
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel moved to the hallway.', ' Daniel got the football there.', ' Daniel moved to the kitchen.', ' Daniel dropped the football.']
+2025-01-21 21:35:58.371 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:35:58.415 | INFO     | __main__:start_test:347 - [(0, 1, 2, 7), (3, 4, 5, 8), (2, 5, 6, 7), (1, 2, 3, 8), (1, 3, 5, 7), (1, 3, 7, 8), (5, 6, 7, 9), (0, 1, 3, 4), (0, 1, 7, 8), (0, 5, 6, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:35:58.727 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:35:58.727 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:35:58.728 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):  10%|█         | 1/10 [00:00<00:02,  3.21it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  10%|█         | 1/10 [00:00<00:02,  3.21it/s][A[A2025-01-21 21:36:04.448 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:36:04.448 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  20%|██        | 2/10 [00:06<00:27,  3.50s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 6, 7):  20%|██        | 2/10 [00:06<00:27,  3.50s/it][A[A2025-01-21 21:36:10.155 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:36:10.156 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 6, 7):  30%|███       | 3/10 [00:11<00:31,  4.51s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 8):  30%|███       | 3/10 [00:11<00:31,  4.51s/it][A[A2025-01-21 21:36:15.691 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:36:15.691 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 8):  40%|████      | 4/10 [00:17<00:29,  4.91s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 7):  40%|████      | 4/10 [00:17<00:29,  4.91s/it][A[A2025-01-21 21:36:21.222 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:36:21.222 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 7):  50%|█████     | 5/10 [00:22<00:25,  5.13s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  50%|█████     | 5/10 [00:22<00:25,  5.13s/it][A[A2025-01-21 21:36:26.806 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:36:26.807 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  60%|██████    | 6/10 [00:28<00:21,  5.29s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 9):  60%|██████    | 6/10 [00:28<00:21,  5.29s/it][A[A2025-01-21 21:36:32.455 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:36:32.456 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 9):  70%|███████   | 7/10 [00:34<00:16,  5.41s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  70%|███████   | 7/10 [00:34<00:16,  5.41s/it][A[A2025-01-21 21:36:32.730 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:36:32.730 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:36:32.730 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  80%|████████  | 8/10 [00:34<00:07,  3.77s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 7, 8):  80%|████████  | 8/10 [00:34<00:07,  3.77s/it][A[A2025-01-21 21:36:33.022 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:36:33.022 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:36:33.022 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 7, 8):  90%|█████████ | 9/10 [00:34<00:02,  2.68s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 7):  90%|█████████ | 9/10 [00:34<00:02,  2.68s/it][A[A2025-01-21 21:36:33.319 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:36:33.319 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:36:33.319 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 7): 100%|██████████| 10/10 [00:34<00:00,  1.95s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 5, 6, 7): 100%|██████████| 10/10 [00:34<00:00,  3.49s/it]
+2025-01-21 21:36:33.319 | INFO     | __main__:start_test:320 - Selected idx: 149
+2025-01-21 21:36:33.319 | INFO     | __main__:start_test:321 - Answer: hallway
+2025-01-21 21:36:33.319 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:36:33.319 | INFO     | __main__:start_test:323 - Needle: [' Mary got the milk there.', ' Mary put down the milk.', ' Daniel moved to the hallway.', ' Daniel grabbed the apple.', ' John moved to the hallway.', ' Daniel moved to the kitchen.', ' Daniel dropped the apple.', ' Mary moved to the garden.']
+2025-01-21 21:36:33.320 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel moved to the hallway.', ' Daniel grabbed the apple.', ' Daniel moved to the kitchen.', ' Daniel dropped the apple.']
+2025-01-21 21:36:33.320 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:36:33.358 | INFO     | __main__:start_test:347 - [(1, 3, 4, 8), (2, 5, 8, 9), (1, 3, 5, 9), (2, 4, 6, 8), (1, 2, 8, 9), (2, 3, 4, 9), (2, 5, 7, 8), (0, 1, 2, 5), (1, 3, 7, 9), (1, 2, 5, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:36:38.845 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:36:38.846 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 8):  10%|█         | 1/10 [00:05<00:49,  5.49s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 8, 9):  10%|█         | 1/10 [00:05<00:49,  5.49s/it][A[A2025-01-21 21:36:44.380 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:36:44.381 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 8, 9):  20%|██        | 2/10 [00:11<00:44,  5.52s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  20%|██        | 2/10 [00:11<00:44,  5.52s/it][A[A2025-01-21 21:36:49.909 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:36:49.909 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  30%|███       | 3/10 [00:16<00:38,  5.52s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8):  30%|███       | 3/10 [00:16<00:38,  5.52s/it][A[A2025-01-21 21:36:55.464 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:36:55.464 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8):  40%|████      | 4/10 [00:22<00:33,  5.53s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 8, 9):  40%|████      | 4/10 [00:22<00:33,  5.53s/it][A[A2025-01-21 21:37:01.032 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:37:01.032 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 8, 9):  50%|█████     | 5/10 [00:27<00:27,  5.55s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 9):  50%|█████     | 5/10 [00:27<00:27,  5.55s/it][A[A2025-01-21 21:37:06.567 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:37:06.567 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 9):  60%|██████    | 6/10 [00:33<00:22,  5.54s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  60%|██████    | 6/10 [00:33<00:22,  5.54s/it][A[A2025-01-21 21:37:12.143 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:37:12.144 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  70%|███████   | 7/10 [00:38<00:16,  5.55s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5):  70%|███████   | 7/10 [00:38<00:16,  5.55s/it][A[A2025-01-21 21:37:12.417 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:12.417 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:12.417 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5):  80%|████████  | 8/10 [00:39<00:07,  3.87s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 9):  80%|████████  | 8/10 [00:39<00:07,  3.87s/it][A[A2025-01-21 21:37:17.949 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:37:17.949 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 9):  90%|█████████ | 9/10 [00:44<00:04,  4.39s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 9):  90%|█████████ | 9/10 [00:44<00:04,  4.39s/it][A[A2025-01-21 21:37:23.486 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:37:23.486 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 9): 100%|██████████| 10/10 [00:50<00:00,  4.75s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 2, 5, 9): 100%|██████████| 10/10 [00:50<00:00,  5.01s/it]
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:320 - Selected idx: 151
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:323 - Needle: [' John journeyed to the bedroom.', ' Daniel went to the bedroom.', ' Mary went back to the kitchen.', ' John got the apple.', ' Sandra went back to the hallway.', ' Mary travelled to the hallway.', ' Mary went to the bathroom.', ' John travelled to the bathroom.', ' Sandra grabbed the milk.', ' John dropped the apple there.', ' Sandra put down the milk.']
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bedroom.', ' John got the apple.', ' John travelled to the bathroom.', ' John dropped the apple there.']
+2025-01-21 21:37:23.490 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:37:23.529 | INFO     | __main__:start_test:347 - [(3, 4, 6, 7), (0, 4, 7, 9), (0, 7, 8, 9), (0, 5, 7, 8), (0, 4, 5, 6), (4, 6, 7, 9), (5, 6, 7, 9), (4, 5, 7, 8), (0, 3, 4, 5), (0, 4, 5, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:37:30.840 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:37:30.840 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  10%|█         | 1/10 [00:07<01:05,  7.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 9):  10%|█         | 1/10 [00:07<01:05,  7.31s/it][A[A2025-01-21 21:37:31.218 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:31.218 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:31.218 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 9):  20%|██        | 2/10 [00:07<00:25,  3.23s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 7, 8, 9):  20%|██        | 2/10 [00:07<00:25,  3.23s/it][A[A2025-01-21 21:37:31.589 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:31.590 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:31.590 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 7, 8, 9):  30%|███       | 3/10 [00:08<00:13,  1.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 7, 8):  30%|███       | 3/10 [00:08<00:13,  1.93s/it][A[A2025-01-21 21:37:31.944 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:31.944 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:31.944 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 7, 8):  40%|████      | 4/10 [00:08<00:07,  1.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  40%|████      | 4/10 [00:08<00:07,  1.31s/it][A[A2025-01-21 21:37:32.274 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:32.274 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:32.274 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  50%|█████     | 5/10 [00:08<00:04,  1.05it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 9):  50%|█████     | 5/10 [00:08<00:04,  1.05it/s][A[A2025-01-21 21:37:39.566 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:37:39.567 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 9):  60%|██████    | 6/10 [00:16<00:12,  3.11s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 9):  60%|██████    | 6/10 [00:16<00:12,  3.11s/it][A[A2025-01-21 21:37:46.874 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:37:46.875 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 9):  70%|███████   | 7/10 [00:23<00:13,  4.48s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 8):  70%|███████   | 7/10 [00:23<00:13,  4.48s/it][A[A2025-01-21 21:37:54.123 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:37:54.123 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 8):  80%|████████  | 8/10 [00:30<00:10,  5.36s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  80%|████████  | 8/10 [00:30<00:10,  5.36s/it][A[A2025-01-21 21:37:54.472 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:54.472 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:54.472 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  90%|█████████ | 9/10 [00:30<00:03,  3.79s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7):  90%|█████████ | 9/10 [00:30<00:03,  3.79s/it][A[A2025-01-21 21:37:54.807 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:54.807 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:54.807 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7): 100%|██████████| 10/10 [00:31<00:00,  2.73s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 4, 5, 7): 100%|██████████| 10/10 [00:31<00:00,  3.13s/it]
+2025-01-21 21:37:54.807 | INFO     | __main__:start_test:320 - Selected idx: 153
+2025-01-21 21:37:54.807 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:37:54.807 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:37:54.807 | INFO     | __main__:start_test:323 - Needle: [' John journeyed to the bedroom.', ' John grabbed the apple.', ' Sandra went back to the hallway.', ' Mary went to the bathroom.', ' Daniel went to the bedroom.', ' Sandra grabbed the milk.', ' Mary went back to the kitchen.', ' John travelled to the bathroom.', ' Mary travelled to the hallway.', ' Sandra put down the milk.', ' John dropped the apple there.', ' Sandra moved to the garden.']
+2025-01-21 21:37:54.808 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bedroom.', ' John grabbed the apple.', ' John travelled to the bathroom.', ' John dropped the apple there.']
+2025-01-21 21:37:54.808 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:37:54.846 | INFO     | __main__:start_test:347 - [(0, 1, 4, 5), (0, 2, 3, 4), (2, 3, 6, 9), (1, 2, 6, 9), (1, 2, 4, 7), (0, 2, 5, 8), (3, 5, 6, 7), (1, 3, 6, 7), (2, 3, 4, 7), (1, 2, 6, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:37:55.162 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:55.162 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:55.162 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):  10%|█         | 1/10 [00:00<00:02,  3.17it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 4):  10%|█         | 1/10 [00:00<00:02,  3.17it/s][A[A2025-01-21 21:37:55.473 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:37:55.473 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:37:55.473 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 4):  20%|██        | 2/10 [00:00<00:02,  3.20it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 6, 9):  20%|██        | 2/10 [00:00<00:02,  3.20it/s][A[A2025-01-21 21:38:03.214 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:03.214 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 6, 9):  30%|███       | 3/10 [00:08<00:25,  3.71s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 6, 9):  30%|███       | 3/10 [00:08<00:25,  3.71s/it][A[A2025-01-21 21:38:10.943 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:10.943 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 6, 9):  40%|████      | 4/10 [00:16<00:31,  5.29s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 7):  40%|████      | 4/10 [00:16<00:31,  5.29s/it][A[A2025-01-21 21:38:20.932 | INFO     | __main__:evaluate_and_log:295 - model response: The bathroom.
+2025-01-21 21:38:20.932 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 7):  50%|█████     | 5/10 [00:26<00:34,  6.99s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8):  50%|█████     | 5/10 [00:26<00:34,  6.99s/it][A[A2025-01-21 21:38:21.299 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:38:21.299 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:38:21.299 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8):  60%|██████    | 6/10 [00:26<00:18,  4.74s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 7):  60%|██████    | 6/10 [00:26<00:18,  4.74s/it][A[A2025-01-21 21:38:28.956 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:28.957 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 7):  70%|███████   | 7/10 [00:34<00:17,  5.69s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7):  70%|███████   | 7/10 [00:34<00:17,  5.69s/it][A[A2025-01-21 21:38:36.708 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:36.708 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7):  80%|████████  | 8/10 [00:41<00:12,  6.35s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 7):  80%|████████  | 8/10 [00:41<00:12,  6.35s/it][A[A2025-01-21 21:38:45.113 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:45.113 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 7):  90%|█████████ | 9/10 [00:50<00:06,  6.99s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 6, 7):  90%|█████████ | 9/10 [00:50<00:06,  6.99s/it][A[A2025-01-21 21:38:52.797 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:52.798 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 6, 7): 100%|██████████| 10/10 [00:57<00:00,  7.20s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 2, 6, 7): 100%|██████████| 10/10 [00:57<00:00,  5.80s/it]
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:320 - Selected idx: 155
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:323 - Needle: [' Sandra went back to the hallway.', ' John journeyed to the bedroom.', ' Mary travelled to the hallway.', ' John took the football.', ' Mary went to the bathroom.', ' Daniel went to the bedroom.', ' John travelled to the bathroom.', ' Sandra grabbed the milk.', ' John dropped the football there.', ' Mary went back to the kitchen.']
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bedroom.', ' John took the football.', ' John travelled to the bathroom.', ' John dropped the football there.']
+2025-01-21 21:38:52.803 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:38:52.844 | INFO     | __main__:start_test:347 - [(1, 3, 6, 8), (3, 5, 7, 8), (0, 4, 5, 8), (0, 2, 5, 8), (1, 3, 4, 6), (2, 5, 7, 9), (1, 5, 6, 9), (0, 2, 4, 8), (2, 4, 5, 7), (3, 5, 6, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:38:59.571 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:38:59.572 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 8):  10%|█         | 1/10 [00:06<01:00,  6.73s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  10%|█         | 1/10 [00:06<01:00,  6.73s/it][A[A2025-01-21 21:39:06.297 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:39:06.297 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  20%|██        | 2/10 [00:13<00:53,  6.73s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):  20%|██        | 2/10 [00:13<00:53,  6.73s/it][A[A2025-01-21 21:39:06.659 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:06.659 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:06.659 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):  30%|███       | 3/10 [00:13<00:26,  3.82s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8):  30%|███       | 3/10 [00:13<00:26,  3.82s/it][A[A2025-01-21 21:39:06.982 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:06.983 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:06.983 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8):  40%|████      | 4/10 [00:14<00:14,  2.44s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  40%|████      | 4/10 [00:14<00:14,  2.44s/it][A[A2025-01-21 21:39:13.701 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:39:13.701 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  50%|█████     | 5/10 [00:20<00:19,  3.98s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 9):  50%|█████     | 5/10 [00:20<00:19,  3.98s/it][A[A2025-01-21 21:39:20.471 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:39:20.471 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 9):  60%|██████    | 6/10 [00:27<00:19,  4.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 5, 6, 9):  60%|██████    | 6/10 [00:27<00:19,  4.93s/it][A[A2025-01-21 21:39:27.217 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:39:27.218 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 5, 6, 9):  70%|███████   | 7/10 [00:34<00:16,  5.52s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 8):  70%|███████   | 7/10 [00:34<00:16,  5.52s/it][A[A2025-01-21 21:39:27.558 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:27.559 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:27.559 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 8):  80%|████████  | 8/10 [00:34<00:07,  3.87s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  80%|████████  | 8/10 [00:34<00:07,  3.87s/it][A[A2025-01-21 21:39:34.313 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:39:34.313 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  90%|█████████ | 9/10 [00:41<00:04,  4.77s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 9):  90%|█████████ | 9/10 [00:41<00:04,  4.77s/it][A[A2025-01-21 21:39:41.074 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:39:41.074 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 9): 100%|██████████| 10/10 [00:48<00:00,  5.39s/it][A[AProcessing length: 11900 | task: 4-hop | depth (3, 5, 6, 9): 100%|██████████| 10/10 [00:48<00:00,  4.82s/it]
+2025-01-21 21:39:41.079 | INFO     | __main__:start_test:320 - Selected idx: 157
+2025-01-21 21:39:41.079 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:39:41.079 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:39:41.080 | INFO     | __main__:start_test:323 - Needle: [' John travelled to the bathroom.', ' John got the apple.', ' Mary travelled to the bathroom.', ' Sandra went back to the hallway.', ' John put down the apple there.', ' John discarded the apple.', ' Mary got the milk.', ' John moved to the kitchen.', ' John grabbed the apple.', ' Mary travelled to the office.', ' Mary dropped the milk there.', ' John moved to the hallway.']
+2025-01-21 21:39:41.080 | INFO     | __main__:start_test:324 - Real Needle: [' Mary travelled to the bathroom.', ' Mary got the milk.', ' Mary travelled to the office.', ' Mary dropped the milk there.']
+2025-01-21 21:39:41.080 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:39:41.124 | INFO     | __main__:start_test:347 - [(2, 3, 5, 7), (2, 6, 8, 9), (0, 1, 2, 7), (0, 2, 8, 9), (0, 4, 8, 9), (1, 4, 5, 7), (0, 4, 5, 8), (2, 4, 8, 9), (1, 3, 7, 9), (0, 1, 7, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 7):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:39:48.627 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:39:48.627 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 7):  10%|█         | 1/10 [00:07<01:07,  7.51s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 8, 9):  10%|█         | 1/10 [00:07<01:07,  7.51s/it][A[A2025-01-21 21:39:56.237 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:39:56.237 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 8, 9):  20%|██        | 2/10 [00:15<01:00,  7.57s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):  20%|██        | 2/10 [00:15<01:00,  7.57s/it][A[A2025-01-21 21:39:56.669 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:56.670 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:56.670 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):  30%|███       | 3/10 [00:15<00:30,  4.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 8, 9):  30%|███       | 3/10 [00:15<00:30,  4.31s/it][A[A2025-01-21 21:39:57.115 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:57.115 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:57.115 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 8, 9):  40%|████      | 4/10 [00:15<00:16,  2.78s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 8, 9):  40%|████      | 4/10 [00:15<00:16,  2.78s/it][A[A2025-01-21 21:39:57.567 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:39:57.567 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:39:57.567 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 8, 9):  50%|█████     | 5/10 [00:16<00:09,  1.94s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 7):  50%|█████     | 5/10 [00:16<00:09,  1.94s/it][A[A2025-01-21 21:40:07.126 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:40:07.126 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 7):  60%|██████    | 6/10 [00:26<00:18,  4.53s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):  60%|██████    | 6/10 [00:26<00:18,  4.53s/it][A[A2025-01-21 21:40:07.590 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:07.590 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:07.590 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 8):  70%|███████   | 7/10 [00:26<00:09,  3.20s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 8, 9):  70%|███████   | 7/10 [00:26<00:09,  3.20s/it][A[A2025-01-21 21:40:18.000 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:40:18.000 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 8, 9):  80%|████████  | 8/10 [00:36<00:10,  5.50s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 9):  80%|████████  | 8/10 [00:36<00:10,  5.50s/it][A[A2025-01-21 21:40:25.788 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:40:25.789 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 9):  90%|█████████ | 9/10 [00:44<00:06,  6.21s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 7, 9):  90%|█████████ | 9/10 [00:44<00:06,  6.21s/it][A[A2025-01-21 21:40:26.265 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:26.265 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:26.265 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 7, 9): 100%|██████████| 10/10 [00:45<00:00,  4.44s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 1, 7, 9): 100%|██████████| 10/10 [00:45<00:00,  4.51s/it]
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:320 - Selected idx: 159
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:323 - Needle: [' Mary travelled to the bathroom.', ' Mary got the milk.', ' John moved to the kitchen.', ' Mary travelled to the office.', ' Sandra went back to the hallway.', ' John travelled to the bathroom.', ' Mary dropped the milk there.', ' John grabbed the apple.']
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:324 - Real Needle: [' Mary travelled to the bathroom.', ' Mary got the milk.', ' Mary travelled to the office.', ' Mary dropped the milk there.']
+2025-01-21 21:40:26.266 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:40:26.307 | INFO     | __main__:start_test:347 - [(2, 6, 7, 8), (1, 2, 3, 6), (1, 2, 7, 8), (1, 3, 5, 6), (0, 4, 5, 7), (1, 2, 3, 4), (0, 1, 3, 8), (0, 1, 6, 7), (0, 1, 4, 6), (1, 4, 6, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:40:32.278 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:40:32.278 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  10%|█         | 1/10 [00:05<00:53,  5.97s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):  10%|█         | 1/10 [00:06<00:53,  5.97s/it][A[A2025-01-21 21:40:37.987 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:40:37.987 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):  20%|██        | 2/10 [00:11<00:46,  5.82s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 8):  20%|██        | 2/10 [00:11<00:46,  5.82s/it][A[A2025-01-21 21:40:43.944 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:40:43.944 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 8):  30%|███       | 3/10 [00:17<00:41,  5.88s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 6):  30%|███       | 3/10 [00:17<00:41,  5.88s/it][A[A2025-01-21 21:40:49.680 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:40:49.680 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 6):  40%|████      | 4/10 [00:23<00:34,  5.82s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7):  40%|████      | 4/10 [00:23<00:34,  5.82s/it][A[A2025-01-21 21:40:49.958 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:49.958 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:49.958 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 7):  50%|█████     | 5/10 [00:23<00:19,  3.82s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 4):  50%|█████     | 5/10 [00:23<00:19,  3.82s/it][A[A2025-01-21 21:40:55.510 | INFO     | __main__:evaluate_and_log:295 - model response: the hallway
+2025-01-21 21:40:55.510 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 4):  60%|██████    | 6/10 [00:29<00:17,  4.41s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  60%|██████    | 6/10 [00:29<00:17,  4.41s/it][A[A2025-01-21 21:40:55.776 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:55.777 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:55.777 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  70%|███████   | 7/10 [00:29<00:09,  3.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  70%|███████   | 7/10 [00:29<00:09,  3.06s/it][A[A2025-01-21 21:40:56.013 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:56.013 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:56.013 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  80%|████████  | 8/10 [00:29<00:04,  2.16s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 6):  80%|████████  | 8/10 [00:29<00:04,  2.16s/it][A[A2025-01-21 21:40:56.234 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:40:56.234 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:40:56.234 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 6):  90%|█████████ | 9/10 [00:29<00:01,  1.55s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 6, 8):  90%|█████████ | 9/10 [00:29<00:01,  1.55s/it][A[A2025-01-21 21:41:01.759 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:41:01.759 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 6, 8): 100%|██████████| 10/10 [00:35<00:00,  2.78s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 4, 6, 8): 100%|██████████| 10/10 [00:35<00:00,  3.55s/it]
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:320 - Selected idx: 161
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:323 - Needle: [' Daniel journeyed to the bedroom.', ' Mary went to the bathroom.', ' Sandra travelled to the office.', ' Daniel went to the kitchen.', ' Mary grabbed the milk.', ' John got the apple.', ' Mary journeyed to the kitchen.', ' John discarded the apple.', ' Mary put down the milk.', ' Daniel moved to the bedroom.']
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:324 - Real Needle: [' Mary went to the bathroom.', ' Mary grabbed the milk.', ' Mary journeyed to the kitchen.', ' Mary put down the milk.']
+2025-01-21 21:41:01.762 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:41:01.803 | INFO     | __main__:start_test:347 - [(2, 4, 5, 6), (2, 4, 7, 8), (0, 2, 4, 8), (0, 1, 6, 7), (3, 4, 6, 7), (1, 3, 4, 9), (2, 6, 7, 8), (0, 2, 7, 9), (0, 1, 3, 8), (1, 3, 6, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:41:08.394 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:41:08.395 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):  10%|█         | 1/10 [00:06<00:59,  6.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 8):  10%|█         | 1/10 [00:06<00:59,  6.59s/it][A[A2025-01-21 21:41:15.030 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:41:15.031 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 8):  20%|██        | 2/10 [00:13<00:52,  6.62s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 8):  20%|██        | 2/10 [00:13<00:52,  6.62s/it][A[A2025-01-21 21:41:15.384 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:15.384 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:15.384 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 8):  30%|███       | 3/10 [00:13<00:26,  3.76s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  30%|███       | 3/10 [00:13<00:26,  3.76s/it][A[A2025-01-21 21:41:15.709 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:15.709 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:15.709 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  40%|████      | 4/10 [00:13<00:14,  2.40s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  40%|████      | 4/10 [00:13<00:14,  2.40s/it][A[A2025-01-21 21:41:22.353 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:41:22.353 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  50%|█████     | 5/10 [00:20<00:19,  3.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 9):  50%|█████     | 5/10 [00:20<00:19,  3.93s/it][A[A2025-01-21 21:41:28.949 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:41:28.950 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 9):  60%|██████    | 6/10 [00:27<00:19,  4.84s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  60%|██████    | 6/10 [00:27<00:19,  4.84s/it][A[A2025-01-21 21:41:35.571 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:41:35.571 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  70%|███████   | 7/10 [00:33<00:16,  5.42s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 7, 9):  70%|███████   | 7/10 [00:33<00:16,  5.42s/it][A[A2025-01-21 21:41:35.946 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:35.947 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:35.947 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 7, 9):  80%|████████  | 8/10 [00:34<00:07,  3.81s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  80%|████████  | 8/10 [00:34<00:07,  3.81s/it][A[A2025-01-21 21:41:36.264 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:36.264 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:36.264 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  90%|█████████ | 9/10 [00:34<00:02,  2.72s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7):  90%|█████████ | 9/10 [00:34<00:02,  2.72s/it][A[A2025-01-21 21:41:42.840 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:41:42.840 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7): 100%|██████████| 10/10 [00:41<00:00,  3.91s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 3, 6, 7): 100%|██████████| 10/10 [00:41<00:00,  4.10s/it]
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:320 - Selected idx: 163
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:323 - Needle: [' John got the apple.', ' Mary went to the bathroom.', ' Daniel journeyed to the bedroom.', ' Mary grabbed the milk.', ' John discarded the apple.', ' Mary journeyed to the kitchen.', ' Mary put down the milk.', ' Sandra travelled to the office.']
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:324 - Real Needle: [' Mary went to the bathroom.', ' Mary grabbed the milk.', ' Mary journeyed to the kitchen.', ' Mary put down the milk.']
+2025-01-21 21:41:42.843 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:41:42.880 | INFO     | __main__:start_test:347 - [(1, 2, 3, 6), (2, 3, 8, 9), (0, 2, 5, 9), (0, 1, 2, 9), (0, 5, 6, 7), (1, 3, 4, 6), (0, 2, 3, 8), (2, 4, 6, 7), (3, 5, 6, 8), (0, 1, 5, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:41:49.873 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:41:49.874 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):  10%|█         | 1/10 [00:06<01:02,  7.00s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 8, 9):  10%|█         | 1/10 [00:07<01:02,  7.00s/it][A[A2025-01-21 21:41:55.530 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:41:55.530 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 8, 9):  20%|██        | 2/10 [00:12<00:49,  6.21s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 9):  20%|██        | 2/10 [00:12<00:49,  6.21s/it][A[A2025-01-21 21:41:55.834 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:55.834 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:55.834 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 9):  30%|███       | 3/10 [00:12<00:24,  3.51s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  30%|███       | 3/10 [00:12<00:24,  3.51s/it][A[A2025-01-21 21:41:56.092 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:56.092 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:56.092 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  40%|████      | 4/10 [00:13<00:13,  2.23s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 7):  40%|████      | 4/10 [00:13<00:13,  2.23s/it][A[A2025-01-21 21:41:56.373 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:41:56.373 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:41:56.373 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 7):  50%|█████     | 5/10 [00:13<00:07,  1.53s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  50%|█████     | 5/10 [00:13<00:07,  1.53s/it][A[A2025-01-21 21:42:01.919 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:42:01.919 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  60%|██████    | 6/10 [00:19<00:11,  2.89s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  60%|██████    | 6/10 [00:19<00:11,  2.89s/it][A[A2025-01-21 21:42:02.212 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:42:02.212 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:42:02.212 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  70%|███████   | 7/10 [00:19<00:06,  2.04s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 7):  70%|███████   | 7/10 [00:19<00:06,  2.04s/it][A[A2025-01-21 21:42:07.826 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:42:07.826 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 7):  80%|████████  | 8/10 [00:24<00:06,  3.18s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 8):  80%|████████  | 8/10 [00:24<00:06,  3.18s/it][A[A2025-01-21 21:42:14.895 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:42:14.895 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 8):  90%|█████████ | 9/10 [00:32<00:04,  4.40s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 9):  90%|█████████ | 9/10 [00:32<00:04,  4.40s/it][A[A2025-01-21 21:42:15.193 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:42:15.193 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:42:15.193 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 9): 100%|██████████| 10/10 [00:32<00:00,  3.13s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 1, 5, 9): 100%|██████████| 10/10 [00:32<00:00,  3.23s/it]
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:320 - Selected idx: 165
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:323 - Needle: [' Mary went to the bathroom.', ' John journeyed to the bedroom.', ' Daniel journeyed to the bedroom.', ' John picked up the football.', ' John moved to the office.', ' Mary journeyed to the hallway.', ' John left the football.', ' Mary went back to the kitchen.']
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bedroom.', ' John picked up the football.', ' John moved to the office.', ' John left the football.']
+2025-01-21 21:42:15.193 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:42:15.232 | INFO     | __main__:start_test:347 - [(0, 1, 5, 6), (3, 4, 5, 8), (0, 1, 4, 7), (1, 3, 4, 7), (4, 7, 8, 9), (2, 6, 7, 8), (1, 2, 5, 9), (3, 4, 6, 7), (2, 5, 6, 7), (0, 2, 5, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:42:15.505 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:42:15.505 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:42:15.505 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 6):  10%|█         | 1/10 [00:00<00:02,  3.66it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  10%|█         | 1/10 [00:00<00:02,  3.66it/s][A[A2025-01-21 21:42:21.441 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:21.441 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  20%|██        | 2/10 [00:06<00:28,  3.61s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7):  20%|██        | 2/10 [00:06<00:28,  3.61s/it][A[A2025-01-21 21:42:21.741 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:42:21.741 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:42:21.741 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7):  30%|███       | 3/10 [00:06<00:14,  2.10s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 7):  30%|███       | 3/10 [00:06<00:14,  2.10s/it][A[A2025-01-21 21:42:27.664 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:27.664 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 7):  40%|████      | 4/10 [00:12<00:21,  3.61s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  40%|████      | 4/10 [00:12<00:21,  3.61s/it][A[A2025-01-21 21:42:34.086 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:34.086 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  50%|█████     | 5/10 [00:18<00:23,  4.62s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  50%|█████     | 5/10 [00:18<00:23,  4.62s/it][A[A2025-01-21 21:42:40.593 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:40.593 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  60%|██████    | 6/10 [00:25<00:21,  5.26s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 9):  60%|██████    | 6/10 [00:25<00:21,  5.26s/it][A[A2025-01-21 21:42:46.762 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:46.762 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 9):  70%|███████   | 7/10 [00:31<00:16,  5.56s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  70%|███████   | 7/10 [00:31<00:16,  5.56s/it][A[A2025-01-21 21:42:53.251 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:53.251 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  80%|████████  | 8/10 [00:38<00:11,  5.86s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 6, 7):  80%|████████  | 8/10 [00:38<00:11,  5.86s/it][A[A2025-01-21 21:42:59.725 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:42:59.725 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 6, 7):  90%|█████████ | 9/10 [00:44<00:06,  6.05s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8):  90%|█████████ | 9/10 [00:44<00:06,  6.05s/it][A[A2025-01-21 21:43:00.069 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:43:00.069 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:43:00.069 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 8): 100%|██████████| 10/10 [00:44<00:00,  4.29s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 2, 5, 8): 100%|██████████| 10/10 [00:44<00:00,  4.48s/it]
+2025-01-21 21:43:00.069 | INFO     | __main__:start_test:320 - Selected idx: 167
+2025-01-21 21:43:00.070 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:43:00.070 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:43:00.070 | INFO     | __main__:start_test:323 - Needle: [' Daniel journeyed to the bedroom.', ' John journeyed to the bedroom.', ' Mary went to the bathroom.', ' Mary journeyed to the hallway.', ' John grabbed the football.', ' John moved to the office.', ' John left the football.', ' Mary went back to the kitchen.']
+2025-01-21 21:43:00.070 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bedroom.', ' John grabbed the football.', ' John moved to the office.', ' John left the football.']
+2025-01-21 21:43:00.070 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:43:00.107 | INFO     | __main__:start_test:347 - [(3, 4, 6, 8), (0, 2, 6, 9), (2, 5, 7, 9), (2, 4, 5, 7), (3, 4, 5, 7), (0, 5, 6, 9), (2, 5, 7, 8), (0, 3, 5, 7), (3, 4, 5, 8), (0, 4, 7, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:43:06.207 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:43:06.207 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 8):  10%|█         | 1/10 [00:06<00:54,  6.10s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 6, 9):  10%|█         | 1/10 [00:06<00:54,  6.10s/it][A[A2025-01-21 21:43:06.517 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:43:06.517 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:43:06.517 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 6, 9):  20%|██        | 2/10 [00:06<00:21,  2.69s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 9):  20%|██        | 2/10 [00:06<00:21,  2.69s/it][A[A2025-01-21 21:43:13.837 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:43:13.837 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 9):  30%|███       | 3/10 [00:13<00:33,  4.81s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  30%|███       | 3/10 [00:13<00:33,  4.81s/it][A[A2025-01-21 21:43:19.689 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:43:19.689 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  40%|████      | 4/10 [00:19<00:31,  5.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 7):  40%|████      | 4/10 [00:19<00:31,  5.22s/it][A[A2025-01-21 21:43:25.493 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:43:25.493 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 7):  50%|█████     | 5/10 [00:25<00:27,  5.43s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):  50%|█████     | 5/10 [00:25<00:27,  5.43s/it][A[A2025-01-21 21:43:25.815 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:43:25.815 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:43:25.815 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):  60%|██████    | 6/10 [00:25<00:14,  3.69s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  60%|██████    | 6/10 [00:25<00:14,  3.69s/it][A[A2025-01-21 21:43:33.162 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:43:33.162 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  70%|███████   | 7/10 [00:33<00:14,  4.89s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 7):  70%|███████   | 7/10 [00:33<00:14,  4.89s/it][A[A2025-01-21 21:43:33.478 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:43:33.478 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:43:33.478 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 7):  80%|████████  | 8/10 [00:33<00:06,  3.43s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  80%|████████  | 8/10 [00:33<00:06,  3.43s/it][A[A2025-01-21 21:43:39.989 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:43:39.990 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  90%|█████████ | 9/10 [00:39<00:04,  4.40s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 8):  90%|█████████ | 9/10 [00:39<00:04,  4.40s/it][A[A2025-01-21 21:43:40.306 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:43:40.306 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:43:40.306 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 8): 100%|██████████| 10/10 [00:40<00:00,  3.14s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 4, 7, 8): 100%|██████████| 10/10 [00:40<00:00,  4.02s/it]
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:320 - Selected idx: 169
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:323 - Needle: [' Mary went back to the kitchen.', ' John travelled to the office.', ' Daniel went to the kitchen.', ' John picked up the milk.', ' Mary went to the bathroom.', ' John journeyed to the bedroom.', ' Mary journeyed to the hallway.', ' Daniel journeyed to the bedroom.', ' Sandra travelled to the office.', ' John left the milk.', ' Daniel moved to the bedroom.']
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:324 - Real Needle: [' John travelled to the office.', ' John picked up the milk.', ' John journeyed to the bedroom.', ' John left the milk.']
+2025-01-21 21:43:40.306 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:43:40.403 | INFO     | __main__:start_test:347 - [(4, 6, 7, 8), (1, 2, 4, 5), (1, 6, 7, 8), (4, 5, 6, 8), (0, 3, 4, 7), (3, 4, 5, 6), (0, 4, 7, 8), (3, 5, 7, 8), (1, 6, 8, 9), (1, 4, 5, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:43:49.825 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:43:49.825 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 8):  10%|█         | 1/10 [00:09<01:24,  9.43s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  10%|█         | 1/10 [00:09<01:24,  9.43s/it][A[A2025-01-21 21:43:59.185 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:43:59.186 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  20%|██        | 2/10 [00:18<01:15,  9.39s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):  20%|██        | 2/10 [00:18<01:15,  9.39s/it][A[A2025-01-21 21:44:08.777 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:44:08.777 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):  30%|███       | 3/10 [00:28<01:06,  9.48s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 8):  30%|███       | 3/10 [00:28<01:06,  9.48s/it][A[A2025-01-21 21:44:18.215 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:44:18.215 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 8):  40%|████      | 4/10 [00:37<00:56,  9.46s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):  40%|████      | 4/10 [00:37<00:56,  9.46s/it][A[A2025-01-21 21:44:18.559 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:44:18.559 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:44:18.560 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):  50%|█████     | 5/10 [00:38<00:30,  6.17s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 6):  50%|█████     | 5/10 [00:38<00:30,  6.17s/it][A[A2025-01-21 21:44:27.904 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:44:27.904 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 6):  60%|██████    | 6/10 [00:47<00:29,  7.25s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 8):  60%|██████    | 6/10 [00:47<00:29,  7.25s/it][A[A2025-01-21 21:44:28.274 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:44:28.274 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:44:28.274 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 8):  70%|███████   | 7/10 [00:47<00:15,  5.00s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  70%|███████   | 7/10 [00:47<00:15,  5.00s/it][A[A2025-01-21 21:44:37.686 | INFO     | __main__:evaluate_and_log:295 - model response: The bedroom.
+2025-01-21 21:44:37.687 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  80%|████████  | 8/10 [00:57<00:12,  6.41s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  80%|████████  | 8/10 [00:57<00:12,  6.41s/it][A[A2025-01-21 21:44:47.210 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:44:47.210 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  90%|█████████ | 9/10 [01:06<00:07,  7.38s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 8):  90%|█████████ | 9/10 [01:06<00:07,  7.38s/it][A[A2025-01-21 21:44:56.698 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:44:56.698 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 8): 100%|██████████| 10/10 [01:16<00:00,  8.03s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 4, 5, 8): 100%|██████████| 10/10 [01:16<00:00,  7.63s/it]
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:320 - Selected idx: 171
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:323 - Needle: [' Daniel went to the office.', ' Mary journeyed to the hallway.', ' John went back to the garden.', ' John got the milk.', ' Daniel journeyed to the garden.', ' John moved to the office.', ' John dropped the milk.', ' Daniel went to the bathroom.']
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:324 - Real Needle: [' John went back to the garden.', ' John got the milk.', ' John moved to the office.', ' John dropped the milk.']
+2025-01-21 21:44:56.703 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:44:56.747 | INFO     | __main__:start_test:347 - [(0, 4, 5, 9), (3, 4, 5, 9), (1, 6, 8, 9), (0, 3, 4, 7), (0, 1, 2, 4), (0, 4, 5, 6), (0, 3, 4, 8), (0, 3, 8, 9), (3, 5, 7, 9), (2, 3, 4, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:44:57.108 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:44:57.108 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:44:57.108 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  10%|█         | 1/10 [00:00<00:03,  2.77it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 9):  10%|█         | 1/10 [00:00<00:03,  2.77it/s][A[A2025-01-21 21:45:02.913 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:45:02.913 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 9):  20%|██        | 2/10 [00:06<00:28,  3.56s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  20%|██        | 2/10 [00:06<00:28,  3.56s/it][A[A2025-01-21 21:45:10.260 | INFO     | __main__:evaluate_and_log:295 - model response: The garden.
+2025-01-21 21:45:10.261 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  30%|███       | 3/10 [00:13<00:37,  5.29s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):  30%|███       | 3/10 [00:13<00:37,  5.29s/it][A[A2025-01-21 21:45:10.606 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:45:10.607 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:45:10.607 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):  40%|████      | 4/10 [00:13<00:20,  3.34s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 4):  40%|████      | 4/10 [00:13<00:20,  3.34s/it][A[A2025-01-21 21:45:10.895 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:45:10.895 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:45:10.895 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 4):  50%|█████     | 5/10 [00:14<00:11,  2.24s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  50%|█████     | 5/10 [00:14<00:11,  2.24s/it][A[A2025-01-21 21:45:11.219 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:45:11.219 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:45:11.219 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  60%|██████    | 6/10 [00:14<00:06,  1.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 8):  60%|██████    | 6/10 [00:14<00:06,  1.59s/it][A[A2025-01-21 21:45:11.546 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:45:11.546 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:45:11.547 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 8):  70%|███████   | 7/10 [00:14<00:03,  1.18s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 8, 9):  70%|███████   | 7/10 [00:14<00:03,  1.18s/it][A[A2025-01-21 21:45:11.891 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:45:11.891 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:45:11.891 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 8, 9):  80%|████████  | 8/10 [00:15<00:01,  1.10it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 9):  80%|████████  | 8/10 [00:15<00:01,  1.10it/s][A[A2025-01-21 21:45:17.695 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:45:17.696 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 9):  90%|█████████ | 9/10 [00:20<00:02,  2.44s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 9):  90%|█████████ | 9/10 [00:20<00:02,  2.44s/it][A[A2025-01-21 21:45:24.967 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:45:24.967 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 9): 100%|██████████| 10/10 [00:28<00:00,  3.93s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 3, 4, 9): 100%|██████████| 10/10 [00:28<00:00,  2.82s/it]
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:320 - Selected idx: 173
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:323 - Needle: [' Daniel went to the office.', ' Mary went to the garden.', ' Daniel journeyed to the garden.', ' Sandra travelled to the bathroom.', ' Mary grabbed the milk.', ' Daniel moved to the office.', ' Mary went back to the kitchen.', ' John went back to the kitchen.', ' Daniel went to the bathroom.', ' Daniel went back to the hallway.', ' Mary left the milk.', ' Sandra moved to the kitchen.']
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:324 - Real Needle: [' Mary went to the garden.', ' Mary grabbed the milk.', ' Mary went back to the kitchen.', ' Mary left the milk.']
+2025-01-21 21:45:24.970 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:45:25.015 | INFO     | __main__:start_test:347 - [(2, 4, 5, 6), (1, 4, 7, 8), (3, 5, 7, 8), (5, 7, 8, 9), (4, 5, 7, 9), (0, 2, 5, 9), (2, 3, 5, 7), (0, 2, 5, 7), (0, 1, 3, 4), (1, 3, 4, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:45:32.858 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:45:32.858 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):  10%|█         | 1/10 [00:07<01:10,  7.85s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 7, 8):  10%|█         | 1/10 [00:07<01:10,  7.85s/it][A[A2025-01-21 21:45:40.772 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:45:40.772 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 7, 8):  20%|██        | 2/10 [00:15<01:03,  7.89s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  20%|██        | 2/10 [00:15<01:03,  7.89s/it][A[A2025-01-21 21:45:48.703 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:45:48.703 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  30%|███       | 3/10 [00:23<00:55,  7.91s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (5, 7, 8, 9):  30%|███       | 3/10 [00:23<00:55,  7.91s/it][A[A2025-01-21 21:45:56.746 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:45:56.747 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (5, 7, 8, 9):  40%|████      | 4/10 [00:31<00:47,  7.96s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 9):  40%|████      | 4/10 [00:31<00:47,  7.96s/it][A[A2025-01-21 21:46:06.927 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:46:06.927 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 7, 9):  50%|█████     | 5/10 [00:41<00:43,  8.76s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 9):  50%|█████     | 5/10 [00:41<00:43,  8.76s/it][A[A2025-01-21 21:46:07.371 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:07.371 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:07.371 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 9):  60%|██████    | 6/10 [00:42<00:23,  5.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 7):  60%|██████    | 6/10 [00:42<00:23,  5.93s/it][A[A2025-01-21 21:46:15.308 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:46:15.308 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 7):  70%|███████   | 7/10 [00:50<00:19,  6.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 7):  70%|███████   | 7/10 [00:50<00:19,  6.59s/it][A[A2025-01-21 21:46:15.736 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:15.737 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:15.737 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 7):  80%|████████  | 8/10 [00:50<00:09,  4.63s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  80%|████████  | 8/10 [00:50<00:09,  4.63s/it][A[A2025-01-21 21:46:16.115 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:16.115 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:16.115 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  90%|█████████ | 9/10 [00:51<00:03,  3.30s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 7):  90%|█████████ | 9/10 [00:51<00:03,  3.30s/it][A[A2025-01-21 21:46:24.016 | INFO     | __main__:evaluate_and_log:295 - model response: kitchen
+2025-01-21 21:46:24.016 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 7): 100%|██████████| 10/10 [00:59<00:00,  4.72s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 3, 4, 7): 100%|██████████| 10/10 [00:59<00:00,  5.90s/it]
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:320 - Selected idx: 175
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:323 - Needle: [' Daniel moved to the office.', ' Sandra travelled to the bathroom.', ' Mary went to the garden.', ' Daniel went to the office.', ' Mary picked up the milk.', ' Daniel journeyed to the garden.', ' Daniel went to the bathroom.', ' Mary went back to the kitchen.', ' John went back to the kitchen.', ' Daniel went back to the hallway.', ' Mary left the milk.', ' Sandra moved to the kitchen.']
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:324 - Real Needle: [' Mary went to the garden.', ' Mary picked up the milk.', ' Mary went back to the kitchen.', ' Mary left the milk.']
+2025-01-21 21:46:24.019 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:46:24.063 | INFO     | __main__:start_test:347 - [(0, 2, 4, 9), (0, 3, 6, 7), (3, 5, 6, 8), (2, 4, 7, 9), (0, 2, 3, 5), (0, 1, 3, 8), (0, 2, 4, 6), (2, 4, 5, 8), (1, 2, 4, 5), (2, 4, 5, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:46:24.462 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:24.462 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:24.463 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 9):  10%|█         | 1/10 [00:00<00:03,  2.50it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 7):  10%|█         | 1/10 [00:00<00:03,  2.50it/s][A[A2025-01-21 21:46:24.840 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:24.840 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:24.840 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 7):  20%|██        | 2/10 [00:00<00:03,  2.59it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 8):  20%|██        | 2/10 [00:00<00:03,  2.59it/s][A[A2025-01-21 21:46:32.758 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:46:32.758 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 6, 8):  30%|███       | 3/10 [00:08<00:26,  3.83s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9):  30%|███       | 3/10 [00:08<00:26,  3.83s/it][A[A2025-01-21 21:46:40.683 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:46:40.683 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9):  40%|████      | 4/10 [00:16<00:32,  5.44s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  40%|████      | 4/10 [00:16<00:32,  5.44s/it][A[A2025-01-21 21:46:41.064 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:41.064 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:41.064 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  50%|█████     | 5/10 [00:17<00:18,  3.62s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  50%|█████     | 5/10 [00:17<00:18,  3.62s/it][A[A2025-01-21 21:46:41.426 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:41.426 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:41.426 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  60%|██████    | 6/10 [00:17<00:10,  2.51s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 6):  60%|██████    | 6/10 [00:17<00:10,  2.51s/it][A[A2025-01-21 21:46:41.795 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:46:41.795 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:46:41.795 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 4, 6):  70%|███████   | 7/10 [00:17<00:05,  1.81s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 8):  70%|███████   | 7/10 [00:17<00:05,  1.81s/it][A[A2025-01-21 21:46:49.677 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:46:49.677 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 8):  80%|████████  | 8/10 [00:25<00:07,  3.74s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  80%|████████  | 8/10 [00:25<00:07,  3.74s/it][A[A2025-01-21 21:46:57.628 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:46:57.628 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  90%|█████████ | 9/10 [00:33<00:05,  5.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  90%|█████████ | 9/10 [00:33<00:05,  5.06s/it][A[A2025-01-21 21:47:05.550 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:47:05.550 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7): 100%|██████████| 10/10 [00:41<00:00,  5.94s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 4, 5, 7): 100%|██████████| 10/10 [00:41<00:00,  4.15s/it]
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:320 - Selected idx: 177
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:323 - Needle: [' Daniel went to the office.', ' Daniel went back to the hallway.', ' Mary went to the garden.', ' Daniel moved to the office.', ' Mary got the apple.', ' John went back to the kitchen.', ' Daniel journeyed to the garden.', ' Daniel went to the bathroom.', ' Mary went back to the kitchen.', ' Sandra travelled to the bathroom.', ' Mary left the apple.', ' Sandra moved to the kitchen.']
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:324 - Real Needle: [' Mary went to the garden.', ' Mary got the apple.', ' Mary went back to the kitchen.', ' Mary left the apple.']
+2025-01-21 21:47:05.554 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:47:05.630 | INFO     | __main__:start_test:347 - [(2, 3, 8, 9), (0, 2, 3, 6), (0, 6, 7, 9), (0, 1, 6, 7), (1, 3, 5, 7), (0, 1, 3, 7), (0, 3, 5, 7), (0, 4, 6, 7), (0, 2, 3, 5), (0, 1, 4, 7)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 8, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:47:15.794 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:47:15.794 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 8, 9):  10%|█         | 1/10 [00:10<01:31, 10.17s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 6):  10%|█         | 1/10 [00:10<01:31, 10.17s/it][A[A2025-01-21 21:47:16.171 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:16.171 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:16.171 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 6):  20%|██        | 2/10 [00:10<00:35,  4.41s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  20%|██        | 2/10 [00:10<00:35,  4.41s/it][A[A2025-01-21 21:47:16.570 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:16.570 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:16.570 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  30%|███       | 3/10 [00:10<00:18,  2.58s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  30%|███       | 3/10 [00:10<00:18,  2.58s/it][A[A2025-01-21 21:47:16.934 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:16.934 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:16.934 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 7):  40%|████      | 4/10 [00:11<00:10,  1.70s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 7):  40%|████      | 4/10 [00:11<00:10,  1.70s/it][A[A2025-01-21 21:47:24.837 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:47:24.837 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 7):  50%|█████     | 5/10 [00:19<00:19,  3.94s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 7):  50%|█████     | 5/10 [00:19<00:19,  3.94s/it][A[A2025-01-21 21:47:25.217 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:25.217 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:25.217 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 7):  60%|██████    | 6/10 [00:19<00:10,  2.73s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 7):  60%|██████    | 6/10 [00:19<00:10,  2.73s/it][A[A2025-01-21 21:47:25.587 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:25.587 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:25.587 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 7):  70%|███████   | 7/10 [00:19<00:05,  1.96s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 7):  70%|███████   | 7/10 [00:19<00:05,  1.96s/it][A[A2025-01-21 21:47:25.964 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:25.964 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:25.964 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 7):  80%|████████  | 8/10 [00:20<00:02,  1.45s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  80%|████████  | 8/10 [00:20<00:02,  1.45s/it][A[A2025-01-21 21:47:26.314 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:26.314 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:26.314 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  90%|█████████ | 9/10 [00:20<00:01,  1.11s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7):  90%|█████████ | 9/10 [00:20<00:01,  1.11s/it][A[A2025-01-21 21:47:26.674 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:47:26.674 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:47:26.675 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7): 100%|██████████| 10/10 [00:21<00:00,  1.14it/s][A[AProcessing length: 11900 | task: 4-hop | depth (0, 1, 4, 7): 100%|██████████| 10/10 [00:21<00:00,  2.10s/it]
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:320 - Selected idx: 179
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:321 - Answer: hallway
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:323 - Needle: [' Daniel went to the office.', ' Mary journeyed to the hallway.', ' Sandra travelled to the bathroom.', ' Mary got the apple.', ' Daniel journeyed to the garden.', ' Daniel went back to the hallway.', ' Mary travelled to the office.', ' John went back to the kitchen.', ' Daniel went to the bathroom.', ' Daniel moved to the office.', ' Mary put down the apple.', ' Sandra moved to the kitchen.']
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:324 - Real Needle: [' Mary journeyed to the hallway.', ' Mary got the apple.', ' Mary travelled to the office.', ' Mary put down the apple.']
+2025-01-21 21:47:26.675 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:47:26.711 | INFO     | __main__:start_test:347 - [(1, 2, 4, 6), (4, 5, 8, 9), (2, 3, 4, 6), (2, 4, 7, 9), (2, 4, 5, 9), (0, 1, 4, 9), (0, 6, 7, 9), (1, 2, 3, 6), (0, 1, 3, 7), (0, 1, 2, 5)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:47:34.568 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:47:34.568 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 6):  10%|█         | 1/10 [00:07<01:10,  7.86s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 8, 9):  10%|█         | 1/10 [00:07<01:10,  7.86s/it][A[A2025-01-21 21:47:42.547 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:47:42.547 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 8, 9):  20%|██        | 2/10 [00:15<01:03,  7.93s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 6):  20%|██        | 2/10 [00:15<01:03,  7.93s/it][A[A2025-01-21 21:47:50.431 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:47:50.431 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 4, 6):  30%|███       | 3/10 [00:23<00:55,  7.91s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9):  30%|███       | 3/10 [00:23<00:55,  7.91s/it][A[A2025-01-21 21:47:58.410 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:47:58.410 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9):  40%|████      | 4/10 [00:31<00:47,  7.94s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 9):  40%|████      | 4/10 [00:31<00:47,  7.94s/it][A[A2025-01-21 21:48:06.267 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:48:06.268 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 9):  50%|█████     | 5/10 [00:39<00:39,  7.91s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 9):  50%|█████     | 5/10 [00:39<00:39,  7.91s/it][A[A2025-01-21 21:48:06.671 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:06.672 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:06.672 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 9):  60%|██████    | 6/10 [00:39<00:21,  5.36s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  60%|██████    | 6/10 [00:39<00:21,  5.36s/it][A[A2025-01-21 21:48:07.072 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:07.072 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:07.072 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  70%|███████   | 7/10 [00:40<00:11,  3.74s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):  70%|███████   | 7/10 [00:40<00:11,  3.74s/it][A[A2025-01-21 21:48:14.967 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:48:14.967 | INFO     | __main__:evaluate_and_log:296 - gloden label: hallway
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 6):  80%|████████  | 8/10 [00:48<00:10,  5.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 7):  80%|████████  | 8/10 [00:48<00:10,  5.06s/it][A[A2025-01-21 21:48:15.340 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:15.340 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:15.340 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 7):  90%|█████████ | 9/10 [00:48<00:03,  3.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5):  90%|█████████ | 9/10 [00:48<00:03,  3.59s/it][A[A2025-01-21 21:48:15.675 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:15.675 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:15.676 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5): 100%|██████████| 10/10 [00:48<00:00,  2.59s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 1, 2, 5): 100%|██████████| 10/10 [00:48<00:00,  4.90s/it]
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:320 - Selected idx: 181
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:321 - Answer: bedroom
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:323 - Needle: [' Daniel moved to the bedroom.', ' Mary discarded the milk.', ' Mary took the football.', ' Daniel took the apple there.', ' Daniel journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary grabbed the milk.', ' Mary got the football.', ' Mary discarded the football.', ' Daniel put down the apple.', ' Sandra went to the kitchen.']
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel moved to the bedroom.', ' Daniel took the apple there.', ' Daniel journeyed to the office.', ' Daniel put down the apple.']
+2025-01-21 21:48:15.676 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:48:15.716 | INFO     | __main__:start_test:347 - [(0, 1, 8, 9), (0, 4, 5, 6), (1, 3, 6, 7), (0, 6, 7, 9), (0, 3, 6, 8), (0, 1, 3, 6), (1, 4, 5, 6), (0, 4, 5, 9), (2, 6, 7, 9), (0, 1, 3, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 8, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:48:16.070 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:16.070 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:16.070 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 8, 9):  10%|█         | 1/10 [00:00<00:03,  2.82it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  10%|█         | 1/10 [00:00<00:03,  2.82it/s][A[A2025-01-21 21:48:16.414 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:16.414 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:16.414 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 6):  20%|██        | 2/10 [00:00<00:02,  2.87it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7):  20%|██        | 2/10 [00:00<00:02,  2.87it/s][A[A2025-01-21 21:48:25.233 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:48:25.233 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 6, 7):  30%|███       | 3/10 [00:09<00:29,  4.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  30%|███       | 3/10 [00:09<00:29,  4.22s/it][A[A2025-01-21 21:48:25.633 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:25.633 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:25.633 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 9):  40%|████      | 4/10 [00:09<00:16,  2.71s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 8):  40%|████      | 4/10 [00:09<00:16,  2.71s/it][A[A2025-01-21 21:48:25.987 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:25.987 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:25.987 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 6, 8):  50%|█████     | 5/10 [00:10<00:09,  1.86s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 6):  50%|█████     | 5/10 [00:10<00:09,  1.86s/it][A[A2025-01-21 21:48:26.308 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:26.308 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:26.308 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 6):  60%|██████    | 6/10 [00:10<00:05,  1.34s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 6):  60%|██████    | 6/10 [00:10<00:05,  1.34s/it][A[A2025-01-21 21:48:33.218 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:48:33.218 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 5, 6):  70%|███████   | 7/10 [00:17<00:09,  3.16s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  70%|███████   | 7/10 [00:17<00:09,  3.16s/it][A[A2025-01-21 21:48:34.043 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:34.043 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:34.043 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  80%|████████  | 8/10 [00:18<00:04,  2.42s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 9):  80%|████████  | 8/10 [00:18<00:04,  2.42s/it][A[A2025-01-21 21:48:50.449 | INFO     | __main__:evaluate_and_log:295 - model response: the Taverne du Pantheon
+2025-01-21 21:48:50.449 | INFO     | __main__:evaluate_and_log:296 - gloden label: bedroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 9):  90%|█████████ | 9/10 [00:34<00:06,  6.79s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8):  90%|█████████ | 9/10 [00:34<00:06,  6.79s/it][A[A2025-01-21 21:48:50.805 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:50.805 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:50.805 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 8): 100%|██████████| 10/10 [00:35<00:00,  4.80s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 1, 3, 8): 100%|██████████| 10/10 [00:35<00:00,  3.51s/it]
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:320 - Selected idx: 183
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:323 - Needle: [' Mary journeyed to the bathroom.', ' Mary discarded the football.', ' Mary took the football.', ' Sandra went to the kitchen.', ' Daniel journeyed to the office.', ' Mary discarded the football.', ' Daniel grabbed the milk.', ' Daniel travelled to the garden.', ' Mary got the football.', ' Daniel discarded the milk there.', ' Mary journeyed to the bedroom.']
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel journeyed to the office.', ' Daniel grabbed the milk.', ' Daniel travelled to the garden.', ' Daniel discarded the milk there.']
+2025-01-21 21:48:50.805 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:48:50.919 | INFO     | __main__:start_test:347 - [(0, 1, 5, 7), (1, 3, 7, 8), (0, 2, 5, 6), (1, 6, 7, 9), (0, 1, 5, 6), (2, 4, 5, 9), (0, 3, 4, 9), (1, 2, 5, 8), (0, 1, 3, 4), (1, 2, 3, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 7):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:48:51.247 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:51.247 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:51.247 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 7):  10%|█         | 1/10 [00:00<00:02,  3.05it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  10%|█         | 1/10 [00:00<00:02,  3.05it/s][A[A2025-01-21 21:48:58.275 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:48:58.275 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  20%|██        | 2/10 [00:07<00:34,  4.27s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 6):  20%|██        | 2/10 [00:07<00:34,  4.27s/it][A[A2025-01-21 21:48:58.632 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:48:58.632 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:48:58.632 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 5, 6):  30%|███       | 3/10 [00:07<00:17,  2.48s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  30%|███       | 3/10 [00:07<00:17,  2.48s/it][A[A2025-01-21 21:49:07.529 | INFO     | __main__:evaluate_and_log:295 - model response: the poorhouse
+2025-01-21 21:49:07.529 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  40%|████      | 4/10 [00:16<00:30,  5.02s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 6):  40%|████      | 4/10 [00:16<00:30,  5.02s/it][A[A2025-01-21 21:49:07.881 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:49:07.881 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:49:07.881 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 6):  50%|█████     | 5/10 [00:16<00:16,  3.33s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 9):  50%|█████     | 5/10 [00:16<00:16,  3.33s/it][A[A2025-01-21 21:49:16.793 | INFO     | __main__:evaluate_and_log:295 - model response: the poorhouse
+2025-01-21 21:49:16.793 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 9):  60%|██████    | 6/10 [00:25<00:20,  5.23s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 9):  60%|██████    | 6/10 [00:25<00:20,  5.23s/it][A[A2025-01-21 21:49:17.158 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:49:17.158 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:49:17.158 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 9):  70%|███████   | 7/10 [00:26<00:10,  3.64s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 8):  70%|███████   | 7/10 [00:26<00:10,  3.64s/it][A[A2025-01-21 21:49:26.110 | INFO     | __main__:evaluate_and_log:295 - model response: the poorhouse
+2025-01-21 21:49:26.110 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 8):  80%|████████  | 8/10 [00:35<00:10,  5.33s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  80%|████████  | 8/10 [00:35<00:10,  5.33s/it][A[A2025-01-21 21:49:26.440 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:49:26.441 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:49:26.441 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 7 | attack clues length: 7
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 3, 4):  90%|█████████ | 9/10 [00:35<00:03,  3.77s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 8):  90%|█████████ | 9/10 [00:35<00:03,  3.77s/it][A[A2025-01-21 21:49:35.328 | INFO     | __main__:evaluate_and_log:295 - model response: the poorhouse
+2025-01-21 21:49:35.329 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 8): 100%|██████████| 10/10 [00:44<00:00,  5.35s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 2, 3, 8): 100%|██████████| 10/10 [00:44<00:00,  4.44s/it]
+2025-01-21 21:49:35.331 | INFO     | __main__:start_test:320 - Selected idx: 185
+2025-01-21 21:49:35.331 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:49:35.331 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:49:35.331 | INFO     | __main__:start_test:323 - Needle: [' Mary discarded the football.', ' Mary discarded the football.', ' Daniel travelled to the garden.', ' Mary got the football.', ' Mary took the football.', ' Sandra went to the kitchen.', ' Daniel took the milk.', ' Mary journeyed to the bedroom.', ' Daniel travelled to the bathroom.', ' Mary journeyed to the bathroom.', ' Daniel discarded the milk there.', ' Sandra travelled to the bathroom.']
+2025-01-21 21:49:35.331 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel travelled to the garden.', ' Daniel took the milk.', ' Daniel travelled to the bathroom.', ' Daniel discarded the milk there.']
+2025-01-21 21:49:35.332 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:49:35.382 | INFO     | __main__:start_test:347 - [(0, 1, 6, 9), (1, 3, 7, 8), (0, 3, 4, 5), (1, 6, 7, 8), (1, 2, 3, 4), (2, 3, 5, 6), (1, 6, 7, 9), (0, 3, 5, 9), (4, 5, 6, 8), (0, 3, 7, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:49:35.788 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:49:35.789 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:49:35.789 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 9):  10%|█         | 1/10 [00:00<00:03,  2.46it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  10%|█         | 1/10 [00:00<00:03,  2.46it/s][A[A2025-01-21 21:49:43.318 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:49:43.318 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 7, 8):  20%|██        | 2/10 [00:07<00:36,  4.60s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  20%|██        | 2/10 [00:07<00:36,  4.60s/it][A[A2025-01-21 21:49:43.708 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:49:43.708 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:49:43.708 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 5):  30%|███       | 3/10 [00:08<00:18,  2.68s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):  30%|███       | 3/10 [00:08<00:18,  2.68s/it][A[A2025-01-21 21:49:51.135 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:49:51.136 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):  40%|████      | 4/10 [00:15<00:27,  4.55s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 4):  40%|████      | 4/10 [00:15<00:27,  4.55s/it][A[A2025-01-21 21:49:58.598 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:49:58.598 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 3, 4):  50%|█████     | 5/10 [00:23<00:28,  5.60s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 6):  50%|█████     | 5/10 [00:23<00:28,  5.60s/it][A[A2025-01-21 21:50:06.124 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:50:06.125 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 5, 6):  60%|██████    | 6/10 [00:30<00:25,  6.26s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  60%|██████    | 6/10 [00:30<00:25,  6.26s/it][A[A2025-01-21 21:50:13.799 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:50:13.799 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  70%|███████   | 7/10 [00:38<00:20,  6.72s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 9):  70%|███████   | 7/10 [00:38<00:20,  6.72s/it][A[A2025-01-21 21:50:14.225 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:50:14.225 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:50:14.225 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 5, 9):  80%|████████  | 8/10 [00:38<00:09,  4.72s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 8):  80%|████████  | 8/10 [00:38<00:09,  4.72s/it][A[A2025-01-21 21:50:21.745 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:50:21.746 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 8):  90%|█████████ | 9/10 [00:46<00:05,  5.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 7, 9):  90%|█████████ | 9/10 [00:46<00:05,  5.59s/it][A[A2025-01-21 21:50:22.180 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:50:22.180 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:50:22.180 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 7, 9): 100%|██████████| 10/10 [00:46<00:00,  4.00s/it][A[AProcessing length: 11900 | task: 4-hop | depth (0, 3, 7, 9): 100%|██████████| 10/10 [00:46<00:00,  4.68s/it]
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:320 - Selected idx: 187
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:323 - Needle: [' Daniel journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary got the football.', ' Sandra went to the kitchen.', ' Daniel grabbed the milk.', ' Mary took the football.', ' Daniel travelled to the garden.', ' Mary discarded the football.', ' Daniel discarded the milk there.', ' Mary discarded the football.']
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel journeyed to the office.', ' Daniel grabbed the milk.', ' Daniel travelled to the garden.', ' Daniel discarded the milk there.']
+2025-01-21 21:50:22.181 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:50:22.231 | INFO     | __main__:start_test:347 - [(0, 3, 4, 7), (2, 4, 5, 6), (3, 5, 7, 8), (0, 4, 5, 9), (3, 4, 7, 8), (0, 1, 4, 7), (3, 4, 5, 8), (1, 2, 7, 8), (1, 6, 7, 9), (3, 4, 8, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:50:22.538 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:50:22.538 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:50:22.538 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 7):  10%|█         | 1/10 [00:00<00:02,  3.26it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):  10%|█         | 1/10 [00:00<00:02,  3.26it/s][A[A2025-01-21 21:50:28.973 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:50:28.973 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 6):  20%|██        | 2/10 [00:06<00:31,  3.91s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  20%|██        | 2/10 [00:06<00:31,  3.91s/it][A[A2025-01-21 21:50:35.453 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:50:35.454 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 5, 7, 8):  30%|███       | 3/10 [00:13<00:35,  5.09s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  30%|███       | 3/10 [00:13<00:35,  5.09s/it][A[A2025-01-21 21:50:35.805 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:50:35.805 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:50:35.805 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  40%|████      | 4/10 [00:13<00:19,  3.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 7, 8):  40%|████      | 4/10 [00:13<00:19,  3.22s/it][A[A2025-01-21 21:50:42.308 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:50:42.308 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 7, 8):  50%|█████     | 5/10 [00:20<00:22,  4.40s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7):  50%|█████     | 5/10 [00:20<00:22,  4.40s/it][A[A2025-01-21 21:50:42.639 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:50:42.639 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:50:42.639 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 6 | attack clues length: 6
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 7):  60%|██████    | 6/10 [00:20<00:12,  3.02s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  60%|██████    | 6/10 [00:20<00:12,  3.02s/it][A[A2025-01-21 21:50:49.059 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:50:49.059 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 8):  70%|███████   | 7/10 [00:26<00:12,  4.13s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 8):  70%|███████   | 7/10 [00:26<00:12,  4.13s/it][A[A2025-01-21 21:50:55.531 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:50:55.531 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 8):  80%|████████  | 8/10 [00:33<00:09,  4.88s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  80%|████████  | 8/10 [00:33<00:09,  4.88s/it][A[A2025-01-21 21:51:01.970 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:51:01.970 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 9):  90%|█████████ | 9/10 [00:39<00:05,  5.36s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 8, 9):  90%|█████████ | 9/10 [00:39<00:05,  5.36s/it][A[A2025-01-21 21:51:08.449 | INFO     | __main__:evaluate_and_log:295 - model response: the garden
+2025-01-21 21:51:08.449 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 8, 9): 100%|██████████| 10/10 [00:46<00:00,  5.71s/it][A[AProcessing length: 11900 | task: 4-hop | depth (3, 4, 8, 9): 100%|██████████| 10/10 [00:46<00:00,  4.62s/it]
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:320 - Selected idx: 189
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:323 - Needle: [' Mary grabbed the milk.', ' John journeyed to the bathroom.', ' Mary journeyed to the bathroom.', ' John got the apple.', ' John went to the office.', ' Mary got the football.', ' John dropped the apple.', ' Mary discarded the milk.']
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:324 - Real Needle: [' John journeyed to the bathroom.', ' John got the apple.', ' John went to the office.', ' John dropped the apple.']
+2025-01-21 21:51:08.452 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:51:08.502 | INFO     | __main__:start_test:347 - [(1, 7, 8, 9), (4, 6, 7, 8), (1, 4, 8, 9), (2, 6, 7, 8), (3, 6, 7, 9), (3, 6, 8, 9), (1, 6, 8, 9), (1, 3, 5, 9), (5, 6, 7, 8), (2, 3, 7, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 7, 8, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:51:15.356 | INFO     | __main__:evaluate_and_log:295 - model response: the office.
+2025-01-21 21:51:15.356 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 7, 8, 9):  10%|█         | 1/10 [00:06<01:01,  6.86s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 8):  10%|█         | 1/10 [00:06<01:01,  6.86s/it][A[A2025-01-21 21:51:20.857 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom
+2025-01-21 21:51:20.857 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 6, 7, 8):  20%|██        | 2/10 [00:12<00:48,  6.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 8, 9):  20%|██        | 2/10 [00:12<00:48,  6.06s/it][A[A2025-01-21 21:51:27.717 | INFO     | __main__:evaluate_and_log:295 - model response: the office.
+2025-01-21 21:51:27.717 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 8, 9):  30%|███       | 3/10 [00:19<00:44,  6.43s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  30%|███       | 3/10 [00:19<00:44,  6.43s/it][A[A2025-01-21 21:51:34.573 | INFO     | __main__:evaluate_and_log:295 - model response: the bathroom.
+2025-01-21 21:51:34.574 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 6, 7, 8):  40%|████      | 4/10 [00:26<00:39,  6.59s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 7, 9):  40%|████      | 4/10 [00:26<00:39,  6.59s/it][A[A2025-01-21 21:51:45.754 | INFO     | __main__:evaluate_and_log:295 - model response: the ostler's room.
+2025-01-21 21:51:45.754 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 7, 9):  50%|█████     | 5/10 [00:37<00:41,  8.25s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 8, 9):  50%|█████     | 5/10 [00:37<00:41,  8.25s/it][A[A2025-01-21 21:51:56.929 | INFO     | __main__:evaluate_and_log:295 - model response: the ostler's room.
+2025-01-21 21:51:56.929 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 6, 8, 9):  60%|██████    | 6/10 [00:48<00:36,  9.24s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  60%|██████    | 6/10 [00:48<00:36,  9.24s/it][A[A2025-01-21 21:52:08.020 | INFO     | __main__:evaluate_and_log:295 - model response: the ostler's room.
+2025-01-21 21:52:08.020 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 8, 9):  70%|███████   | 7/10 [00:59<00:29,  9.85s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  70%|███████   | 7/10 [00:59<00:29,  9.85s/it][A[A2025-01-21 21:52:19.023 | INFO     | __main__:evaluate_and_log:295 - model response: the ostler's room.
+2025-01-21 21:52:19.023 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  80%|████████  | 8/10 [01:10<00:20, 10.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 8):  80%|████████  | 8/10 [01:10<00:20, 10.22s/it][A[A2025-01-21 21:52:25.950 | INFO     | __main__:evaluate_and_log:295 - model response: the office.
+2025-01-21 21:52:25.950 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (5, 6, 7, 8):  90%|█████████ | 9/10 [01:17<00:09,  9.19s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 7, 9):  90%|█████████ | 9/10 [01:17<00:09,  9.19s/it][A[A2025-01-21 21:52:37.111 | INFO     | __main__:evaluate_and_log:295 - model response: the ostler's room.
+2025-01-21 21:52:37.111 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 3, 7, 9): 100%|██████████| 10/10 [01:28<00:00,  9.80s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 3, 7, 9): 100%|██████████| 10/10 [01:28<00:00,  8.86s/it]
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:320 - Selected idx: 191
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:323 - Needle: [' Daniel journeyed to the bathroom.', ' Daniel took the apple.', ' Daniel went back to the office.', ' Mary travelled to the office.', ' Mary journeyed to the hallway.', ' Daniel left the apple.', ' John journeyed to the bedroom.']
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel journeyed to the bathroom.', ' Daniel took the apple.', ' Daniel went back to the office.', ' Daniel left the apple.']
+2025-01-21 21:52:37.114 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:52:37.169 | INFO     | __main__:start_test:347 - [(0, 3, 4, 6), (2, 5, 7, 8), (4, 5, 6, 7), (0, 1, 4, 5), (2, 5, 8, 9), (0, 5, 6, 9), (6, 7, 8, 9), (0, 2, 3, 8), (1, 2, 4, 8), (2, 7, 8, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 6):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:52:37.453 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:52:37.453 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:52:37.453 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 6):  10%|█         | 1/10 [00:00<00:02,  3.52it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  10%|█         | 1/10 [00:00<00:02,  3.52it/s][A[A2025-01-21 21:52:42.758 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:52:42.758 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 7, 8):  20%|██        | 2/10 [00:05<00:25,  3.24s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 7):  20%|██        | 2/10 [00:05<00:25,  3.24s/it][A[A2025-01-21 21:52:49.454 | INFO     | __main__:evaluate_and_log:295 - model response: The bathroom.
+2025-01-21 21:52:49.455 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 5, 6, 7):  30%|███       | 3/10 [00:12<00:33,  4.82s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):  30%|███       | 3/10 [00:12<00:33,  4.82s/it][A[A2025-01-21 21:52:49.732 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:52:49.732 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:52:49.732 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):  40%|████      | 4/10 [00:12<00:18,  3.02s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 8, 9):  40%|████      | 4/10 [00:12<00:18,  3.02s/it][A[A2025-01-21 21:52:56.402 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:52:56.402 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 5, 8, 9):  50%|█████     | 5/10 [00:19<00:21,  4.34s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):  50%|█████     | 5/10 [00:19<00:21,  4.34s/it][A[A2025-01-21 21:52:56.729 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:52:56.729 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:52:56.729 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):  60%|██████    | 6/10 [00:19<00:11,  2.97s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (6, 7, 8, 9):  60%|██████    | 6/10 [00:19<00:11,  2.97s/it][A[A2025-01-21 21:53:03.408 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:53:03.408 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (6, 7, 8, 9):  70%|███████   | 7/10 [00:26<00:12,  4.19s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  70%|███████   | 7/10 [00:26<00:12,  4.19s/it][A[A2025-01-21 21:53:03.701 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:03.701 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:03.701 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  80%|████████  | 8/10 [00:26<00:05,  2.95s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 8):  80%|████████  | 8/10 [00:26<00:05,  2.95s/it][A[A2025-01-21 21:53:09.010 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:53:09.011 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 8):  90%|█████████ | 9/10 [00:31<00:03,  3.69s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 7, 8, 9):  90%|█████████ | 9/10 [00:31<00:03,  3.69s/it][A[A2025-01-21 21:53:15.716 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:53:15.716 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 7, 8, 9): 100%|██████████| 10/10 [00:38<00:00,  4.62s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 7, 8, 9): 100%|██████████| 10/10 [00:38<00:00,  3.86s/it]
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:320 - Selected idx: 193
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:323 - Needle: [' Mary travelled to the office.', ' Mary journeyed to the hallway.', ' Daniel went back to the office.', ' Daniel picked up the milk.', ' Daniel moved to the kitchen.', ' Daniel dropped the milk.', ' John journeyed to the bedroom.']
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel went back to the office.', ' Daniel picked up the milk.', ' Daniel moved to the kitchen.', ' Daniel dropped the milk.']
+2025-01-21 21:53:15.720 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:53:15.773 | INFO     | __main__:start_test:347 - [(0, 4, 5, 9), (0, 2, 3, 5), (1, 2, 4, 5), (0, 1, 2, 7), (4, 7, 8, 9), (2, 4, 5, 7), (0, 3, 4, 6), (1, 7, 8, 9), (1, 5, 6, 7), (2, 4, 6, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:53:16.041 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:16.041 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:16.041 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 5, 9):  10%|█         | 1/10 [00:00<00:02,  3.72it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  10%|█         | 1/10 [00:00<00:02,  3.72it/s][A[A2025-01-21 21:53:16.252 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:16.252 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:16.252 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 5):  20%|██        | 2/10 [00:00<00:01,  4.27it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  20%|██        | 2/10 [00:00<00:01,  4.27it/s][A[A2025-01-21 21:53:22.673 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:53:22.673 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 5):  30%|███       | 3/10 [00:06<00:21,  3.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):  30%|███       | 3/10 [00:06<00:21,  3.06s/it][A[A2025-01-21 21:53:22.917 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:22.917 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:22.917 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 7):  40%|████      | 4/10 [00:07<00:11,  1.95s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  40%|████      | 4/10 [00:07<00:11,  1.95s/it][A[A2025-01-21 21:53:29.566 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:53:29.566 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  50%|█████     | 5/10 [00:13<00:18,  3.64s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  50%|█████     | 5/10 [00:13<00:18,  3.64s/it][A[A2025-01-21 21:53:36.231 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:53:36.231 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 5, 7):  60%|██████    | 6/10 [00:20<00:18,  4.67s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 6):  60%|██████    | 6/10 [00:20<00:18,  4.67s/it][A[A2025-01-21 21:53:36.482 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:36.482 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:36.482 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 3 | attack clues length: 3
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 6):  70%|███████   | 7/10 [00:20<00:09,  3.22s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 7, 8, 9):  70%|███████   | 7/10 [00:20<00:09,  3.22s/it][A[A2025-01-21 21:53:43.118 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:53:43.119 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 7, 8, 9):  80%|████████  | 8/10 [00:27<00:08,  4.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 5, 6, 7):  80%|████████  | 8/10 [00:27<00:08,  4.31s/it][A[A2025-01-21 21:53:48.412 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:53:48.412 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 5, 6, 7):  90%|█████████ | 9/10 [00:32<00:04,  4.62s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8):  90%|█████████ | 9/10 [00:32<00:04,  4.62s/it][A[A2025-01-21 21:53:55.202 | INFO     | __main__:evaluate_and_log:295 - model response: The kitchen.
+2025-01-21 21:53:55.202 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8): 100%|██████████| 10/10 [00:39<00:00,  5.29s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 4, 6, 8): 100%|██████████| 10/10 [00:39<00:00,  3.94s/it]
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:320 - Selected idx: 195
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:321 - Answer: office
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:323 - Needle: [' Daniel went back to the office.', ' Mary journeyed to the hallway.', ' Daniel got the football.', ' Mary travelled to the office.', ' John journeyed to the bedroom.', ' Daniel moved to the kitchen.', ' Daniel dropped the football.', ' Sandra picked up the milk there.']
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel went back to the office.', ' Daniel got the football.', ' Daniel moved to the kitchen.', ' Daniel dropped the football.']
+2025-01-21 21:53:55.208 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:53:55.244 | INFO     | __main__:start_test:347 - [(0, 1, 6, 8), (0, 1, 4, 9), (0, 1, 5, 9), (0, 1, 4, 5), (2, 4, 6, 7), (3, 4, 6, 7), (1, 2, 7, 9), (0, 1, 2, 9), (4, 7, 8, 9), (2, 4, 6, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:53:55.593 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:55.593 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:55.593 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 8):  10%|█         | 1/10 [00:00<00:03,  2.87it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 9):  10%|█         | 1/10 [00:00<00:03,  2.87it/s][A[A2025-01-21 21:53:55.908 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:55.908 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:55.908 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 9):  20%|██        | 2/10 [00:00<00:02,  3.04it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 9):  20%|██        | 2/10 [00:00<00:02,  3.04it/s][A[A2025-01-21 21:53:56.228 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:56.228 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:56.228 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 5, 9):  30%|███       | 3/10 [00:00<00:02,  3.08it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):  30%|███       | 3/10 [00:00<00:02,  3.08it/s][A[A2025-01-21 21:53:56.527 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:53:56.527 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:53:56.527 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 4, 5):  40%|████      | 4/10 [00:01<00:01,  3.18it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 7):  40%|████      | 4/10 [00:01<00:01,  3.18it/s][A[A2025-01-21 21:54:02.371 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:54:02.371 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 7):  50%|█████     | 5/10 [00:07<00:11,  2.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  50%|█████     | 5/10 [00:07<00:11,  2.31s/it][A[A2025-01-21 21:54:08.322 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:54:08.322 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 6, 7):  60%|██████    | 6/10 [00:13<00:14,  3.55s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 9):  60%|██████    | 6/10 [00:13<00:14,  3.55s/it][A[A2025-01-21 21:54:14.282 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:54:14.283 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 7, 9):  70%|███████   | 7/10 [00:19<00:13,  4.34s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  70%|███████   | 7/10 [00:19<00:13,  4.34s/it][A[A2025-01-21 21:54:14.620 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:14.620 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:14.620 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 4 | attack clues length: 4
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  80%|████████  | 8/10 [00:19<00:06,  3.06s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  80%|████████  | 8/10 [00:19<00:06,  3.06s/it][A[A2025-01-21 21:54:20.536 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:54:20.536 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  90%|█████████ | 9/10 [00:25<00:03,  3.96s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8):  90%|█████████ | 9/10 [00:25<00:03,  3.96s/it][A[A2025-01-21 21:54:26.488 | INFO     | __main__:evaluate_and_log:295 - model response: the kitchen
+2025-01-21 21:54:26.488 | INFO     | __main__:evaluate_and_log:296 - gloden label: office
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 6, 8): 100%|██████████| 10/10 [00:31<00:00,  4.57s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 4, 6, 8): 100%|██████████| 10/10 [00:31<00:00,  3.12s/it]
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:320 - Selected idx: 197
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:321 - Answer: garden
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:323 - Needle: [' Mary travelled to the office.', ' Daniel went back to the office.', ' Sandra journeyed to the garden.', ' Daniel journeyed to the bathroom.', ' Sandra picked up the apple.', ' Mary journeyed to the hallway.', ' Daniel grabbed the milk.', ' Sandra went to the bedroom.', ' John journeyed to the bedroom.', ' Daniel moved to the kitchen.', ' Sandra put down the apple.', ' Daniel journeyed to the hallway.']
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:324 - Real Needle: [' Sandra journeyed to the garden.', ' Sandra picked up the apple.', ' Sandra went to the bedroom.', ' Sandra put down the apple.']
+2025-01-21 21:54:26.492 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:54:26.711 | INFO     | __main__:start_test:347 - [(1, 6, 7, 8), (0, 3, 4, 9), (0, 2, 3, 8), (0, 1, 6, 9), (0, 1, 2, 5), (0, 3, 4, 8), (0, 4, 7, 9), (1, 3, 4, 6), (1, 3, 5, 9), (1, 2, 5, 8)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:54:35.652 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:54:35.653 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 6, 7, 8):  10%|█         | 1/10 [00:08<01:20,  8.94s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 9):  10%|█         | 1/10 [00:08<01:20,  8.94s/it][A[A2025-01-21 21:54:36.182 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:36.182 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:36.182 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 9):  20%|██        | 2/10 [00:09<00:31,  3.99s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  20%|██        | 2/10 [00:09<00:31,  3.99s/it][A[A2025-01-21 21:54:36.660 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:36.660 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:36.660 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 2, 3, 8):  30%|███       | 3/10 [00:09<00:16,  2.39s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 9):  30%|███       | 3/10 [00:09<00:16,  2.39s/it][A[A2025-01-21 21:54:37.117 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:37.117 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:37.117 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 6, 9):  40%|████      | 4/10 [00:10<00:09,  1.63s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5):  40%|████      | 4/10 [00:10<00:09,  1.63s/it][A[A2025-01-21 21:54:37.558 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:37.558 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:37.558 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 5):  50%|█████     | 5/10 [00:10<00:05,  1.20s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 8):  50%|█████     | 5/10 [00:10<00:05,  1.20s/it][A[A2025-01-21 21:54:38.069 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:38.069 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:38.069 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 3, 4, 8):  60%|██████    | 6/10 [00:11<00:03,  1.04it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 9):  60%|██████    | 6/10 [00:11<00:03,  1.04it/s][A[A2025-01-21 21:54:38.579 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:54:38.579 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:54:38.579 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 8 | attack clues length: 8
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 7, 9):  70%|███████   | 7/10 [00:11<00:02,  1.23it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  70%|███████   | 7/10 [00:11<00:02,  1.23it/s][A[A2025-01-21 21:54:47.283 | INFO     | __main__:evaluate_and_log:295 - model response: the bedroom
+2025-01-21 21:54:47.283 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 4, 6):  80%|████████  | 8/10 [00:20<00:06,  3.33s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  80%|████████  | 8/10 [00:20<00:06,  3.33s/it][A[A2025-01-21 21:54:56.209 | INFO     | __main__:evaluate_and_log:295 - model response: bedroom
+2025-01-21 21:54:56.209 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 3, 5, 9):  90%|█████████ | 9/10 [00:29<00:05,  5.08s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 8):  90%|█████████ | 9/10 [00:29<00:05,  5.08s/it][A[A2025-01-21 21:55:05.058 | INFO     | __main__:evaluate_and_log:295 - model response: bedroom
+2025-01-21 21:55:05.058 | INFO     | __main__:evaluate_and_log:296 - gloden label: garden
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 5, 8): 100%|██████████| 10/10 [00:38<00:00,  6.24s/it][A[AProcessing length: 11900 | task: 4-hop | depth (1, 2, 5, 8): 100%|██████████| 10/10 [00:38<00:00,  3.83s/it]
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:320 - Selected idx: 199
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:321 - Answer: bathroom
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:322 - Tag: 4-hop
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:323 - Needle: [' Daniel journeyed to the bathroom.', ' John journeyed to the bedroom.', ' Daniel grabbed the milk.', ' Daniel went to the office.', ' Mary travelled to the office.', ' Mary journeyed to the hallway.', ' John went back to the office.', ' Daniel put down the milk.', ' Mary travelled to the bedroom.']
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:324 - Real Needle: [' Daniel journeyed to the bathroom.', ' Daniel grabbed the milk.', ' Daniel went to the office.', ' Daniel put down the milk.']
+2025-01-21 21:55:05.061 | INFO     | __main__:start_test:325 - =============================================
+2025-01-21 21:55:05.130 | INFO     | __main__:start_test:347 - [(0, 5, 6, 9), (1, 2, 4, 9), (0, 6, 7, 8), (0, 1, 2, 9), (1, 4, 6, 8), (4, 7, 8, 9), (0, 4, 6, 8), (0, 5, 7, 9), (3, 4, 5, 9), (2, 4, 7, 9)]
+
+
+  0%|          | 0/10 [00:00<?, ?it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):   0%|          | 0/10 [00:00<?, ?it/s][A[A2025-01-21 21:55:05.453 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:55:05.453 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:55:05.453 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 6, 9):  10%|█         | 1/10 [00:00<00:02,  3.09it/s][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 9):  10%|█         | 1/10 [00:00<00:02,  3.09it/s][A[A2025-01-21 21:55:11.999 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:55:11.999 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 2, 4, 9):  20%|██        | 2/10 [00:06<00:31,  3.99s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 8):  20%|██        | 2/10 [00:06<00:31,  3.99s/it][A[A2025-01-21 21:55:12.328 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:55:12.328 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:55:12.328 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 6, 7, 8):  30%|███       | 3/10 [00:07<00:16,  2.31s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  30%|███       | 3/10 [00:07<00:16,  2.31s/it][A[A2025-01-21 21:55:12.595 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:55:12.595 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:55:12.595 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 1, 2, 9):  40%|████      | 4/10 [00:07<00:09,  1.51s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 6, 8):  40%|████      | 4/10 [00:07<00:09,  1.51s/it][A[A2025-01-21 21:55:21.246 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:55:21.247 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (1, 4, 6, 8):  50%|█████     | 5/10 [00:16<00:20,  4.08s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  50%|█████     | 5/10 [00:16<00:20,  4.08s/it][A[A2025-01-21 21:55:27.929 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:55:27.929 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (4, 7, 8, 9):  60%|██████    | 6/10 [00:22<00:19,  4.97s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 8):  60%|██████    | 6/10 [00:22<00:19,  4.97s/it][A[A2025-01-21 21:55:28.250 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:55:28.250 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:55:28.250 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 4, 6, 8):  70%|███████   | 7/10 [00:23<00:10,  3.45s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 7, 9):  70%|███████   | 7/10 [00:23<00:10,  3.45s/it][A[A2025-01-21 21:55:28.540 | INFO     | __main__:evaluate_and_log:275 - length of search pos and attack pos is not equal to the length of evidence and disturb_tok_needles, skip this case
+2025-01-21 21:55:28.540 | INFO     | __main__:evaluate_and_log:276 - search_pos length: 3 | evidence length: 4
+2025-01-21 21:55:28.540 | INFO     | __main__:evaluate_and_log:277 - attack_pos length: 5 | attack clues length: 5
+
+
+Processing length: 11900 | task: 4-hop | depth (0, 5, 7, 9):  80%|████████  | 8/10 [00:23<00:04,  2.44s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 9):  80%|████████  | 8/10 [00:23<00:04,  2.44s/it][A[A2025-01-21 21:55:37.060 | INFO     | __main__:evaluate_and_log:295 - model response: The office.
+2025-01-21 21:55:37.061 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (3, 4, 5, 9):  90%|█████████ | 9/10 [00:31<00:04,  4.34s/it][A[A
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9):  90%|█████████ | 9/10 [00:31<00:04,  4.34s/it][A[A2025-01-21 21:55:43.700 | INFO     | __main__:evaluate_and_log:295 - model response: the office
+2025-01-21 21:55:43.700 | INFO     | __main__:evaluate_and_log:296 - gloden label: bathroom
+
+
+Processing length: 11900 | task: 4-hop | depth (2, 4, 7, 9): 100%|██████████| 10/10 [00:38<00:00,  5.05s/it][A[AProcessing length: 11900 | task: 4-hop | depth (2, 4, 7, 9): 100%|██████████| 10/10 [00:38<00:00,  3.86s/it]
+2025-01-21 21:55:43.790 | INFO     | modelzipper.tutils:auto_save_data:309 - json file saved successfully!
+2025-01-21 21:55:43.791 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to attention_analysis/attention_score/4-hop-11900.json | len: 2 |  size: 166.18 KB
+
+100%|██████████| 2/2 [2:36:52<00:00, 4609.15s/it]  [A100%|██████████| 2/2 [2:36:52<00:00, 4706.43s/it]
+100%|██████████| 1/1 [2:36:52<00:00, 9412.86s/it]100%|██████████| 1/1 [2:36:52<00:00, 9412.86s/it]
