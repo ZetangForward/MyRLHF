@@ -329,8 +329,9 @@ class LLMNeedleHaystackTester:
             return False
         
         if len(injected_emojis) > 0:
-            inp = self.inject_emoji(inp, injected_emojis, irrevelant_pos, flatten_search_pos + flatten_attack_pos)
-        
+            inp, emoji_injected_pos = self.inject_emoji(inp, injected_emojis, irrevelant_pos, flatten_search_pos + flatten_attack_pos)
+            flatten_emoji_pos = [num for st, ed in emoji_injected_pos for num in range(st, ed + 1)]
+
         flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)  # after injection, re-seach the positions
         if flatten_search_pos is None:  # search failed
             return False
@@ -339,7 +340,7 @@ class LLMNeedleHaystackTester:
 
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
+            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
         
         logger.info(f"model response: {response}")
