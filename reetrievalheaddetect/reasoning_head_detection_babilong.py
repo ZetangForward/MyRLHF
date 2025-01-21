@@ -174,7 +174,7 @@ class LLMNeedleHaystackTester:
             elif idx in flatten_attack_pos:
                 retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['attack_pos']['attention_token_id'].add(step_token_id)
-            elif idx < irrevelant_pos[0] and idx >= irrevelant_pos[0]:
+            elif idx < irrevelant_pos[1] and idx >= irrevelant_pos[0]:
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_token_id'].add(step_token_id)
 
@@ -338,7 +338,6 @@ class LLMNeedleHaystackTester:
                         disturb_tok_needles = [i for i in needle if i not in evidence]
                         disturb_pos = None
 
-
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                     if self.combinations_number >= len(all_combinations):
                         logger.info("combinations_number is larger than or equal to the number of all combinations, auto select all combinations")
@@ -400,7 +399,7 @@ if __name__ == "__main__":
     ht.start_test()
 
 
-# nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=0 > logs/1900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=0 > logs/0.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=0 python reasoning_head_detection_babilong.py --context_lengths=1900 > logs/1900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=1 python reasoning_head_detection_babilong.py --context_lengths=3900 > logs/3900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=2 python reasoning_head_detection_babilong.py --context_lengths=7900 > logs/7900.log 2>&1 &
