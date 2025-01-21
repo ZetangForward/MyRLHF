@@ -10,14 +10,27 @@ import datasets
 import itertools
 import nltk
 import torch
+import emoji
 import random
-from rouge_score import rouge_scorer
 from collections import defaultdict
 from typing import List, Tuple, Optional, Dict
 from tqdm import tqdm
 from loguru import logger
 from modelzipper.tutils import *
-from .utils import get_random_emoji
+
+
+def get_random_emoji(tokenizer, num=50, return_idx=True):
+    all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
+    random_emojis = random.sample(all_emojis, num)
+    print(f"your chose emoji: {random_emojis}")
+
+    if return_idx:
+        index_emojis = []
+        for e in random_emojis:
+            index_emojis.append(tokenizer(e, add_special_tokens=False).input_ids)
+        return index_emojis
+
+    return random_emojis
 
 
 def random_combine(ref:list, att:list):
@@ -155,13 +168,13 @@ class LLMNeedleHaystackTester:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
 
-    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, step_token_id, topk=1):
+    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos, step_token_id, topk=1):
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
-                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
+                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos)
 
-    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int], irrevelant_pos: List[int]):
+    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int], irrevelant_pos: List[int], flatten_emoji_pos: List[int]):
         """
         check if the attention index (where the model put attention at) 
         fall into the search_pos or attack_pos scope
@@ -181,6 +194,9 @@ class LLMNeedleHaystackTester:
             elif idx < irrevelant_pos[1] and idx >= irrevelant_pos[0]:
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_token_id'].add(step_token_id)
+            if idx in flatten_emoji_pos:  # check if model attend to emoji positions
+                retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
+                retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_token_id'].add(step_token_id)
 
 
     def retrieval_head_accumulate(self, retrieval_score, fail=False):
@@ -190,12 +206,15 @@ class LLMNeedleHaystackTester:
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
+                    self.fail_head_counter[f"{layer_idx}-{head_idx}"]['emoji_pos'].append(retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'])
                 else:
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
+                    self.succ_head_counter[f"{layer_idx}-{head_idx}"]['emoji_pos'].append(retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'])
 
-    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos, irrevelant_pos):
+
+    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos):
         output = []
         retrieval_score = [
             [
@@ -203,6 +222,7 @@ class LLMNeedleHaystackTester:
                     "clue_pos": {"attention_score": 0, "attention_token_id": set()},
                     "attack_pos": {"attention_score": 0, "attention_token_id": set()},
                     "irrelevant_pos": {"attention_score": 0, "attention_token_id": set()},
+                    "emoji_pos": {"attention_score": 0, "attention_token_id": set()},
                 }    
             for _ in range(self.head_num)
             ] for _ in range(self.layer_num)
@@ -218,7 +238,7 @@ class LLMNeedleHaystackTester:
             inp = outputs.logits[0, -1].argmax()
             step_token = self.enc.decode(inp.item())
             output.append(inp.item())
-            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, inp.item(), topk=1)
+            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos, inp.item(), topk=1)
             if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
@@ -227,6 +247,7 @@ class LLMNeedleHaystackTester:
                 head_scores['clue_pos']['attention_score'] /= total_steps
                 head_scores['attack_pos']['attention_score'] /= total_steps
                 head_scores['irrelevant_pos']['attention_score'] /= total_steps
+                head_scores['emoji_pos']['attention_score'] /= total_steps
         return output, retrieval_score
 
 
@@ -266,18 +287,19 @@ class LLMNeedleHaystackTester:
         random_injected_pos = random.sample(avail_inject_pos, len(emoji_lst))
         random_injected_pos.sort()
         
-        result = []
+        result, emoji_injected_pos = [], []
         prev_pos = 0
         for pos, emoji in zip(random_injected_pos, emoji_lst):
             result.extend(inp[prev_pos:pos])
             result.extend(emoji)
+            emoji_injected_pos.append((pos, pos + len(emoji)))
             prev_pos = pos
         result.extend(inp[prev_pos:])
 
         final_inp = torch.tensor(result, dtype=torch.long)
         if flag:
             final_inp = final_inp.unsqueeze(0)
-        return final_inp
+        return final_inp, emoji_injected_pos
 
     def search_pos(self, inp, evidence, disturb):
         search_pos = self.find_multi_needle_idx(inp[0], evidence)
@@ -328,17 +350,19 @@ class LLMNeedleHaystackTester:
             return False
         
         if len(injected_emojis) > 0:
-            inp = self.inject_emoji(inp, injected_emojis, irrevelant_pos, flatten_search_pos + flatten_attack_pos)
-        
+            inp, emoji_injected_pos = self.inject_emoji(inp, injected_emojis, irrevelant_pos, flatten_search_pos + flatten_attack_pos)
+            flatten_emoji_pos = [num for st, ed in emoji_injected_pos for num in range(st, ed + 1)]
+
         flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)  # after injection, re-seach the positions
         if flatten_search_pos is None:  # search failed
+            logger.info("after injection, second searching failed ...")
             return False
         
         inp = inp.to(self.model_to_test.device)
 
         with torch.no_grad():
             q_outputs = self.model_to_test(input_ids=inp[:, :-1], use_cache=True, return_dict=True)
-            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
+            output, retrieval_score = self.decode(q_outputs, inp[:, -1], 20, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos)
             response = self.enc.decode(output[:-1], skip_special_tokens=True).strip()
         
         logger.info(f"model response: {response}")
@@ -366,6 +390,10 @@ class LLMNeedleHaystackTester:
             self.selected_idx = range(len(needle_list))
         
         for context_length in tqdm(self.context_lengths):
+            
+            if context_length == 0:
+                self.inject_emoji_num = 0  # if there is no background text, do not inject emoji
+
             for task_tag in tqdm(["3-hop", "4-hop"]):
                 for s_id in self.selected_idx:
                     if tags[s_id] != task_tag:
@@ -394,19 +422,21 @@ class LLMNeedleHaystackTester:
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                     if self.combinations_number >= len(all_combinations):
                         logger.info("combinations_number is larger than or equal to the number of all combinations, auto select all combinations")
-                    else:
-                        all_combinations = random.sample(all_combinations, self.combinations_number)
+                        self.combinations_number = len(all_combinations)
 
                     logger.info(all_combinations)
 
                     analysis_sample_nums = 0
-                    with tqdm(total=len(all_combinations)) as pbar:
+                    with tqdm(total=self.combinations_number) as pbar:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
                             pbar.set_description(f"Processing length: {context_length} | task: {task_tag} | depth {depth_percent}")
                             res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, injected_emojis)
-                            if res: analysis_sample_nums += 1
-                            pbar.update(1)
+                            if res: 
+                                analysis_sample_nums += 1
+                                pbar.update(1)
+                            if analysis_sample_nums == self.combinations_number: 
+                                break
 
                 # after processing all the samples in different positions, average the attention scores
                 for pos_score_dict in self.succ_head_counter.values():
@@ -426,7 +456,7 @@ class LLMNeedleHaystackTester:
                     "succ_head_counter": self.succ_head_counter,
                     "fail_head_counter": self.fail_head_counter,
                 }
-                auto_save_data(merge_dict, f"attention_analysis/attention_score/{task_tag}-{context_length}.json")
+                auto_save_data(merge_dict, f"attention_analysis/attention_score_w_emoji/{task_tag}-{context_length}.json")
 
                 # refresh the counter for the next task_tag
                 self.succ_head_counter = defaultdict(lambda: defaultdict(list))
@@ -437,7 +467,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default=None, help='name of model')
     parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
-    parser.add_argument('--inject_emoji_num', type=int, default=0, help='A list of integers')
+    parser.add_argument('--inject_emoji_num', type=int, default=10, help='A list of integers')
     args = parser.parse_args()
 
     ht = LLMNeedleHaystackTester(
@@ -447,7 +477,7 @@ if __name__ == "__main__":
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
         # selected_idx=[0],  # for debug
-        combinations_number=10,
+        combinations_number=5,
         inject_emoji_num=args.inject_emoji_num,
     )
 

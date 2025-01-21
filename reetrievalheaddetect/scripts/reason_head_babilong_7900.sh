@@ -9,7 +9,7 @@
 #SBATCH --time=14-00:00:00                   # 时间限制为14天
 #SBATCH --output=/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/logs/7900.log  # 标准输出日志
 #SBATCH --error=/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/logs/7900.err   # 错误日志
-#SBATCH --partition=belt_road                # 指定分区
+#SBATCH --partition=s2_bigdata                # 指定分区
 
 export http_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
 export https_proxy=http://tangzecheng:Jn7iXe92XJUVYa5whNh07VJKZR6miGQ62it3goTiLBxRs8uZxkFD3gF0cQ3w@10.1.20.50:23128/
