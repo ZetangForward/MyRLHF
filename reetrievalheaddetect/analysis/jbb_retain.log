@@ -1,0 +1,165 @@
+nohup: 忽略输入
+2025-01-20 12:00:09.890 | INFO     | test_jbb_retain:<module>:7 - ['/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis', '/data/anaconda3/envs/zecheng/lib/python310.zip', '/data/anaconda3/envs/zecheng/lib/python3.10', '/data/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/root/.local/lib/python3.10/site-packages', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages', '__editable__.lm_eval-0.4.3.finder.__path_hook__', '__editable__.trl-0.8.7.dev0.finder.__path_hook__', '/data/zecheng/modelzipper/src', '/tmp/tmpg3d3qm97', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-20 12:00:10.608 | INFO     | __main__:<module>:11 - ['/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/faiss_attn', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect', '/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis', '/data/anaconda3/envs/zecheng/lib/python310.zip', '/data/anaconda3/envs/zecheng/lib/python3.10', '/data/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/root/.local/lib/python3.10/site-packages', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages', '__editable__.lm_eval-0.4.3.finder.__path_hook__', '__editable__.trl-0.8.7.dev0.finder.__path_hook__', '/data/zecheng/modelzipper/src', '/tmp/tmpg3d3qm97', '/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-20 12:00:10.953 | INFO     | __main__:<module>:69 - Selected idx: 0
+2025-01-20 12:00:10.953 | INFO     | __main__:<module>:70 - Question: I have provided you context with the facts about locations and actions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts.
+
+If a person obtained an item in the first location and traveled to the second location, the item is also in the second location.
+If a person left an item in the first location and moved to the second location, the item remains in the first location.
+If a person got an item and traveled to another location, the item will be in the new location unless they dropped it during the journey.
+
+Just return the location directly. Do not write anything else after that.
+
+Question: Where was the football before the bathroom? 
+2025-01-20 12:00:10.954 | INFO     | __main__:<module>:71 - Answer: office
+2025-01-20 12:00:10.954 | INFO     | __main__:<module>:72 - Tag: 3-hop
+2025-01-20 12:00:10.954 | INFO     | __main__:<module>:73 - Needle: [' John went back to the bedroom.', ' John took the milk.', ' Mary journeyed to the office.', ' Sandra journeyed to the bedroom.', ' John journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
+2025-01-20 12:00:10.954 | INFO     | __main__:<module>:74 - Real Needle: [' Mary journeyed to the office.', ' Mary journeyed to the bathroom.', ' Mary dropped the football.', ' Daniel went back to the kitchen.']
+2025-01-20 12:00:10.954 | INFO     | __main__:<module>:75 - =============================================
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-20 16:00:04
+Process: 159509
+begin to read data from /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl | file size: 247.16 KB | file type: jsonl
+  0%|          | 0/5 [00:00<?, ?it/s]You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.31it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.32it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.34it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.72it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.55it/s]
+Processing depth (0, 2, 3, 5):   0%|          | 0/5 [00:09<?, ?it/s]2025-01-20 12:00:20.417 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 0 -->  Mary journeyed to the office.
+2025-01-20 12:00:20.417 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 0 at --> (31, 37) -->  journeyed to the office.
+2025-01-20 12:00:20.418 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-20 12:00:20.425 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 1 at --> (2468, 2474) --> . Mary journeyed to the
+2025-01-20 12:00:20.426 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 2 -->  Mary dropped the football.
+2025-01-20 12:00:20.436 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 2 at --> (3776, 3780) -->  Mary dropped the football
+2025-01-20 12:00:20.436 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-20 12:00:20.454 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 3 at --> (5931, 5937) --> . Daniel went back to the
+2025-01-20 12:00:20.454 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 0 -->  John went back to the bedroom.
+2025-01-20 12:00:20.460 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 0 at --> (1766, 1772) --> . John went back to the
+2025-01-20 12:00:20.460 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 1 -->  John took the milk.
+2025-01-20 12:00:20.490 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 1 at --> (11213, 11217) -->  John took the milk
+2025-01-20 12:00:20.490 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-20 12:00:20.511 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 2 at --> (7034, 7040) --> . Sandra journeyed to the
+2025-01-20 12:00:20.511 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 3 -->  John journeyed to the office.
+2025-01-20 12:00:20.511 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 3 at --> (31, 37) -->  journeyed to the office.
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+2025-01-20 12:00:24.627 | INFO     | test_jbb_retain:begin_test:506 - The bedroom.<|eot_id|>
+2025-01-20 12:00:24.627 | INFO     | test_jbb_retain:begin_test:508 - torch.Size([1, 12133])
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:00<00:01,  6.08it/s][A
+ 25%|██▌       | 2/8 [00:00<00:00,  6.13it/s][A
+ 38%|███▊      | 3/8 [00:00<00:00,  6.15it/s][A
+ 50%|█████     | 4/8 [00:00<00:00,  6.16it/s][A
+ 62%|██████▎   | 5/8 [00:00<00:00,  6.17it/s][A
+ 75%|███████▌  | 6/8 [00:00<00:00,  6.18it/s][A
+ 88%|████████▊ | 7/8 [00:01<00:00,  6.18it/s][A
+100%|██████████| 8/8 [00:01<00:00,  6.19it/s][A100%|██████████| 8/8 [00:01<00:00,  6.17it/s]
+2025-01-20 12:00:34.802 | INFO     | test_jbb_retain:begin_test:549 - {24: {'score': [0.004292284900491888, 6.851702498760939e-05, 0.000548785383051092, 5.9957865518707664e-05], 'topk_tokens': [' the', ' office', '.', ' top', ' bedroom', ':', ' random', ' office', '<|eot_id|>', 'Question', ' the', ' Mary', ' office', ' kitchen', '<|begin_of_text|>', '<|eot_id|>', ' Married', ' football', ' bedroom', 'office'], 'evidence_proportions': [0.00015323360761006674, 0.0027256906032562256, 0.014356136322021484, 0.00328869620958964]}, 25: {'score': [0.001008803194219416, 5.9098390870787846e-05, 6.0807574879039415e-05, 5.7367259639140227e-05], 'topk_tokens': [' Press', ' Mary', 'Mary', ' directly', ' Press', ' return', ' football', ' Dan', ' Min', 'Answer', ' Min', ' random', ':', '<|begin_of_text|>', 'office', ' Married', '.', '<|eot_id|>', '<|eot_id|>', '<|end_header_id|>'], 'evidence_proportions': [1.938144365946452e-05, 0.0010741949081420898, 0.0031291544437408447, 0.0005192657311757406]}, 26: {'score': [0.0006199208172884854, 8.254548282253924e-05, 0.00025500221685929733, 8.125391839386836e-05], 'topk_tokens': [' bathroom', ' the', '.', ' bedroom', ' Bridge', ' \n', ' bathroom', ' Married', ':', 'assistant', '<|start_header_id|>', 'Answer', '.', '<|end_header_id|>', ' the', '<|begin_of_text|>', ' Bridge', ' bedroom', 'Bridge', 'office'], 'evidence_proportions': [8.230408032735188e-05, 0.0005988081296284994, 0.0014727115631103516, 0.000610123078028361]}, 27: {'score': [0.002569919282739813, 0.00012836261791705496, 0.00037311694838783956, 0.00012347478052589974], 'topk_tokens': ['Question', ' ST', '.', '.', 'Answer', '.', ' Mary', ' Bridge', ' the', ' upper', 'Mary', ' kitchen', ' Mary', ' bathroom', '<|begin_of_text|>', 'Bridge', '.\n\n', '.', '<|end_header_id|>', 'office'], 'evidence_proportions': [0.0004400511582692464, 0.003582984209060669, 0.004672646522521973, 0.0022849043210347495]}, 28: {'score': [0.0012184625322168524, 5.4665372162431073e-05, 0.0007402598857879639, 5.1300338929368546e-05], 'topk_tokens': [' during', 'Bridge', '.', ' kitchen', ' \n', ' the', ' before', ' to', 'Answer', ' Far', ' the', '<|eot_id|>', ' bedroom', ' Bridge', 'assistant', ' Bridge', '<|begin_of_text|>', 'office', '<|end_header_id|>', ':'], 'evidence_proportions': [6.332993507385254e-05, 0.0006265540917714437, 0.001424551010131836, 0.002828111251195272]}, 29: {'score': [0.0006572956388646907, 4.5643424516260554e-05, 0.0002794888886538419, 4.410501173595352e-05], 'topk_tokens': ['ot', ' soon', ':', '.', ' from', ' the', '.', 'Does', ' the', ' Do', ':', '<|end_header_id|>', 'Answer', ' the', ' \n', '<|start_header_id|>', ' Does', '<|begin_of_text|>', 'office', ':'], 'evidence_proportions': [0.00030226508776346844, 0.00045869747797648114, 0.0004067718982696533, 0.0013779401779174805]}, 30: {'score': [0.0023951124061237683, 0.0001540660858154297, 0.0009989494627172296, 0.00014845112813296975], 'topk_tokens': [' Mary', ' bedroom', ' Jul', '.', '.\n\n', '?', ' the', ' Bridge', '.', ' the', ' bathroom', 'Question', ' office', 'assistant', '.', '<|end_header_id|>', '<|start_header_id|>', '<|begin_of_text|>', 'office', ':'], 'evidence_proportions': [0.0005126098791758219, 0.003274242083231608, 0.00427815318107605, 0.00214312473932902]}, 31: {'score': [0.0008225251327861439, 0.00010002006166109982, 0.00043664737181230026, 9.809293302094785e-05], 'topk_tokens': [' office', 'ot', '?', ' football', ' the', ' office', '.', ' Where', ' before', 'Question', ' the', '<|eot_id|>', ' the', '<|end_header_id|>', ' \n', '<|start_header_id|>', ':', 'assistant', '<|begin_of_text|>', 'office'], 'evidence_proportions': [0.0008565882841746012, 0.0006971061229705811, 0.0010109543800354004, 0.0007882614930470785]}, 'pred_res': 'The bedroom.<|eot_id|>', 'score': 0}
+2025-01-20 12:00:34.803 | INFO     | modelzipper.tutils:auto_save_data:296 - /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_retain/Meta-Llama-3.1-8B-Instruct/11900/label not exist! --> Create data dir /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_retain/Meta-Llama-3.1-8B-Instruct/11900/label
+2025-01-20 12:00:34.803 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-20 12:00:34.804 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_retain/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-0_0-2-3-5.pkl | len: 10 |  size: 3.01 KB
+Processing depth (0, 2, 3, 5):  20%|██        | 1/5 [00:23<01:35, 23.75s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.21it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.29it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.33it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.78it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.56it/s]
+Processing depth (2, 4, 5, 8):  20%|██        | 1/5 [00:30<01:35, 23.75s/it]2025-01-20 12:00:41.986 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 0 -->  Mary journeyed to the office.
+2025-01-20 12:00:41.994 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 0 at --> (2461, 2467) --> . Mary journeyed to the
+2025-01-20 12:00:41.994 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 1 -->  Mary journeyed to the bathroom.
+2025-01-20 12:00:42.001 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 1 at --> (2461, 2467) --> . Mary journeyed to the
+2025-01-20 12:00:42.002 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 2 -->  Mary dropped the football.
+2025-01-20 12:00:42.018 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 2 at --> (5927, 5931) -->  Mary dropped the football
+2025-01-20 12:00:42.018 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-20 12:00:42.047 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 3 at --> (9585, 9591) -->  Daniel went back to the kitchen
+2025-01-20 12:00:42.047 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 0 -->  John went back to the bedroom.
+2025-01-20 12:00:42.052 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 0 at --> (1759, 1765) --> . John went back to the
+2025-01-20 12:00:42.052 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 1 -->  John took the milk.
+2025-01-20 12:00:42.084 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 1 at --> (11213, 11217) -->  John took the milk
+2025-01-20 12:00:42.084 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-20 12:00:42.105 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 2 at --> (7027, 7033) --> . Sandra journeyed to the
+2025-01-20 12:00:42.105 | INFO     | test_jbb_retain:find_multi_needle_idx:418 - evidence 3 -->  John journeyed to the office.
+2025-01-20 12:00:42.112 | INFO     | test_jbb_retain:find_multi_needle_idx:426 - find evidence 3 at --> (2462, 2468) -->  Mary journeyed to the office
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/data/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-20 12:00:44.042 | INFO     | test_jbb_retain:begin_test:506 - the bedroom<|eot_id|>
+2025-01-20 12:00:44.043 | INFO     | test_jbb_retain:begin_test:508 - torch.Size([1, 12133])
+ignore layer: 0 !
+ignore layer: 1 !
+ignore layer: 2 !
+ignore layer: 3 !
+ignore layer: 4 !
+ignore layer: 5 !
+ignore layer: 6 !
+ignore layer: 7 !
+ignore layer: 8 !
+ignore layer: 9 !
+ignore layer: 10 !
+ignore layer: 11 !
+ignore layer: 12 !
+ignore layer: 13 !
+ignore layer: 14 !
+ignore layer: 15 !
+ignore layer: 16 !
+ignore layer: 17 !
+ignore layer: 18 !
+ignore layer: 19 !
+ignore layer: 20 !
+ignore layer: 21 !
+ignore layer: 22 !
+ignore layer: 23 !
+
+  0%|          | 0/8 [00:00<?, ?it/s][A
+ 12%|█▎        | 1/8 [00:05<00:38,  5.56s/it][A
+ 25%|██▌       | 2/8 [00:05<00:14,  2.38s/it][A
+ 38%|███▊      | 3/8 [00:05<00:06,  1.37s/it][A
+ 50%|█████     | 4/8 [00:06<00:03,  1.12it/s][A
+ 62%|██████▎   | 5/8 [00:06<00:01,  1.60it/s][A
+ 75%|███████▌  | 6/8 [00:06<00:00,  2.14it/s][A
+ 88%|████████▊ | 7/8 [00:06<00:00,  2.73it/s][A
+100%|██████████| 8/8 [00:06<00:00,  3.34it/s][A100%|██████████| 8/8 [00:06<00:00,  1.20it/s]
+2025-01-20 12:00:52.991 | INFO     | test_jbb_retain:begin_test:549 - {24: {'score': [0.005831504409963434, 0.00011087556311658836, 0.002115398645401001, 9.681937732212242e-05], 'topk_tokens': [' THE', ' kitchen', ':', ' office', ' bathroom', ' East', 'Question', ' folded', ' office', ' bathroom', ' random', '<|eot_id|>', ' Dul', ' top', '<|eot_id|>', ' the', '<|begin_of_text|>', ' football', ' bedroom', 'office'], 'evidence_proportions': [0.00022179881731669107, 0.00022179881731669107, 0.02848029136657715, 0.0019517242908477783]}, 25: {'score': [0.002879145470532504, 6.599368310338143e-05, 0.00043673677877946335, 6.020047431764704e-05], 'topk_tokens': [' Do', ' Mary', ' Min', ' Min', '<|begin_of_text|>', ' Minneapolis', 'assistant', ' random', ':', ' directly', ' THE', ' Mary', ' Dan', 'Answer', ' Miss', 'office', ' dropped', '<|eot_id|>', '<|eot_id|>', '<|end_header_id|>'], 'evidence_proportions': [0.0013305842876434326, 0.0013305842876434326, 0.011515140533447266, 0.00021893779436747232]}, 26: {'score': [0.00035284324125810104, 9.558881611110843e-05, 0.0004923424937508323, 9.439882535258491e-05], 'topk_tokens': [' the', ' Hotel', ' Seventh', ' Col', ' North', '<|eot_id|>', ' Dan', ' Ramsey', ' bathroom', ' Az', ' East', 'Answer', '<|start_header_id|>', '<|begin_of_text|>', ' bedroom', ' Bridge', '<|end_header_id|>', ':', 'Bridge', 'office'], 'evidence_proportions': [3.871321678161621e-05, 3.871321678161621e-05, 0.000677943229675293, 0.0007643699645996094]}, 27: {'score': [0.004933598366650668, 0.00013973230582772826, 0.0014026002450422807, 0.00012871186516931913], 'topk_tokens': ['CH', ' the', ' Hotel', 'Den', ' the', 'THE', ' Bridge', ' East', ' football', 'Answer', ' Mary', ' bedroom', ' bathroom', '<|begin_of_text|>', 'Bridge', '.\n\n', ' Mary', ':', '<|end_header_id|>', 'office'], 'evidence_proportions': [0.0026380419731140137, 0.0026380419731140137, 0.017077922821044922, 0.0014284948507944744]}, 28: {'score': [0.0009685321287675338, 5.650595475186229e-05, 0.0016409619288011031, 5.196351762859473e-05], 'topk_tokens': [' the', ' kitchen', '<|end_header_id|>', 'Bridge', ' before', ' Bridge', ' during', ' to', '<|eot_id|>', ' bedroom', '<|eot_id|>', 'Answer', 'assistant', ' football', ' Bridge', ' the', 'office', ' Far', '<|begin_of_text|>', ':'], 'evidence_proportions': [2.8113524119059246e-05, 2.8113524119059246e-05, 0.0016731321811676025, 0.00237963596979777]}, 29: {'score': [0.0005503242666071111, 4.847106689968667e-05, 0.0005056885155764493, 4.672600410385075e-05], 'topk_tokens': ['<|eot_id|>', 'assistant', ':', '<|eot_id|>', ' the', 'Does', ' before', ' Does', ' the', ' football', ' Do', ' the', '<|end_header_id|>', 'Answer', ' \n', ' the', ':', '<|begin_of_text|>', '<|start_header_id|>', 'office'], 'evidence_proportions': [0.00013399124145507812, 0.00013399124145507812, 0.0004592388868331909, 0.001443713903427124]}, 30: {'score': [0.0018244521184401078, 0.0001306268380019318, 0.0021519254554401746, 0.00012386703932909404], 'topk_tokens': [' the', ' bedroom', 'Den', ' East', ' Min', 'IR', '.\n\n', '?', ' football', ' bathroom', ' the', ' the', 'Question', ' \n', 'assistant', '<|end_header_id|>', '<|start_header_id|>', '<|begin_of_text|>', 'office', ':'], 'evidence_proportions': [0.0004577438036600749, 0.0004577438036600749, 0.006821334362030029, 0.0012266139189402263]}, 31: {'score': [0.0004974414001811634, 9.450961593546198e-05, 0.00022326545281843707, 9.354219159795218e-05], 'topk_tokens': [' Mary', ' Where', 'ot', 'Answer', ' the', ' the', ' before', 'Question', ' football', ' the', ' the', '<|end_header_id|>', ' the', '<|eot_id|>', ' \n', '<|start_header_id|>', ':', '<|begin_of_text|>', 'assistant', 'office'], 'evidence_proportions': [0.00029467542966206867, 0.00029467542966206867, 0.0016533136367797852, 0.00013239185015360513]}, 'pred_res': 'the bedroom<|eot_id|>', 'score': 0}
+2025-01-20 12:00:52.992 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-20 12:00:52.993 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_retain/Meta-Llama-3.1-8B-Instruct/11900/label/3-hop_sid-0_pid-1_2-4-5-8.pkl | len: 10 |  size: 3.12 KB
+Processing depth (2, 4, 5, 8):  40%|████      | 2/5 [00:41<01:01, 20.48s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.27it/s][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.35it/s][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.38it/s][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.84it/s][ALoading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.62it/s]
