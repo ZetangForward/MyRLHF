@@ -2,7 +2,6 @@ import emoji
 import random
 from transformers import AutoTokenizer
 
-
 def get_random_emoji(tokenizer, num=50, return_idx=True):
     all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
     random_emojis = random.sample(all_emojis, num)
