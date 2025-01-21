@@ -355,6 +355,7 @@ class LLMNeedleHaystackTester:
 
         flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)  # after injection, re-seach the positions
         if flatten_search_pos is None:  # search failed
+            logger.info("after injection, second searching failed ...")
             return False
         
         inp = inp.to(self.model_to_test.device)
@@ -421,19 +422,21 @@ class LLMNeedleHaystackTester:
                     all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                     if self.combinations_number >= len(all_combinations):
                         logger.info("combinations_number is larger than or equal to the number of all combinations, auto select all combinations")
-                    else:
-                        all_combinations = random.sample(all_combinations, self.combinations_number)
+                        self.combinations_number = len(all_combinations)
 
                     logger.info(all_combinations)
 
                     analysis_sample_nums = 0
-                    with tqdm(total=len(all_combinations)) as pbar:
+                    with tqdm(total=self.combinations_number) as pbar:
                         for depth_percent in all_combinations:
                             torch.cuda.empty_cache()
                             pbar.set_description(f"Processing length: {context_length} | task: {task_tag} | depth {depth_percent}")
                             res = self.evaluate_and_log(background_text, depth_percent, evidence, disturb_tok_needles, disturb_pos, question, answer, injected_emojis)
-                            if res: analysis_sample_nums += 1
-                            pbar.update(1)
+                            if res: 
+                                analysis_sample_nums += 1
+                                pbar.update(1)
+                            if analysis_sample_nums == self.combinations_number: 
+                                break
 
                 # after processing all the samples in different positions, average the attention scores
                 for pos_score_dict in self.succ_head_counter.values():
@@ -453,7 +456,7 @@ class LLMNeedleHaystackTester:
                     "succ_head_counter": self.succ_head_counter,
                     "fail_head_counter": self.fail_head_counter,
                 }
-                auto_save_data(merge_dict, f"attention_analysis/attention_score/{task_tag}-{context_length}.json")
+                auto_save_data(merge_dict, f"attention_analysis/attention_score_w_emoji/{task_tag}-{context_length}.json")
 
                 # refresh the counter for the next task_tag
                 self.succ_head_counter = defaultdict(lambda: defaultdict(list))
@@ -474,7 +477,7 @@ if __name__ == "__main__":
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
         # selected_idx=[0],  # for debug
-        combinations_number=10,
+        combinations_number=5,
         inject_emoji_num=args.inject_emoji_num,
     )
 
