@@ -155,13 +155,13 @@ class LLMNeedleHaystackTester:
             self.model_to_test = LlamaForCausalLM.from_pretrained(
                 model_name, use_flash_attention_2="flash_attention_2", torch_dtype=torch.bfloat16, device_map = "auto").eval()
 
-    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, step_token_id, topk=1):
+    def retrieval_calculate(self, attention_maxtrix, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos, step_token_id, topk=1):
         for layer_idx in range(self.layer_num):
             for head_idx in range(self.head_num):
                 values, idx = attention_maxtrix[layer_idx][0][head_idx][-1].topk(topk)
-                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos, irrevelant_pos)
+                self.check_if_attend_ref(idx, step_token_id, retrieval_score, layer_idx, head_idx, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos)
 
-    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int], irrevelant_pos: List[int]):
+    def check_if_attend_ref(self, attention_index: List, step_token_id: str, retrieval_score: Dict, layer_idx, head_idx, flatten_search_pos: List[int], flatten_attack_pos: List[int], irrevelant_pos: List[int], flatten_emoji_pos: List[int]):
         """
         check if the attention index (where the model put attention at) 
         fall into the search_pos or attack_pos scope
@@ -181,6 +181,9 @@ class LLMNeedleHaystackTester:
             elif idx < irrevelant_pos[1] and idx >= irrevelant_pos[0]:
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
                 retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_token_id'].add(step_token_id)
+            if idx in flatten_emoji_pos:  # check if model attend to emoji positions
+                retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'] += 1 / (self.layer_num * self.head_num)
+                retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_token_id'].add(step_token_id)
 
 
     def retrieval_head_accumulate(self, retrieval_score, fail=False):
@@ -190,12 +193,15 @@ class LLMNeedleHaystackTester:
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.fail_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
+                    self.fail_head_counter[f"{layer_idx}-{head_idx}"]['emoji_pos'].append(retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'])
                 else:
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['clue_pos'].append(retrieval_score[layer_idx][head_idx]['clue_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['attack_pos'].append(retrieval_score[layer_idx][head_idx]['attack_pos']['attention_score'])
                     self.succ_head_counter[f"{layer_idx}-{head_idx}"]['irrelevant_pos'].append(retrieval_score[layer_idx][head_idx]['irrelevant_pos']['attention_score'])
+                    self.succ_head_counter[f"{layer_idx}-{head_idx}"]['emoji_pos'].append(retrieval_score[layer_idx][head_idx]['emoji_pos']['attention_score'])
 
-    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos, irrevelant_pos):
+
+    def decode(self, q_outputs, inp, decode_len, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos):
         output = []
         retrieval_score = [
             [
@@ -203,6 +209,7 @@ class LLMNeedleHaystackTester:
                     "clue_pos": {"attention_score": 0, "attention_token_id": set()},
                     "attack_pos": {"attention_score": 0, "attention_token_id": set()},
                     "irrelevant_pos": {"attention_score": 0, "attention_token_id": set()},
+                    "emoji_pos": {"attention_score": 0, "attention_token_id": set()},
                 }    
             for _ in range(self.head_num)
             ] for _ in range(self.layer_num)
@@ -218,7 +225,7 @@ class LLMNeedleHaystackTester:
             inp = outputs.logits[0, -1].argmax()
             step_token = self.enc.decode(inp.item())
             output.append(inp.item())
-            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, inp.item(), topk=1)
+            self.retrieval_calculate(outputs.attentions, retrieval_score, flatten_search_pos, flatten_attack_pos, irrevelant_pos, flatten_emoji_pos, inp.item(), topk=1)
             if step_token=='<0x0A>' or inp.item()==self.enc.eos_token_id: break
 
         # normalize the attention score by step numbers
@@ -227,6 +234,7 @@ class LLMNeedleHaystackTester:
                 head_scores['clue_pos']['attention_score'] /= total_steps
                 head_scores['attack_pos']['attention_score'] /= total_steps
                 head_scores['irrelevant_pos']['attention_score'] /= total_steps
+                head_scores['emoji_pos']['attention_score'] /= total_steps
         return output, retrieval_score
 
 
