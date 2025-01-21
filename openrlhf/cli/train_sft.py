@@ -88,6 +88,7 @@ def train(args):
     # configure optimizer
     optim = strategy.create_optimizer(model, lr=args.learning_rate, betas=args.adam_betas, weight_decay=args.l2)
 
+    print(f"len(train_dataset) {len(train_dataset)}")
     # scheduler
     num_update_steps_per_epoch = len(train_dataset) // args.train_batch_size
     max_steps = math.ceil(args.max_epochs * num_update_steps_per_epoch)
@@ -125,6 +126,7 @@ def train(args):
         batch_size=args.train_batch_size,
         max_epochs=args.max_epochs,
         tokenizer=tokenizer,
+        search_clue_seg=args.search_clue_seg,
     )
 
     trainer.fit(args, consumed_samples, num_update_steps_per_epoch)

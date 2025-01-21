@@ -41,6 +41,7 @@ class SFTTrainer(ABC):
         batch_size: int = 1,
         max_epochs: int = 2,
         tokenizer=None,
+        search_clue_seg=False,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -55,6 +56,7 @@ class SFTTrainer(ABC):
         self.tokenizer = tokenizer
         self.optimizer = optim
         self.args = strategy.args
+        self.search_clue_seg = search_clue_seg
 
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
 
@@ -133,9 +135,9 @@ class SFTTrainer(ABC):
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
-                    # if clue_inputs:
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
+                    if self.search_clue_seg:
+                        clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                        clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -260,7 +262,7 @@ class SFTTrainer(ABC):
             # self.strategy.save_ckpt(
             #     self.model.model, args.ckpt_path, tag, args.max_ckpt_num, args.max_ckpt_mem, client_states
             # )
-            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, "adapter", tag))
+            self.strategy.save_model(self.model, self.tokenizer, os.path.join(args.save_path, tag))
 
 
     def evaluate(self, eval_dataloader, steps=0):
@@ -279,8 +281,9 @@ class SFTTrainer(ABC):
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
-                    clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
-                    clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
+                    if self.search_clue_seg:
+                        clue_inputs = clue_inputs.to(torch.cuda.current_device()).squeeze(1)
+                        clue_attention_mask = clue_attention_masks.to(torch.cuda.current_device()).squeeze(1)
                 else:
                     inputs = inputs.to(torch.cuda.current_device()).squeeze(1)
                     attention_mask = attention_masks.to(torch.cuda.current_device()).squeeze(1)
@@ -296,28 +299,29 @@ class SFTTrainer(ABC):
                         packed_seq_lens=infos["input_length"],
                     )
 
-                    clue_output = self.model(
-                        clue_inputs, 
-                        attention_mask=clue_attention_mask, 
-                        return_output=True,
-                        ring_attn_group=self.strategy.ring_attn_group,
-                        packed_seq_lens=infos["clue_input_length"],
-                    )
+                    if self.search_clue_seg:
+                        clue_output = self.model(
+                            clue_inputs, 
+                            attention_mask=clue_attention_mask, 
+                            return_output=True,
+                            ring_attn_group=self.strategy.ring_attn_group,
+                            packed_seq_lens=infos["clue_input_length"],
+                        )
 
-                    clue_labels = torch.where(
-                        clue_attention_mask.bool(),
-                        clue_inputs,
-                        self.loss_fn.IGNORE_INDEX,
-                    )
+                        clue_labels = torch.where(
+                            clue_attention_mask.bool(),
+                            clue_inputs,
+                            self.loss_fn.IGNORE_INDEX,
+                        )
 
-                    index = 0
-                    for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
-                        clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
-                        index += input_length
+                        index = 0
+                        for input_length, source_len in zip(infos["clue_input_length"], clue_prompt_id_lens):
+                            clue_labels[0][index : index + source_len] = self.loss_fn.IGNORE_INDEX
+                            index += input_length
 
-                    short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
-                    
-                    short_ctx_loss_sum += short_ctx_gpt_loss.item()
+                        short_ctx_gpt_loss = self.loss_fn(clue_output.logits, clue_labels)
+                        
+                        short_ctx_loss_sum += short_ctx_gpt_loss.item()
                 
                 # loss function
                 labels = torch.where(

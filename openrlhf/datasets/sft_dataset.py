@@ -33,7 +33,7 @@ def preprocess_data(data, input_template=None, input_key="input", output_key=Non
         if input_template:
             prompt = input_template.format(prompt)
         # output_key is None for continue pretrain
-        response = data[output_key] if output_key else ""
+        # response = data[output_key] if output_key else ""
 
     if meta_key:
         return prompt, response, clue_prompt, data[meta_key]
@@ -154,12 +154,12 @@ class SFTDataset(Dataset):
             clue_prompt_ids_len = clue_prompt_token["attention_mask"].int().sum().item()
 
         # filter the sample whose length is greater than max_length (2 for answer length)
+
         if not prompt or not response or prompt_ids_len >= self.max_length - 2:
             prompt = None
 
         if self.search_clue_seg and (len(clue_pos) != len(clue_list)):
             prompt = None
-
 
         if self.search_clue_seg:
             return {"prompt": prompt, "clue_prompt": clue_prompt, "response": response, "prompt_ids_len": prompt_ids_len, "clue_prompt_ids_len": clue_prompt_ids_len, "clue_pos": clue_pos}
@@ -255,24 +255,30 @@ class SFTDataset(Dataset):
         index = 1
         for prompt_ids_len, input_id, attention_mask, info, pack_prompt_ids_len, clue_input_id, _ in item_list:
             packed_input_ids.append(input_id.flatten())
-            packed_clue_input_ids.append(clue_input_id.flatten())
             packed_attention_masks.append(torch.full_like(input_id.flatten(), index))
-            packed_clue_attention_masks.append(torch.full_like(clue_input_id.flatten(), index))
             prompt_ids_lens.append(prompt_ids_len)
-            clue_prompt_ids_lens.append(pack_prompt_ids_len)
             infos["input_length"].append(info["input_length"])
-            if "clue_input_length" in info:
+
+            if pack_prompt_ids_len is not None:
+                packed_clue_input_ids.append(clue_input_id.flatten())
+                packed_clue_attention_masks.append(torch.full_like(clue_input_id.flatten(), index))
+                clue_prompt_ids_lens.append(pack_prompt_ids_len)
                 infos["clue_input_length"].append(info["clue_input_length"])
-            if "clue_pos" in info:
                 infos["clue_poss"].append(info["clue_pos"])
+                
             index += 1
 
         packed_input_ids = torch.cat(packed_input_ids, dim=0).unsqueeze(0)
         packed_attention_masks = torch.cat(packed_attention_masks, dim=0).unsqueeze(0)
 
-        # if packed_clue_input_ids[0] is not None:  #确保里面都是有实际数值的
-        packed_clue_input_ids = torch.cat(packed_clue_input_ids, dim=0).unsqueeze(0)
-        packed_clue_attention_masks = torch.cat(packed_clue_attention_masks, dim=0).unsqueeze(0)
+        if self.search_clue_seg:
+            packed_clue_input_ids = torch.cat(packed_clue_input_ids, dim=0).unsqueeze(0)
+            packed_clue_attention_masks = torch.cat(packed_clue_attention_masks, dim=0).unsqueeze(0)
+
+            if self.multiple_of > 1:  # not divisible by multiple_of; here we align for grouping
+                padding_len = self.multiple_of - (packed_clue_input_ids.numel() % self.multiple_of)
+                packed_clue_input_ids = F.pad(packed_clue_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
+                packed_clue_attention_masks = F.pad(packed_clue_attention_masks, (0, padding_len), value=0)
 
         if (
             self.multiple_of > 1 and packed_input_ids.numel() % self.multiple_of != 0
@@ -281,11 +287,4 @@ class SFTDataset(Dataset):
             packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
         
-        if (
-            self.multiple_of > 1 and packed_clue_input_ids.numel() % self.multiple_of != 0
-        ):  # not divisible by multiple_of; here we align for grouping
-            padding_len = self.multiple_of - (packed_clue_input_ids.numel() % self.multiple_of)
-            packed_clue_input_ids = F.pad(packed_clue_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
-            packed_clue_attention_masks = F.pad(packed_clue_attention_masks, (0, padding_len), value=0)
-            
         return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos, clue_prompt_ids_lens, packed_clue_input_ids, packed_clue_attention_masks
