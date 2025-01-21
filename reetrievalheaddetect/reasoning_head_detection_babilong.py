@@ -266,18 +266,19 @@ class LLMNeedleHaystackTester:
         random_injected_pos = random.sample(avail_inject_pos, len(emoji_lst))
         random_injected_pos.sort()
         
-        result = []
+        result, emoji_injected_pos = [], []
         prev_pos = 0
         for pos, emoji in zip(random_injected_pos, emoji_lst):
             result.extend(inp[prev_pos:pos])
             result.extend(emoji)
+            emoji_injected_pos.append((pos, pos + len(emoji)))
             prev_pos = pos
         result.extend(inp[prev_pos:])
 
         final_inp = torch.tensor(result, dtype=torch.long)
         if flag:
             final_inp = final_inp.unsqueeze(0)
-        return final_inp
+        return final_inp, emoji_injected_pos
 
     def search_pos(self, inp, evidence, disturb):
         search_pos = self.find_multi_needle_idx(inp[0], evidence)
