@@ -1,5 +1,6 @@
 # export NCCL_SOCKET_IFNAME=eth0
 # export NCCL_DEBUG=INFO
+export HF_DATASETS_CACHE=/dev/null
 SAVE_DIR='/mnt/petrelfs/tangzecheng/remote_bucket/zecheng/ckpt'
 
 deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/context_denoise/language_modeling.py \

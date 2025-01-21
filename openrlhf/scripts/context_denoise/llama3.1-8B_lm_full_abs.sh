@@ -29,6 +29,6 @@ deepspeed --include localhost:0,1,2,3,4,5,6,7 cli/context_denoise/language_model
    --disable_fast_tokenizer \
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project '初号机' \
-   --wandb_run_name 'Llama-3.1-8B-cd-lm_full-adv0.05' \
+   --wandb_run_name 'Llama-3.1-8B-cd-lm_full-adv0.01' \
    --ring_attn_size 4 \
    --ring_head_stride 2;
