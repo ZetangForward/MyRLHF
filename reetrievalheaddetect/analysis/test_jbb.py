@@ -289,7 +289,7 @@ def multi_torch_topk(saliency, target_poss, k):
     return np_topk(values.numpy(), k)
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int]):
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int], is_0k):
     """
     saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
 
@@ -351,10 +351,18 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     # proportion4: remain context -> target token
     proportion4 = proportion2 - proportion1 - proportion3
 
-    proportion1 = proportion1 / evidence_length if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
-    proportion2 = proportion2 / total_context_length
-    proportion3 = proportion3 / irr_evidence_length if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
-    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
+    proportion1 = proportion1 / evidence_length# if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
+    if is_0k:
+        proportion2 = (proportion1 + proportion3) /(evidence_length + irr_evidence_length)
+    else:
+        proportion2 = proportion2 / total_context_length
+    
+    proportion3 = proportion3 / irr_evidence_length# if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
+    
+    if is_0k:
+        proportion4 = 0.
+    else:
+        proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
     return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
 
@@ -430,7 +438,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
     """
     zecheng_note: 这里计算的是language modeling loss    
     """
@@ -453,7 +461,7 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     saliencies = attentionermanger.grad(use_abs=True)
     for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
         saliency = saliencies[i-attentionermanger.start_layer]        
-        proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
+        proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss, is_0k)
         top_tokens = []
         for idx in topk_indices:
             top_tokens.append(tokenizer.decode(input[0][idx].item()))
@@ -476,7 +484,7 @@ def random_combine(ref:list, att:list):
     return results
 
 
-def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter=False, start_layer = 0):
+def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k, with_adapter=False, start_layer = 0):
     if background_text is not None:
         depth_percent = [i / 10 for i in depth_percent]
         updated_sample = [[] for _ in range(len(background_text) + 1)]
@@ -534,6 +542,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
+                                                      is_0k,
                                                       model_name, tokenizer, with_adapter=with_adapter,
                                                       start_layer = start_layer)
     
@@ -542,6 +551,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, 
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
+                                                      is_0k,
                                                       model_name, tokenizer, with_adapter=with_adapter,
                                                       start_layer = start_layer)
 

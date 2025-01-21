@@ -15,7 +15,7 @@ import numpy as np
 from transformers import PreTrainedModel
 import itertools
 from tqdm import trange
-
+import emoji
 
 def hack_attn_llama(
     self,
@@ -146,6 +146,14 @@ class AttentionAdapter(AttentionAdapterBase):
 
     @property
     def grad(self):
+        return self.attn_weights.grad
+
+    @property
+    def weight(self):
+        return self.attn_weights
+    
+    @property
+    def saliency(self):
         return self.attn_weights * self.attn_weights.grad
 
     def zero_grad(self, set_to_none: bool = False) -> None:
@@ -220,7 +228,21 @@ class AttentionerManagerBase:
             if attention_adapter is None:continue
             grads.append(self.grad_process(attention_adapter.grad,*args,**kwargs))
         return grads
+    
+    def saliency(self,*args,**kwargs):
+        saliencies= []
 
+        for attention_adapter in self.attention_adapters:
+            if attention_adapter is None:continue
+            saliencies.append(self.grad_process(attention_adapter.saliency,*args,**kwargs))
+        return saliencies
+
+    def weight(self, *args, **kwargs):
+        weights = []
+        for attention_adapter in self.attention_adapters:
+            if attention_adapter is None:continue
+            weights.append(self.grad_process(attention_adapter.weight,*args,**kwargs))
+        return weights
 
 
 # class AttentionerManager(AttentionerManagerBase):
@@ -287,12 +309,13 @@ def multi_torch_topk(saliency, target_poss, k):
     return np_topk(values.numpy(), k)
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int]):
+def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], target_poss: Tuple[int, int], is_0k):
     """
     saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
 
     target_poss: [l, r)
     """
+    print("is_0k:",is_0k)
     saliency = saliency.float().detach().clone().cpu()
     assert len(saliency.shape) == 2 or (len(saliency.shape) == 3 and saliency.shape[0] == 1)
     if len(saliency.shape) == 3:
@@ -349,10 +372,21 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     # proportion4: remain context -> target token
     proportion4 = proportion2 - proportion1 - proportion3
 
-    proportion1 = proportion1 / evidence_length if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
-    proportion2 = proportion2 / total_context_length
-    proportion3 = proportion3 / irr_evidence_length if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
-    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
+
+    if is_0k:
+        proportion2 = (proportion1 + proportion3) /(evidence_length + irr_evidence_length)
+    else:
+        proportion2 = proportion2 / total_context_length
+
+    proportion1 = proportion1 / evidence_length# if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
+
+    
+    proportion3 = proportion3 / irr_evidence_length# if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
+    
+    if is_0k:
+        proportion4 = 0.
+    else:
+        proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
     return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
 
@@ -428,7 +462,7 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
     return all_evi_pos
 
 
-def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
+def test_model_with_attention_adapter(model, input, golden, search_pos, attack_pos, target_poss, is_0k, model_name, tokenizer, take_last_loss = True, with_adapter=False, start_layer = 0):
     """
     zecheng_note: 这里计算的是language modeling loss    
     """
@@ -448,17 +482,24 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     loss.backward()
 
     pros_dict = dict()
-    saliencies = attentionermanger.grad(use_abs=True)
+
+    
     for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
-        saliency = saliencies[i-attentionermanger.start_layer]        
-        proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss)
-        top_tokens = []
-        for idx in topk_indices:
-            top_tokens.append(tokenizer.decode(input[0][idx].item()))
-        pros_dict[i] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
+        pros_dict[i] = {}        
+    
+    for score_type in ["grad","weight","saliency"]:
+        saliencies = getattr(attentionermanger, score_type)(use_abs=True)
+        for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
+            saliency = saliencies[i-attentionermanger.start_layer]        
+            proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, target_poss, is_0k)
+            top_tokens = []
+            for idx in topk_indices:
+                top_tokens.append(tokenizer.decode(input[0][idx].item()))
+
+            pros_dict[i][score_type] = {'score': [proportion1, proportion2, proportion3, proportion4], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
     return pros_dict
 
-def random_combine(ref:list, att:list):
+def random_combine(ref:list, att:list, return_snd_pos = False):
 
     att_list =[[] for _ in range(len(ref) + 1)]
     for p_att in att[:-1]:
@@ -467,15 +508,37 @@ def random_combine(ref:list, att:list):
 
     results = [k for k in att_list[0]]
 
+    if return_snd_pos:
+        insert_pos = list(range(len(results)))
     for r, patt in zip(ref,att_list[1:]):
         results.append(r)
+        if return_snd_pos:
+            insert_pos.extend(list(range(len(results), len(results) + len(patt))))
+
         results.extend(patt)
+            
+    if return_snd_pos:
+        assert len(att) == len(insert_pos)
+        return results, insert_pos
 
     return results
 
 
-def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter=False, start_layer = 0):
+def get_random_emoji(tokenizer, num=50, return_idx=True):
+    all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
+    random_emojis = random.sample(all_emojis, num)
+    print(f"your chose emoji: {random_emojis}")
+    if return_idx:
+        index_emojis = []
+        for e in random_emojis:
+            index_emojis.append(tokenizer(e, add_special_tokens=False).input_ids)
+        return index_emojis
+    return random_emojis
+
+def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k, use_emoji, with_adapter=False, start_layer = 0):
     if background_text is not None:
+
+
         depth_percent = [i / 10 for i in depth_percent]
         updated_sample = [[] for _ in range(len(background_text) + 1)]
         real_pos = [int(len(background_text) * i) for i in depth_percent]
@@ -483,8 +546,24 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             updated_sample[pos].append(fact)
         for fact, pos in zip(disturb_tok_needles, disturb_pos):  # insert disturb needle
             updated_sample[pos].append(fact)
+
+
+        
+        if use_emoji:
+            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True)
+            back_ground_text, emoji_pos = random_combine(background_text, emojis10, 
+                                                         return_snd_pos = True)
+            emoji_pos = set(emoji_pos)
+            cumsum_num = 0
+            emoji_spans = []
         for i, s in enumerate(background_text):  # insert irrevelent needle
+            if use_emoji and (i in emoji_pos):
+                emoji_spans +=[(cumsum_num, cumsum_num + len(s))]
+
             updated_sample[i].append(s)
+
+            if use_emoji:
+                cumsum_num += sum(len(l) for l in updated_sample[i])
     else:
         updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
         updated_sample = [[k] for k in updated_sample]
@@ -532,6 +611,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
+                                                      is_0k,
                                                       model_name, tokenizer, with_adapter=with_adapter,
                                                       start_layer = start_layer)
     
@@ -540,6 +620,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, 
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
+                                                      is_0k,
                                                       model_name, tokenizer, with_adapter=with_adapter,
                                                       start_layer = start_layer)
 

@@ -130,7 +130,7 @@ if __name__ == "__main__":
                             save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_sid-{s_id}_pid-{cnt}_{depth_tag}"
                             
                             begin_test(
-                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name
+                                args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, (context_length == 0),model_name
                             )
                             pbar.update(1)
                             cnt += 1

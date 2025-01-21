@@ -20,6 +20,6 @@ def get_random_emoji(tokenizer, num=50, return_idx=True):
 
 if __name__ == "__main__":
     # 加载Llama的tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3.1-8B-Instruct")
-    res = get_random_emoji(tokenizer, 50, True)
+    tokenizer = AutoTokenizer.from_pretrained("/data/hf_models/meta-llama-3.1-8b")
+    res = get_random_emoji(tokenizer, 10, True)
     print(res)

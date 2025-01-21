@@ -55,10 +55,10 @@ if __name__ == "__main__":
 
     for context_length in [
         # 15900,
-        11900,
-        7900,
-        3900,
-        1900,
+        # 11900,
+        # 7900,
+        # 3900,
+        # 1900,
             # 900,
         0
             ]:
@@ -94,113 +94,125 @@ if __name__ == "__main__":
                     disturb_tok_needles = [i for i in needle if i not in evidence]
                     disturb_pos = None
 
-                combinations_number = 5
+                # combinations_number = 5
+                # all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
+                # all_combinations = random.sample(all_combinations, combinations_number)
+
+                combinations_number = 100
                 all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                 all_combinations = random.sample(all_combinations, combinations_number)
-
-                # combinations_number = 5
-                # combinations = list(range(10))
-                
                 model = None
+                cnt = 0
                 with tqdm(total=len(all_combinations)) as pbar:
-                    for random_idx, depth_percent in enumerate(all_combinations):
+                    for _, depth_percent in enumerate(all_combinations):
                         # random.shuffle(combinations)
                         # depth_percent = depth_percent[:len(evidence)]
 
                         del model
                         torch.cuda.empty_cache()
+                        if cnt == 5: break
                         # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
                         #                                              device_map='auto',
                         #                                              torch_dtype=torch.bfloat16,
                         #                                              attn_implementation="eager"
                                                 # )
+                        try:
+                            model = AutoModelForCausalLM.from_pretrained(args.model_path, 
+                                                                        attn_implementation = "flash_attention_2"
+                                                                        ).half()
 
-                        model = AutoModelForCausalLM.from_pretrained(args.model_path, 
-                                                                     attn_implementation = "flash_attention_2"
-                                                                     ).half()
+                            # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
+                            #                     attn_implementation="flash_attention_2",
+                            #                     # device_map = "auto",
+                            #                     ).half().cuda().eval()
+                            # layer_name = model.model.layers[0].__class__.__name__
+                            # max_memory = get_balanced_memory(
+                            #     model,
+                            #     max_memory=None,
+                            #     no_split_module_classes=[layer_name],
+                            #     dtype='float16',
+                            #     low_zero=False,
+                            # )
 
-                        # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
-                        #                     attn_implementation="flash_attention_2",
-                        #                     # device_map = "auto",
-                        #                     ).half().cuda().eval()
-                        # layer_name = model.model.layers[0].__class__.__name__
-                        # max_memory = get_balanced_memory(
-                        #     model,
-                        #     max_memory=None,
-                        #     no_split_module_classes=[layer_name],
-                        #     dtype='float16',
-                        #     low_zero=False,
-                        # )
+                            device_map = {
+                                "model.embed_tokens": 0,
+                                "model.rotary_emb" :0,
 
-                        device_map = {
-                            "model.embed_tokens": 0,
-                            "model.rotary_emb" :0,
+                                "model.layers.0" :0,
+                                "model.layers.1" :0,
+                                "model.layers.2" :0,
+                                "model.layers.3" :1,
 
-                            "model.layers.0" :0,
-                            "model.layers.1" :0,
-                            "model.layers.2" :0,
-                            "model.layers.3" :1,
+                                "model.layers.4" :1,
+                                "model.layers.5" :1,
+                                "model.layers.6" :2,
+                                "model.layers.7" :2,
 
-                            "model.layers.4" :1,
-                            "model.layers.5" :1,
-                            "model.layers.6" :2,
-                            "model.layers.7" :2,
+                                "model.layers.8" :2,
+                                "model.layers.9" :3,
+                                "model.layers.10" :3,
+                                "model.layers.11" :3,
 
-                            "model.layers.8" :2,
-                            "model.layers.9" :3,
-                            "model.layers.10" :3,
-                            "model.layers.11" :3,
+                                "model.layers.12" :4,
+                                "model.layers.13" :4,
+                                "model.layers.14" :4,
+                                "model.layers.15" :5,
 
-                            "model.layers.12" :4,
-                            "model.layers.13" :4,
-                            "model.layers.14" :4,
-                            "model.layers.15" :5,
+                                "model.layers.16" :5,
+                                "model.layers.17" :5,
+                                "model.layers.18" :6,
+                                "model.layers.19" :6,
 
-                            "model.layers.16" :5,
-                            "model.layers.17" :5,
-                            "model.layers.18" :6,
-                            "model.layers.19" :6,
+                                "model.layers.20" :6,
+                                "model.layers.21" :7,
+                                "model.layers.22" :7,
+                                "model.layers.23" :7,
+                                
+                                "model.layers.24" :0,
+                                "model.layers.25" :1,
+                                "model.layers.26" :2,
+                                "model.layers.27" :3,
+                                
+                                "model.layers.28" :4,
+                                "model.layers.29" :5,
+                                "model.layers.30" :6,
+                                "model.layers.31" :7,
+                                "model.norm" :6,
+                                "lm_head"  : 7
+                                
+                            }
+                            # print(model)
+                            # device_map = infer_auto_device_map(
+                            #     model,
+                            #     max_memory=max_memory,
+                            #     no_split_module_classes=[layer_name],
+                            #     dtype='float16'
+                            # )
 
-                            "model.layers.20" :6,
-                            "model.layers.21" :7,
-                            "model.layers.22" :7,
-                            "model.layers.23" :7,
+                            model = dispatch_model(model, device_map=device_map)
+
+                            # for param in model.parameters():
+                            #     param.requires_grad = False
+
+                            pbar.set_description(f"Processing depth {depth_percent}")
+                            depth_tag = "-".join([str(i) for i in depth_percent])
+                            model_name = args.model_path.split("/")[-1]
                             
-                            "model.layers.24" :0,
-                            "model.layers.25" :1,
-                            "model.layers.26" :2,
-                            "model.layers.27" :3,
+                            save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_sid-{s_id}_pid-{cnt}_{depth_tag}"
                             
-                            "model.layers.28" :4,
-                            "model.layers.29" :5,
-                            "model.layers.30" :6,
-                            "model.layers.31" :7,
-                            "model.norm" :6,
-                            "lm_head"  : 7
-                            
-                        }
-                        # print(model)
-                        # device_map = infer_auto_device_map(
-                        #     model,
-                        #     max_memory=max_memory,
-                        #     no_split_module_classes=[layer_name],
-                        #     dtype='float16'
-                        # )
+                            begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k = (context_length == 0), with_adapter= True if args.adapter_path else False,                                   start_layer = 24)
+                            pbar.update(1)
+                            cnt += 1
+                        except ZeroDivisionError as ze:
+                            continue
 
-                        model = dispatch_model(model, device_map=device_map)
-
-                        # for param in model.parameters():
-                        #     param.requires_grad = False
-
-                        pbar.set_description(f"Processing depth {depth_percent}")
-                        depth_tag = "-".join([str(i) for i in depth_percent])
-                        model_name = args.model_path.split("/")[-1]
-                        
-                        save_file_name = f"{model_name}/{args.context_length}/{args.loss_type}/{tag}_sid-{s_id}_pid-{random_idx}_{depth_tag}"
-                        
-                        begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, with_adapter= True if args.adapter_path else False,
-                                   start_layer = 24)
-                        pbar.update(1)
-                        # exit(0)
+                        except ValueError as e:
+                            if str(e) =="evidence_list and disturb_tok_needles length not match!":
+                                continue
+                    if cnt != 5:
+                        print(f"args.context_length: {args.context_length}")
+                        print(f"args.loss_type: {args.loss_type}")
+                        print(f"cnt: {cnt}")
+                        print(f"s_id: {s_id}")
 
         print("OVER:",context_length, loss_type)
