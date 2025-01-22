@@ -342,6 +342,9 @@ class LLMNeedleHaystackTester:
 
         new_context = self.enc.decode(tokens)
         input_context = new_context + f"\nQuestion: {question}\nAnswer:"
+
+        # if the model is base_model, use default template
+        # FIXME
         inp = self.enc.apply_chat_template([{"role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
         
         flatten_search_pos, flatten_attack_pos, irrevelant_pos = self.search_pos(inp, evidence, disturb_tok_needles)
@@ -464,14 +467,14 @@ class LLMNeedleHaystackTester:
 if __name__ == "__main__":
     # Tons of defaults set, check out the LLMNeedleHaystackTester's init for more info
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', type=str, default=None, help='name of model')
+    parser.add_argument('--model_name', type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct", help='name of model')
     parser.add_argument('--context_lengths', type=int, nargs='+', help='A list of integers')
     parser.add_argument('--inject_emoji_num', type=int, default=10, help='A list of integers')
     args = parser.parse_args()
 
     ht = LLMNeedleHaystackTester(
         needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl",
-        model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct", 
+        model_name = args.model_name, 
         context_lengths=list(reversed(args.context_lengths)),
         # context_lengths = [1900, 3900, 7900, 11900],
         print_ongoing_status = True,
