@@ -1,0 +1,218 @@
+nohup: 忽略输入
+2025-01-22 22:02:06.875 | INFO     | test_jbb_embedding:<module>:7 - ['/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python310.zip', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages', '/mnt/petrelfs/tangzecheng/DeepSpeed', '/mnt/petrelfs/tangzecheng/modelzipper/src', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-22 22:02:08.862 | INFO     | __main__:<module>:11 - ['/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/faiss_attn', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect', '/mnt/petrelfs/tangzecheng/MyRLHF/reetrievalheaddetect/analysis', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python310.zip', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/lib-dynload', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages', '/mnt/petrelfs/tangzecheng/DeepSpeed', '/mnt/petrelfs/tangzecheng/modelzipper/src', '/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/setuptools/_vendor']
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:81 - Selected idx: 0
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:82 - Question: I have provided you context with the facts about locations and actions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts.
+
+If a person obtained an item in the first location and traveled to the second location, the item is also in the second location.
+If a person left an item in the first location and moved to the second location, the item remains in the first location.
+If a person got an item and traveled to another location, the item will be in the new location unless they dropped it during the journey.
+
+Just return the location directly. Do not write anything else after that.
+
+Question: Where was the football before the bathroom? 
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:83 - Answer: office
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:84 - Tag: 3-hop
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:85 - Needle: [' John went back to the bedroom.', ' Mary took the football.', ' John took the milk.', ' Sandra journeyed to the bedroom.', ' John journeyed to the office.', ' Mary journeyed to the office.', ' Mary journeyed to the bathroom.', ' Daniel went back to the kitchen.']
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:86 - Real Needle: [' Mary took the football.', ' Mary journeyed to the office.', ' Mary journeyed to the bathroom.', ' Daniel went back to the kitchen.']
+2025-01-22 22:02:09.627 | INFO     | __main__:<module>:87 - =============================================
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-23 02:02:02
+Process: 76173
+begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 246.97 KB | file type: jsonl
+begin to testing with [3900]
+  0%|          | 0/100 [00:00<?, ?it/s]You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:03<00:11,  3.88s/it][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:08<00:08,  4.12s/it][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:12<00:04,  4.09s/it][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  2.86s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  3.30s/it]
+Processing depth (0, 2, 5, 8):   0%|          | 0/100 [00:16<?, ?it/s]2025-01-22 22:02:26.478 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  Mary took the football.
+2025-01-22 22:02:26.479 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1, 5) -->  took the football.
+2025-01-22 22:02:26.479 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  Mary journeyed to the office.
+2025-01-22 22:02:26.488 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (1722, 1728) -->  Mary journeyed to the office
+2025-01-22 22:02:26.488 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Mary journeyed to the bathroom.
+2025-01-22 22:02:26.497 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (1723, 1729) -->  journeyed to the office.
+2025-01-22 22:02:26.497 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 22:02:26.531 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (6436, 6442) --> . Daniel went back to the
+2025-01-22 22:02:26.531 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 22:02:26.539 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1496, 1502) --> . John went back to the
+2025-01-22 22:02:26.539 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  John took the milk.
+2025-01-22 22:02:26.551 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2481, 2485) -->  John took the milk
+2025-01-22 22:02:26.551 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 22:02:26.575 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (4352, 4358) --> . Sandra journeyed to the
+2025-01-22 22:02:26.576 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  John journeyed to the office.
+2025-01-22 22:02:26.584 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (1723, 1729) -->  journeyed to the office.
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:590: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0.6` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+/mnt/petrelfs/tangzecheng/anaconda3/envs/zecheng/lib/python3.10/site-packages/transformers/generation/configuration_utils.py:595: UserWarning: `do_sample` is set to `False`. However, `top_p` is set to `0.9` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_p`.
+  warnings.warn(
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+2025-01-22 22:02:29.550 | INFO     | test_jbb_embedding:begin_test:696 -  The football was in the office.<|end_of_text|>
+2025-01-22 22:02:29.550 | INFO     | test_jbb_embedding:begin_test:698 - torch.Size([1, 8112])
+2025-01-22 22:02:31.771 | INFO     | test_jbb_embedding:begin_test:750 - {'embedding': {'grad': {'score': [395.90909090909093, 42.47998197337606, 185.6903409090909, 41.125902373280454, 60.36444627192982], 'topk_indices': array([1843, 1811, 1806, 1807, 8005, 8099,    7, 1810, 1846,    4, 8100,
+       1847, 8109, 1812, 8110, 1844,    8, 1808, 8111, 1809]), 'topk_tokens': [' the', 'cont', ' from', ' the', '.\n\n', 'Question', '***', '\n', '\n', '.', ':', 'cont', ' \n', 'aining', 'Answer', ' cap', '\n\n\n', ' cap', ':\n', 'itol'], 'evidence_proportions': [1241.25, 262.875, 323.8333333333333, 37.458333333333336]}, 'weight': {'score': [21.240767045454547, 23.328184703562183, 21.235795454545453, 23.339580880530423, 28.873081140350877], 'topk_indices': array([3316, 3289, 3203, 3155, 7350, 7388, 1394, 4275, 4291, 5112, 1456,
+       5173, 7127, 7071, 3498, 3472, 4907, 4930, 4959, 4882]), 'topk_tokens': [' proudly', ' proudly', ' trembling', ' trembling', ' acquaintance', ' acquaintance', ' injunction', ' vigorous', ' vigorous', ' strife', ' injunction', ' strife', ' extortion', ' extortion', ' memorable', ' memorable', ' veto', ' veto', ' veto', ' veto'], 'evidence_proportions': [20.7734375, 23.458333333333332, 19.583333333333332, 20.9921875]}, 'saliency': {'score': [1.9517544833096592, 0.24299798187515406, 0.9503395774147727, 0.23641052889046815, 0.4440409342447917], 'topk_indices': array([8100, 8108, 1832,    1, 1806, 8086, 8005,    3, 1811, 8109,    7,
+       8099, 1812, 1847,    8, 1844, 8110, 8111, 1808, 1809]), 'topk_tokens': [':', '?', 'nes', ' took', ' from', ' return', '.\n\n', ' football', 'cont', ' \n', '***', 'Question', 'aining', 'cont', '\n\n\n', ' cap', 'Answer', ':\n', ' cap', 'itol'], 'evidence_proportions': [5.78662109375, 1.57177734375, 1.5333658854166667, 0.19354248046875]}}, 'pred_res': ' The football was in the office.<|end_of_text|>', 'score': 100}
+2025-01-22 22:02:31.776 | INFO     | modelzipper.tutils:auto_save_data:296 - /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label not exist! --> Create data dir /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label
+2025-01-22 22:02:31.780 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 22:02:31.780 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label/3-hop_sid-0_pid-0_0-2-5-8.pkl | len: 3 |  size: 1.94 KB
+Processing depth (0, 2, 5, 8):   1%|          | 1/100 [00:21<36:12, 21.94s/it]is_0k: False
+your chose emoji: ['🤕', '🚘', '🪤', '👨🏻\u200d🦯', '☹️', '\U0001faf8', '🤗', '🛀🏽', '🧚🏾\u200d♂️', '👩🏼\u200d🦼\u200d➡']
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:03<00:11,  3.87s/it][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:08<00:08,  4.31s/it][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:13<00:04,  4.64s/it][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:14<00:00,  3.29s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:14<00:00,  3.69s/it]
+Processing depth (2, 3, 5, 9):   1%|          | 1/100 [00:37<36:12, 21.94s/it]2025-01-22 22:02:47.912 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  Mary took the football.
+2025-01-22 22:02:47.922 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1823, 1827) -->  Mary took the football
+2025-01-22 22:02:47.923 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  Mary journeyed to the office.
+2025-01-22 22:02:47.940 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2945, 2951) -->  tragedy. Mary journeyed to
+2025-01-22 22:02:47.941 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Mary journeyed to the bathroom.
+2025-01-22 22:02:47.956 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (2945, 2951) -->  tragedy. Mary journeyed to
+2025-01-22 22:02:47.956 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 22:02:47.992 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (7095, 7101) -->  Daniel went back to the kitchen
+2025-01-22 22:02:47.993 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 22:02:48.000 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1481, 1487) --> . John went back to the
+2025-01-22 22:02:48.000 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  John took the milk.
+2025-01-22 22:02:48.014 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2502, 2506) -->  John took the milk
+2025-01-22 22:02:48.015 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 22:02:48.041 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (4499, 4505) -->  Sandra journeyed to the bedroom
+2025-01-22 22:02:48.042 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  John journeyed to the office.
+2025-01-22 22:02:48.056 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (2947, 2953) -->  Mary journeyed to the office
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 22:02:49.784 | INFO     | test_jbb_embedding:begin_test:696 -  The football was in the office.
+
+Question: Where was the milk before the office? 
+Answer: The milk was in the kitchen.
+
+Question: Where was the
+2025-01-22 22:02:49.785 | INFO     | test_jbb_embedding:begin_test:698 - torch.Size([1, 8128])
+2025-01-22 22:02:52.002 | INFO     | test_jbb_embedding:begin_test:750 - {'embedding': {'grad': {'score': [137.8046875, 17.956092769713372, 133.0965909090909, 17.316666666666666, 17.23290264423077], 'topk_indices': array([8001, 8005, 8103, 8047, 1826, 8102, 7982, 7986, 8002, 7987, 8100,
+       8124, 8006, 8114, 8115, 8021, 8116, 8125, 8126, 8127]), 'topk_tokens': [' random', ' question', ' the', '.\n', ' football', ' return', '\n', ' you', ' text', ' context', '.\n\n', '?', '.', '.\n\n', 'Question', '.\n\n', ':', ' \n', 'Answer', ':\n'], 'evidence_proportions': [238.0625, 158.38802083333334, 158.38802083333334, 29.799479166666668]}, 'weight': {'score': [25.267755681818183, 23.342385287243204, 23.53125, 23.33663226654298, 29.07860576923077], 'topk_indices': array([3256, 3229, 3101, 3149, 7424, 7386, 1379, 5083, 1441, 4241, 5144,
+       4225, 7107, 7163, 3438, 3412, 4908, 4840, 4865, 4937]), 'topk_tokens': [' proudly', ' proudly', ' trembling', ' trembling', ' acquaintance', ' acquaintance', ' injunction', ' strife', ' injunction', ' vigorous', ' strife', ' vigorous', ' extortion', ' extortion', ' memorable', ' memorable', ' veto', ' veto', ' veto', ' veto'], 'evidence_proportions': [26.5859375, 24.966145833333332, 24.966145833333332, 24.9921875]}, 'saliency': {'score': [0.8427013050426136, 0.1013059631340148, 0.8005593039772727, 0.09738583066394171, 0.12853487454927884], 'topk_indices': array([7985, 7986, 7976, 8123, 8120, 8100, 8001, 8102, 8005, 8116, 8002,
+       1826, 8124, 8114, 8021, 7987, 8115, 8125, 8126, 8127]), 'topk_tokens': [' provided', ' you', '�', ' bathroom', ' football', '.\n\n', ' random', ' return', ' question', ':', ' text', ' football', '?', '.\n\n', '.\n\n', ' context', 'Question', ' \n', 'Answer', ':\n'], 'evidence_proportions': [1.6356201171875, 0.9010823567708334, 0.9010823567708334, 0.19732666015625]}}, 'pred_res': ' The football was in the office.\n\nQuestion: Where was the milk before the office? \nAnswer: The milk was in the kitchen.\n\nQuestion: Where was the', 'score': 100}
+2025-01-22 22:02:52.009 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 22:02:52.009 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label/3-hop_sid-0_pid-1_2-3-5-9.pkl | len: 3 |  size: 2.07 KB
+Processing depth (2, 3, 5, 9):   2%|▏         | 2/100 [00:42<34:11, 20.93s/it]is_0k: False
+your chose emoji: ['🔡', '💪🏼', '⛹🏾\u200d♂️', '👩\u200d🔧', '\U0001faf1🏽\u200d\U0001faf2🏿', '🚃', '👨🏾\u200d🔬', '🖕🏾', '🧗\u200d♀', '🍱']
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:03<00:10,  3.65s/it][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:08<00:08,  4.13s/it][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:12<00:04,  4.25s/it][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  2.97s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  3.38s/it]
+Processing depth (2, 3, 4, 5):   2%|▏         | 2/100 [00:56<34:11, 20.93s/it]2025-01-22 22:03:06.851 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  Mary took the football.
+2025-01-22 22:03:06.862 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1977, 1981) -->  Mary took the football
+2025-01-22 22:03:06.862 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  Mary journeyed to the office.
+2025-01-22 22:03:06.877 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2963, 2969) -->  tragedy. Mary journeyed to
+2025-01-22 22:03:06.877 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Mary journeyed to the bathroom.
+2025-01-22 22:03:06.892 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (2963, 2969) -->  tragedy. Mary journeyed to
+2025-01-22 22:03:06.892 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 22:03:06.918 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (4221, 4227) -->  Daniel went back to the kitchen
+2025-01-22 22:03:06.918 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 22:03:06.925 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1513, 1519) --> . John went back to the
+2025-01-22 22:03:06.925 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  John took the milk.
+2025-01-22 22:03:06.940 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2521, 2525) -->  took the milk.
+2025-01-22 22:03:06.940 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 22:03:06.964 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (4479, 4485) --> . Sandra journeyed to the
+2025-01-22 22:03:06.964 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  John journeyed to the office.
+2025-01-22 22:03:06.981 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (2965, 2971) -->  Mary journeyed to the office
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 22:03:08.675 | INFO     | test_jbb_embedding:begin_test:696 -  The football was in the kitchen.
+
+Question: Where was the milk before the office? 
+Answer: The milk was in the bedroom.
+
+Question: Where was the
+2025-01-22 22:03:08.675 | INFO     | test_jbb_embedding:begin_test:698 - torch.Size([1, 8202])
+2025-01-22 22:03:10.915 | INFO     | test_jbb_embedding:begin_test:750 - {'embedding': {'grad': {'score': [117.24431818181819, 19.423006445812508, 117.38352272727273, 18.895098587449443, 29.35315180759804], 'topk_indices': array([8059, 8060, 8176, 8180, 8194, 8076, 8079, 8121, 8056, 8061, 8174,
+       8198, 8080, 8188, 8095, 8189, 8199, 8190, 8200, 8201]), 'topk_tokens': [' provided', ' you', ' return', '.', ' football', ' text', ' question', '.\n', '\n', ' context', '.\n\n', '?', '.', '.\n\n', '.\n\n', 'Question', ' \n', ':', 'Answer', ':\n'], 'evidence_proportions': [207.9375, 111.65364583333333, 111.65364583333333, 67.96354166666667]}, 'weight': {'score': [25.267755681818183, 23.4145015543094, 21.410511363636363, 23.414908000367692, 29.89767156862745], 'topk_indices': array([3247, 3274, 7434, 3119, 3167, 7472, 4284, 5211, 1369, 1431, 5150,
+       4300, 7185, 7129, 3490, 3464, 4959, 4936, 4988, 4911]), 'topk_tokens': [' proudly', ' proudly', ' acquaintance', ' trembling', ' trembling', ' acquaintance', ' vigorous', ' strife', ' injunction', ' injunction', ' strife', ' vigorous', ' extortion', ' extortion', ' memorable', ' memorable', ' veto', ' veto', ' veto', ' veto'], 'evidence_proportions': [26.5859375, 24.966145833333332, 24.966145833333332, 24.9921875]}, 'saliency': {'score': [0.7135231711647727, 0.11088267178357003, 0.6417458274147727, 0.1078262824698952, 0.22174102184819242], 'topk_indices': array([8195, 8179, 8197, 8059, 8075, 8176, 1980, 8076, 8174, 8079, 8194,
+       8198, 8190, 8188, 8061, 8095, 8199, 8189, 8200, 8201]), 'topk_tokens': [' before', ' directly', ' bathroom', ' provided', ' random', ' return', ' football', ' text', '.\n\n', ' question', ' football', '?', ':', '.\n\n', ' context', '.\n\n', ' \n', 'Question', 'Answer', ':\n'], 'evidence_proportions': [1.45233154296875, 0.60064697265625, 0.60064697265625, 0.4467366536458333]}}, 'pred_res': ' The football was in the kitchen.\n\nQuestion: Where was the milk before the office? \nAnswer: The milk was in the bedroom.\n\nQuestion: Where was the', 'score': 100}
+2025-01-22 22:03:10.921 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 22:03:10.921 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label/3-hop_sid-0_pid-2_2-3-4-5.pkl | len: 3 |  size: 2.08 KB
+Processing depth (2, 3, 4, 5):   3%|▎         | 3/100 [01:01<32:21, 20.01s/it]is_0k: False
+your chose emoji: ['🧑🏼\u200d❤️\u200d🧑🏽', '🏌🏼\u200d♀', '🚶🏻\u200d♂\u200d➡️', '👩🏾\u200d❤\u200d👩🏽', '🏖', '👨🏽\u200d🦽\u200d➡️', '🇼🇸', '👨🏽\u200d🦱', '😇', '👨🏿\u200d❤️\u200d👨🏻']
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:04<00:13,  4.53s/it][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:09<00:09,  4.80s/it][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:13<00:04,  4.54s/it][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:14<00:00,  3.14s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:14<00:00,  3.69s/it]
+Processing depth (0, 1, 2, 8):   3%|▎         | 3/100 [01:16<32:21, 20.01s/it]2025-01-22 22:03:26.590 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  Mary took the football.
+2025-01-22 22:03:26.590 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1, 5) -->  took the football.
+2025-01-22 22:03:26.591 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  Mary journeyed to the office.
+2025-01-22 22:03:26.595 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (796, 802) --> . Mary journeyed to the
+2025-01-22 22:03:26.595 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Mary journeyed to the bathroom.
+2025-01-22 22:03:26.599 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (796, 802) --> . Mary journeyed to the
+2025-01-22 22:03:26.600 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 22:03:26.634 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (6454, 6460) --> . Daniel went back to the
+2025-01-22 22:03:26.634 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 22:03:26.642 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1383, 1389) --> . John went back to the
+2025-01-22 22:03:26.642 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  John took the milk.
+2025-01-22 22:03:26.657 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2480, 2484) -->  John took the milk
+2025-01-22 22:03:26.657 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 22:03:26.680 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (4314, 4320) --> . Sandra journeyed to the
+2025-01-22 22:03:26.680 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  John journeyed to the office.
+2025-01-22 22:03:26.684 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (797, 803) -->  Mary journeyed to the office
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 22:03:27.619 | INFO     | test_jbb_embedding:begin_test:696 -  The football was in the bedroom.<|end_of_text|>
+2025-01-22 22:03:27.620 | INFO     | test_jbb_embedding:begin_test:698 - torch.Size([1, 8122])
+2025-01-22 22:03:29.828 | INFO     | test_jbb_embedding:begin_test:750 - {'embedding': {'grad': {'score': [369.8927556818182, 34.01435738027822, 182.83522727272728, 32.6944682974378, 39.89887852822581], 'topk_indices': array([   1, 8096,  249, 8094, 8097, 5004,    3, 8118, 8108, 5033,    7,
+          2, 8109,    4, 8015, 8119, 8110, 8120,    8, 8121]), 'topk_tokens': [' took', ' return', '.', '.\n\n', ' the', 'ing', ' football', '?', '.\n\n', ' curs', '***', ' the', 'Question', '.', '.\n\n', ' \n', ':', 'Answer', '\n\n\n', ':\n'], 'evidence_proportions': [1176.5, 265.1041666666667, 265.1041666666667, 41.731770833333336]}, 'weight': {'score': [20.466619318181817, 23.344242428905577, 22.292613636363637, 23.354942211288527, 29.47782258064516], 'topk_indices': array([3274, 3301, 7368, 3176, 3128, 7406, 1412, 5124, 1474, 4287, 4303,
+       5185, 7089, 7145, 3483, 3457, 4959, 4882, 4930, 4907]), 'topk_tokens': [' proudly', ' proudly', ' acquaintance', ' trembling', ' trembling', ' acquaintance', ' injunction', ' strife', ' injunction', ' vigorous', ' vigorous', ' strife', ' extortion', ' extortion', ' memorable', ' memorable', ' veto', ' veto', ' veto', ' veto'], 'evidence_proportions': [20.7734375, 20.1015625, 20.1015625, 20.9921875]}, 'saliency': {'score': [1.7927190607244319, 0.1925304449941524, 1.0546375621448865, 0.18582534459516958, 0.30028017105594756], 'topk_indices': array([   5,  250, 8108, 7981, 5003, 8118, 8110,    1, 8096, 8114, 4998,
+          3, 8015,    7, 5033, 8119,    8, 8109, 8120, 8121]), 'topk_tokens': [' PA', ' If', '.\n\n', ' context', ' curs', '?', ':', ' took', ' return', ' football', 'antically', ' football', '.\n\n', '***', ' curs', ' \n', '\n\n\n', 'Question', 'Answer', ':\n'], 'evidence_proportions': [5.6171875, 1.3023274739583333, 1.3023274739583333, 0.22385660807291666]}}, 'pred_res': ' The football was in the bedroom.<|end_of_text|>', 'score': 0}
+2025-01-22 22:03:29.833 | INFO     | modelzipper.tutils:auto_save_data:314 - pkl file saved successfully!
+2025-01-22 22:03:29.833 | INFO     | modelzipper.tutils:auto_save_data:329 - Save file to /mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws/meta-llama-3.1-8b/3900/label/3-hop_sid-0_pid-3_0-1-2-8.pkl | len: 3 |  size: 1.95 KB
+Processing depth (0, 1, 2, 8):   4%|▍         | 4/100 [01:19<31:19, 19.58s/it]is_0k: False
+your chose emoji: ['👩🏾\u200d🍼', '🏄🏼\u200d♀️', '😦', '🇮🇱', '🥍', '🧑🏽', '\U0001faf4🏾', '\U0001faf6🏾', '👰🏾', '🙍🏿\u200d♀️']
+is_0k: False
+is_0k: False
+is_0k: False
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s][A
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:04<00:13,  4.43s/it][A
+Loading checkpoint shards:  50%|█████     | 2/4 [00:09<00:09,  4.95s/it][A
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:14<00:04,  4.81s/it][A
+Loading checkpoint shards: 100%|██████████| 4/4 [00:15<00:00,  3.27s/it][ALoading checkpoint shards: 100%|██████████| 4/4 [00:15<00:00,  3.82s/it]
+Processing depth (1, 4, 7, 8):   4%|▍         | 4/100 [01:36<31:19, 19.58s/it]2025-01-22 22:03:46.032 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  Mary took the football.
+2025-01-22 22:03:46.037 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (866, 870) -->  Mary took the football
+2025-01-22 22:03:46.037 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  Mary journeyed to the office.
+2025-01-22 22:03:46.056 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (3574, 3580) --> . Mary journeyed to the
+2025-01-22 22:03:46.056 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Mary journeyed to the bathroom.
+2025-01-22 22:03:46.074 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (3574, 3580) --> . Mary journeyed to the
+2025-01-22 22:03:46.075 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  Daniel went back to the kitchen.
+2025-01-22 22:03:46.112 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (6556, 6562) --> . Daniel went back to the
+2025-01-22 22:03:46.112 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 0 -->  John went back to the bedroom.
+2025-01-22 22:03:46.120 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 0 at --> (1489, 1495) -->  John went back to the bedroom
+2025-01-22 22:03:46.120 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 1 -->  John took the milk.
+2025-01-22 22:03:46.132 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 1 at --> (2489, 2493) -->  took the milk.
+2025-01-22 22:03:46.132 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 2 -->  Sandra journeyed to the bedroom.
+2025-01-22 22:03:46.155 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 2 at --> (4398, 4404) -->  Sandra journeyed to the bedroom
+2025-01-22 22:03:46.155 | INFO     | test_jbb_embedding:find_multi_needle_idx:530 - evidence 3 -->  John journeyed to the office.
+2025-01-22 22:03:46.175 | INFO     | test_jbb_embedding:find_multi_needle_idx:538 - find evidence 3 at --> (3575, 3581) -->  Mary journeyed to the office
+The attention mask and the pad token id were not set. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
+Setting `pad_token_id` to `eos_token_id`:None for open-end generation.
+2025-01-22 22:03:47.819 | INFO     | test_jbb_embedding:begin_test:696 -  The football was in the bedroom.
+
+Question: Where was the milk before the office? 
+Answer: The milk was in the kitchen.
+
+Question: Where was the
+2025-01-22 22:03:47.819 | INFO     | test_jbb_embedding:begin_test:698 - torch.Size([1, 8098])

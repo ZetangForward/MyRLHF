@@ -672,10 +672,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     new_context = tokenizer.decode(tokens)
     input_context = new_context + f"\n{question}\nAnswer:"
-    inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
-
-    emoji_spans = [(k[0] + 30, k[1] + 30) for k in emoji_spans]
-
+    if tokenizer.chat_template is not None:
+        shift = 30
+        inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
+    else:
+        shift = 0
+        inp = tokenizer(input_context, return_tensors='pt').input_ids
+    emoji_spans = [(k[0] + shift, k[1] + shift) for k in emoji_spans]
 
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
@@ -694,13 +697,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     logger.info(inp.shape)
 
-    inp = tokenizer.apply_chat_template(
-        [
-            {"role": "user", "content": input_context}, 
-            {"role": "assistant", "content": answer}
-        ], 
-        tokenize=True, add_generation_prompt=False, return_tensors='pt'
-    ).to(model.device)
+    if tokenizer.chat_template is not None:
+        inp = tokenizer.apply_chat_template(
+            [{"role": "user", "content": input_context}, {"role": "assistant", "content": answer}], 
+            tokenize=True, add_generation_prompt=False, return_tensors='pt'
+        ).to(model.device)
+    else:
+        inp = tokenizer(input_context + "\n" + answer, return_tensors='pt').input_ids.to(model.device)
 
     # if use_emoji:
     #     print("emoji:")
@@ -726,7 +729,8 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        flow_res = test_model_embedding(model, inp, label, search_pos, attack_pos, emoji_spans,
+        flow_res = test_model_embedding(
+            model, inp, label, search_pos, attack_pos, emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,
