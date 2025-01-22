@@ -562,7 +562,7 @@ def test_model_embedding(model, input, golden, search_pos, attack_pos, emoji_pos
     pros_dict['embedding'] = {}
     
     for score_type in ["grad","weight","saliency"]:
-        saliencies = getattr(embeddingmanger, score_type)(p = 2)
+        saliencies = getattr(embeddingmanger, score_type)(p = 1)
 
         proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices = calculate_embedding_portions(saliencies, search_pos, attack_pos, emoji_pos, target_poss, is_0k)
         top_tokens = []
