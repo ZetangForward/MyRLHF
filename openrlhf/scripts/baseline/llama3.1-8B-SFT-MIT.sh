@@ -29,5 +29,5 @@ deepspeed --master_port 29504 --include localhost:0,1,2,3,4,5,6,7 cli/train_sft.
    --use_wandb 'f81f2a236e712350a0ec153e02f43d1366c856a5' \
    --wandb_project 'baseline' \
    --wandb_run_name 'Llama-3.1-8B-LongMIT-sft' \
-   --ring_attn_size 2 \
-   --ring_head_stride 1;
+   --ring_attn_size 4 \
+   --ring_head_stride 2;
