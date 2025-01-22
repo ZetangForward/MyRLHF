@@ -21,3 +21,6 @@ Quota information for storage pool Default (ID: 1):
            5048658          belt_road   Long_PPL       reserved tangzech       normal  R  1-21:43:46      1      gpu:8 SH-IDC1-10-140-24-86                    
            5048503          belt_road saliency_s       reserved tangzech       normal  R  2-00:38:57      1      gpu:8 SH-IDC1-10-140-24-35                    
 [31m🛑 远程桶未挂载，请使用 quick_mount 命令进行挂载。 [0m
+ModelZipper is ready for launch🚀 | Current Version🦄 >>> 0.2.7 <<< | AOE Time🕒 2025-01-22 05:25:51
+begin to read data from ./haystack_for_detect/reasoning_needle_new.jsonl | file size: 247.16 KB | file type: jsonl
+your chose emoji: ['👩🏿\u200d🔧', '🇧🇿', '🤦🏼', '👩🏻\u200d🤝\u200d👩🏽', '↕️', '🗞️', '🚵🏻\u200d♀', '🇳🇫', '🙅🏿', '🏴\u200d☠']

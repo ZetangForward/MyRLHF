@@ -8,6 +8,7 @@ evaluation/babilong/babilong_evals_ms_poe
 reetrievalheaddetect/results/
 sbatch_logs/
 openrlhf/wandb/
+*.err
 
 # C extensions
 *.so

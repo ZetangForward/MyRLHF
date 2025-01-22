@@ -111,7 +111,6 @@ class SentenceSampler:
         return True
 
 
-
 class LLMNeedleHaystackTester:
     def __init__(
         self,
