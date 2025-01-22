@@ -41,9 +41,9 @@ if __name__ == "__main__":
     args.model_path = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     # args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
-    args.needle_path = "./haystack_for_detect/reasoning_needle_jbb_200.jsonl"
+    args.needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/repos/Long-form-reasoning/preliminary/babilong_random5x100/results/gws"
-    args.selected_idx = list(range(200))
+    args.selected_idx = list(range(0, 200, 2))
     # args.loss_type = "ce"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
