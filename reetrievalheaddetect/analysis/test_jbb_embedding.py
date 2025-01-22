@@ -697,13 +697,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     logger.info(inp.shape)
 
-    # inp = tokenizer.apply_chat_template(
-    #     [
-    #         {"role": "user", "content": input_context}, 
-    #         {"role": "assistant", "content": answer}
-    #     ], 
-    #     tokenize=True, add_generation_prompt=False, return_tensors='pt'
-    # ).to(model.device)
+    if tokenizer.chat_template is not None:
+        inp = tokenizer.apply_chat_template(
+            [{"role": "user", "content": input_context}, {"role": "assistant", "content": answer}], 
+            tokenize=True, add_generation_prompt=False, return_tensors='pt'
+        ).to(model.device)
+    else:
+        inp = tokenizer(input_context + "\n" + answer, return_tensors='pt').input_ids.to(model.device)
 
     # if use_emoji:
     #     print("emoji:")
@@ -729,7 +729,8 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        flow_res = test_model_embedding(model, inp, label, search_pos, attack_pos, emoji_spans,
+        flow_res = test_model_embedding(
+            model, inp, label, search_pos, attack_pos, emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
                                                       is_0k,

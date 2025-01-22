@@ -16,8 +16,8 @@ from accelerate.utils import get_balanced_memory
 
 # nohup python test2_pjlab_llama_jbb_random5x100_embedding.py > jbb_embedding.log
 
-# nohup env CUDA_VISIBLE_DEVICES=1,2,3 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --testing_lengths 11900 > logs/embedding_saliency_score_11900.log 2>&1 &
-# nohup env CUDA_VISIBLE_DEVICES=4,5 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --testing_lengths 7900 > logs/embedding_saliency_score_7900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=1,2,3 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 11900 > logs/base_embedding_saliency_score_11900.log 2>&1 &
+# nohup env CUDA_VISIBLE_DEVICES=4,5 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 7900 > logs/base_embedding_saliency_score_7900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=6 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 3900 > logs/base_embedding_saliency_score_3900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=7 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 1900 > logs/base_embedding_saliency_score_1900.log 2>&1 &
 # nohup env CUDA_VISIBLE_DEVICES=0 python analysis/test2_pjlab_llama_jbb_random5x100_embedding.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 0 > logs/base_embedding_saliency_score_0.log 2>&1 &
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args.dataset_path = "/mnt/petrelfs/tangzecheng/local_data/pg19-test"
     args.needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl"
     args.save_dir = "/mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/gws"
-    args.selected_idx = list(range(0, 200, 2))
+    args.selected_idx = list(range(0, 200, 1))
     # args.loss_type = "ce"
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
