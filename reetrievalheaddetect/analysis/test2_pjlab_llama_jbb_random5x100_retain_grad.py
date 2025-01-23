@@ -18,6 +18,10 @@ from accelerate.utils import get_balanced_memory
 # nohup python test2_pjlab_llama_jbb_random5x100.py > jbb.log
 
 # nohup python test2_pjlab_llama_jbb_random5x100_retain_grad.py > jbb_retain.log 2>&1 &
+
+## pjlab
+# nohup python analysis/test2_pjlab_llama_jbb_random5x100_retain_grad.py --model_path "Crystalcareai/meta-llama-3.1-8b" --testing_lengths 7900 3900 0 --dataset_path "/mnt/petrelfs/tangzecheng/local_data/pg19-test" --save_dir "/mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws" > logs/attention_saliency_score.log 2>&1 &
+
 if __name__ == "__main__":
     print("Pid:",os.getpid())
     parser = argparse.ArgumentParser()
@@ -26,13 +30,16 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
+    parser.add_argument('--testing_lengths', type=int, nargs='+', default=None, help="A list of integers")
+
     args = parser.parse_args()
-    args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
-    args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
-    args.dataset_path = "/data/pub_data/pg19-test"
-    args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_jbb_200.jsonl"
+
+    # args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+    args.adapter_path = ""
+    # args.dataset_path = "/data/pub_data/pg19-test"
+    args.needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl"
     # args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_gws"
-    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws"
+    # args.save_dir ="/mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws"
     args.selected_idx = list(range(200))
 
     args.use_emoji = True
@@ -50,21 +57,10 @@ if __name__ == "__main__":
     for pe,pn in zip(evidence_list, needle_list):
         last_idx = pn.index(pe[-1])
         assert last_idx > -1
-
         pe += [pn[last_idx + 1]]
     
-        # print("evidence:", pe)
 
-
-    for context_length in [
-        11900,
-        0,
-        7900,
-        3900,
-        1900,
-            # 900,
-        
-            ]:
+    for context_length in args.testing_lengths:
         for loss_type in [ "label" ]:
             args.context_length = context_length
             args.loss_type = loss_type
@@ -76,8 +72,6 @@ if __name__ == "__main__":
                 logger.info(f"Needle: {needle_list[s_id]}")
                 logger.info(f"Real Needle: {evidence_list[s_id]}")
                 logger.info("=============================================")
-
-
 
                 needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
                 evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]

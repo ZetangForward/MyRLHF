@@ -65,15 +65,6 @@ if __name__ == "__main__":
         # print("evidence:", pe)
     print(f"begin to testing with {args.testing_lengths}")
     for context_length in args.testing_lengths:
-        
-        # [
-        # # 15900,
-        # # 11900,
-        # # 7900,
-        # 3900,
-        # 1900,
-        # 0
-        #     ]:
         for loss_type in [ "label" ]:
             args.context_length = context_length
             args.loss_type = loss_type

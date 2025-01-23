@@ -415,39 +415,9 @@ def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: Li
     else:
         proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
 
-    
-
     return proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices
 
-    # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
-    proportion1 = 0
-    evidence_length = 0
-    for span_idx in evi_poss:
-        proportion1 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
-        evidence_length += span_idx[1] - span_idx[0]
-        # evidence proportions
-        evidence_proportions.append(saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum() / (span_idx[1] - span_idx[0]))
 
-    # proportion2: all context -> target token
-    proportion2 = saliency[target_poss, :].sum()
-
-    # proportion3: irrevelent evidence -> target token
-    proportion3 = 0
-    irr_evidence_length = 0
-    for span_idx in attack_pos:
-        proportion3 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
-        irr_evidence_length += span_idx[1] - span_idx[0]
-
-    # proportion4: remain context -> target token
-    proportion4 = proportion2 - proportion1 - proportion3
-
-    proportion1 = proportion1 / evidence_length
-    proportion2 = proportion2 / total_context_length
-    proportion3 = proportion3 / irr_evidence_length
-    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
-
-    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
-    
 
 def get_proportion_wla(saliency, class_poss, final_poss):
     saliency = saliency.detach().clone().cpu()
@@ -611,9 +581,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     new_context = tokenizer.decode(tokens)
     input_context = new_context + f"\n{question}\nAnswer:"
 
-    inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
-    
-    emoji_spans = [(k[0] + 30, k[1] + 30) for k in emoji_spans]
+    if tokenizer.chat_template is not None:
+        shift = 30
+        inp = tokenizer.apply_chat_template([{ "role": "user", "content": input_context}], tokenize=True, add_generation_prompt=True, return_tensors='pt')
+    else:
+        shift = 0
+        inp = tokenizer(input_context, return_tensors='pt').input_ids
+    emoji_spans = [(k[0] + shift, k[1] + shift) for k in emoji_spans]
     
     # if use_emoji:
     #     print("emoji:")
@@ -633,13 +607,14 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
 
     logger.info(inp.shape)
 
-    inp = tokenizer.apply_chat_template(
-        [
-            {"role": "user", "content": input_context}, 
-            {"role": "assistant", "content": answer}
-        ], 
-        tokenize=True, add_generation_prompt=False, return_tensors='pt'
-    ).to(model.device)
+    if tokenizer.chat_template is not None:
+        inp = tokenizer.apply_chat_template(
+            [{"role": "user", "content": input_context}, {"role": "assistant", "content": answer}], 
+            tokenize=True, add_generation_prompt=False, return_tensors='pt'
+        ).to(model.device)
+    else:
+        inp = tokenizer(input_context + "\n" + answer, return_tensors='pt').input_ids.to(model.device)
+
     answer_ids = tokenizer(answer, add_special_tokens=False, return_tensors='pt')["input_ids"].to(model.device)
     toks_length = answer_ids.size(-1)
     for j in range(inp.size(-1), toks_length, -1):
@@ -655,13 +630,12 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
-                                                     emoji_spans,
-                                                     (target_pos[0] - 1,
-                                                      target_pos[1] - 1), 
-                                                      is_0k,
-                                                      model_name, tokenizer, with_adapter=with_adapter,
-                                                      start_layer = start_layer)
+        flow_res = test_model_with_attention_adapter(
+            model, inp, label, search_pos, attack_pos, emoji_spans,
+            (target_pos[0] - 1, target_pos[1] - 1), 
+            is_0k, model_name, tokenizer, with_adapter=with_adapter,
+            start_layer = start_layer
+        )
     
     elif args.loss_type == "ce":
          # shift to left before the label token
