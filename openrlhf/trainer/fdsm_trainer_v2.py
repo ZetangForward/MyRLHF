@@ -84,6 +84,7 @@ class FDSMTrainerV2(ABC):
         max_epochs: int = 2,
         tokenizer=None,
         adv_epsilon: float = 0.1,
+        is_adjust_weight: bool = False,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -99,6 +100,7 @@ class FDSMTrainerV2(ABC):
         self.optimizer = optim
         self.args = strategy.args
         self.adv_epsilon = adv_epsilon
+        self.is_adjust_weight = is_adjust_weight
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
 
         # packing samples
@@ -135,7 +137,35 @@ class FDSMTrainerV2(ABC):
             log_dir = os.path.join(self.strategy.args.use_tensorboard, strategy.args.wandb_run_name)
             self._tensorboard = SummaryWriter(log_dir=log_dir)
 
-    def perturb_whole_sequence(self, sequence, epsilon, ring_attn_group=None):
+    def adjust_weights_by_gradient(self, sequence, epsilon):
+        """
+        Reduce weights in the sequence for regions with smaller gradients.
+
+        Args:
+            sequence (torch.Tensor): The sequence to adjust, shape (b, l, d).
+            epsilon (float): Scaling factor to control the adjustment strength.
+
+        Returns:
+            torch.Tensor: Adjusted sequence with reduced weights for smaller gradients.
+        """
+        dist.all_reduce(sequence.grad, op=dist.ReduceOp.SUM, group=self.strategy.ring_attn_group)
+        
+        # Compute L2 norm of the gradient for each position
+        grad_l2_norm = torch.norm(sequence.grad, p=2, dim=2)  # (b, l)
+        
+        # Normalize the gradient to [0, 1] (optional, to stabilize scaling)
+        grad_l2_norm_normalized = grad_l2_norm / (grad_l2_norm.max(dim=-1, keepdim=True)[0] + 1e-8)  # (b, l)
+        
+        # Compute scaling factor: Smaller gradients -> Smaller scaling values
+        scaling_factor = 1 - epsilon * (1 - grad_l2_norm_normalized)  # (b, l)
+        
+        # Apply scaling to the sequence
+        adjusted_sequence = sequence * scaling_factor.unsqueeze(-1)  # (b, l, d)
+        
+        return adjusted_sequence
+
+
+    def perturb_whole_sequence(self, sequence, epsilon):
         """ 
         Perturb the entire sequence based on the gradient of the sequence.
 
@@ -261,9 +291,15 @@ class FDSMTrainerV2(ABC):
                     self.model.model.base_model.enable_adapter_layers()
 
                 if not self.pretrain_mode:
-                    adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
+                    if self.is_adjust_weight:
+                        adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
+                    else:
+                        adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
                 else:
-                    adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
+                    if self.is_adjust_weight:
+                        adv_embeddings = self.adjust_weights_by_gradient(embeddings, self.adv_epsilon)                    
+                    else:
+                        adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
 
                 # detach from the original gradient graph
                 adv_embeddings = adv_embeddings.detach().requires_grad_(True)
