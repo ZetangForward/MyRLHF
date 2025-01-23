@@ -11,47 +11,6 @@ from openrlhf.models import GPTLMLoss, SimPOLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
-def perturb_partial_sequence(sequence, epsilon, perturb_positions):
-    raise NotImplementedError("Only support pretrain mode")
-
-    clue_poss = infos["clue_poss"]
-    non_zero_mask = embeddings.grad.abs().sum(dim=2) != 0  # (b, l)
-    grad_l2_norm = torch.norm(embeddings.grad, p=2, dim=2)  # (b, l)
-    batch_size, seq_len, _ = embeddings.size()
-    grad_mask = torch.zeros(batch_size, seq_len, device=embeddings.device)
-    
-    for batch_idx in range(batch_size):
-        non_zero_positions = torch.where(non_zero_mask[batch_idx])[0].tolist()
-        cur_clue_pos = clue_poss[batch_idx]
-        clue_positions_set = set()
-        for start, end in cur_clue_pos:
-            clue_positions_set.update(range(start, end))
-            grad_mask[batch_idx, start: end] = 1
-        non_zero_positions_set = set(non_zero_positions)
-        overlap = clue_positions_set & non_zero_positions_set
-        overlap_count = len(overlap)
-        total_clue_positions = len(clue_positions_set)
-        overlap_ratio = overlap_count / total_clue_positions if total_clue_positions > 0 else 0
-        # print(f"cur_clue_pos is {cur_clue_pos}")
-        # print(f"Batch {batch_idx}: Non-zero positions in l -> {non_zero_positions}")
-        # print(f"total_clue_positions is {total_clue_positions}")
-        # print(f"overlap_count is {overlap_count}")
-        # print(f"inputs.shape is {inputs.shape}")
-        # print(f"non_zero_mask.shape is {non_zero_mask.shape}")
-        # print(f"overlap_ratio is {overlap_ratio}")
-
-    context_grad = embeddings.grad.clone().detach()
-    clue_grad = embeddings.grad.clone().detach()
-
-    context_grad[grad_mask.bool()] = 0  # 将 clue 部分的梯度设为 0
-    context_adv_embeddings = embeddings + self.adv_epsilon * context_grad.sign()
-
-    clue_grad = torch.where(clue_grad.sign() == 0, torch.tensor(1, device=clue_grad.device), clue_grad.sign())  # 需要加上一个极小的扰动
-    clue_grad[~grad_mask.bool()] = 0  # 将非 clue 部分的梯度设为 0
-    clue_adv_embeddings = embeddings + self.adv_epsilon * clue_grad.sign()
-
-
-
 class FDSMTrainerV2(ABC):
     """
     Trainer for supervised fine-tuning (SFT).
