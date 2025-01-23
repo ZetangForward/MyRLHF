@@ -48,7 +48,7 @@ def extract_pkl_files_from_one(dir_name, delete = True):
         os.remove(f"{dir_name}/full.pkl")
 
 
-
+# nohup python analysis/test2_pjlab_llama_jbb_random5x100_zero_embed.py --model_path="meta-llama/Meta-Llama-3.1-8B-Instruct" --dataset_path="/mnt/petrelfs/tangzecheng/local_data/pg19-test" --save_dir="/mnt/petrelfs/tangzecheng/repos/SaliencyResults/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample100_gws" --testing_lengths 3900 7900 > ./logs/embedding_zero.log 2>&1 &
 
 if __name__ == "__main__":
     print("Pid:",os.getpid())
@@ -58,16 +58,18 @@ if __name__ == "__main__":
     parser.add_argument('--model_path', type=str, default=None, help='path to model')
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
+    parser.add_argument('--testing_lengths', type=int, nargs='+', default=None, help="A list of integers")
     args = parser.parse_args()
     # args.model_path = "/data/hf_models/meta-llama-3.1-8b"
-    args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
+    
+    # args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.factor = 0.01
     args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
-    args.dataset_path = "/data/pub_data/pg19-test"
-    args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_new.jsonl"
+    # args.dataset_path = "/data/pub_data/pg19-test"
+    args.needle_path = "./haystack_for_detect/reasoning_needle_new.jsonl"
     # args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws"
     
-    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample100_gws"
+    # args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample100_gws"
     args.selected_idx = list(range(0, 100))
 
     args.use_emoji = True
@@ -87,18 +89,9 @@ if __name__ == "__main__":
         assert last_idx > -1
 
         pe += [pn[last_idx + 1]]
-    
-        # print("evidence:", pe)
 
-
-    for context_length in [
-        11900,
-        7900,
-        # 3900,
-        # 1900,
-            # 900,
-        
-            ]:
+    print(f"begin to testing with {args.testing_lengths}")
+    for context_length in args.testing_lengths:
         for loss_type in [ "label" ]:
             args.context_length = context_length
             args.loss_type = loss_type
@@ -110,8 +103,6 @@ if __name__ == "__main__":
                 logger.info(f"Needle: {needle_list[s_id]}")
                 logger.info(f"Real Needle: {evidence_list[s_id]}")
                 logger.info("=============================================")
-
-
 
                 needle = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in needle_list[s_id]]
                 evidence = [tokenizer(i, add_special_tokens=False)['input_ids'] for i in evidence_list[s_id]]
@@ -255,7 +246,7 @@ if __name__ == "__main__":
 
             
             print("Start merge:")
-            file_dir =f"{model_name}_factor{args.factor}/{args.context_length}/{args.loss_type}/"
+            file_dir =f"{args.save_dir}/{model_name}_factor{args.factor}/{args.context_length}/{args.loss_type}/"
             combine_pkl_files_to_one(file_dir)
 
         print("OVER:",context_length, loss_type)
