@@ -158,19 +158,19 @@ class FDSMTrainerV2(ABC):
         
         # Create a mask indicating whether each position's gradient is larger than the average
         is_large_gradient = grad_l2_norm > avg_grad_l2_norm  # (b, l)
-        grad_sign = sequence.grad.sign()  # (b, l, d)
+        # grad_sign = sequence.grad.sign()  # (b, l, d)
         
         # Generate Gaussian noise with the same shape as the sequence
-        noise = torch.randn_like(sequence, device=sequence.device)  # (b, l, d)
-        noise = noise * grad_sign  # (b, l, d)
+        # noise = torch.randn_like(sequence, device=sequence.device)  # (b, l, d)
+        # noise = noise * grad_sign  # (b, l, d)
         
         # Apply perturbation in the direction based on gradient size
         # For large gradients, perturb in the opposite direction
         # For small or equal gradients, perturb in the same direction
         perturbation = torch.where(
             is_large_gradient.unsqueeze(-1),  # (b, l, 1)
-            -sigma.unsqueeze(-1) * noise,    # Opposite direction for large gradients
-            sigma.unsqueeze(-1) * noise      # Same direction for small gradients
+            -sigma.unsqueeze(-1) * sequence.grad,    # Opposite direction for large gradients
+            sigma.unsqueeze(-1) * sequence.grad      # Same direction for small gradients
         )
 
         return sequence + perturbation
