@@ -136,7 +136,6 @@ class SFTDataset(Dataset):
                 return_tensors="pt",
                 add_special_tokens=False,
             )
-            # zecheng_note: 这里要定位出关键信息的位置
             assert len(clue_list) > 0, "clue_list should not be empty if search_clue_seg is True"
             clue_pos = []
             prompt_len = prompt_token.input_ids.size(-1)

@@ -129,7 +129,7 @@ class SFTTrainer(ABC):
             # train
             self.model.train()
             loss_mean = 0
-            short_ctx_loss_mean = 0
+
             # for prompt_id_lens, inputs, attention_masks, infos in self.train_dataloader:  # zecheng_note: 临时取消这里 因为这里引入了clue prompt
             for prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks in self.train_dataloader:
                 if self.packing_samples:

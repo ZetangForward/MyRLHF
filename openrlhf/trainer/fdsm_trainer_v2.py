@@ -43,7 +43,7 @@ class FDSMTrainerV2(ABC):
         max_epochs: int = 2,
         tokenizer=None,
         adv_epsilon: float = 0.1,
-        is_adjust_weight: bool = False,
+        w_annotation: bool = False,
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -59,7 +59,7 @@ class FDSMTrainerV2(ABC):
         self.optimizer = optim
         self.args = strategy.args
         self.adv_epsilon = adv_epsilon
-        self.is_adjust_weight = is_adjust_weight
+        self.w_annotation = w_annotation
         self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
 
         # packing samples
@@ -167,11 +167,13 @@ class FDSMTrainerV2(ABC):
         # Apply perturbation in the direction based on gradient size
         # For large gradients, perturb in the opposite direction
         # For small or equal gradients, perturb in the same direction
-        perturbation = torch.where(
-            is_large_gradient.unsqueeze(-1),  # (b, l, 1)
-            -sigma.unsqueeze(-1) * sequence.grad,    # Opposite direction for large gradients
-            sigma.unsqueeze(-1) * sequence.grad      # Same direction for small gradients
-        )
+        perturbation = -sigma.unsqueeze(-1) * sequence.grad * is_large_gradient.unsqueeze(-1)
+        # perturbation = torch.where(
+        #     is_large_gradient.unsqueeze(-1),  # (b, l, 1)
+        #     -sigma.unsqueeze(-1) * sequence.grad,    # Opposite direction for large gradients
+        #     0
+        #     # sigma.unsqueeze(-1) * sequence.grad      # Same direction for small gradients
+        # )
 
         return sequence + perturbation
 
@@ -205,7 +207,7 @@ class FDSMTrainerV2(ABC):
             self.model.train()
             loss_mean = 0
             for data in self.train_dataloader:
-                prompt_id_lens, inputs, attention_masks, infos = data
+                prompt_id_lens, inputs, attention_masks, infos, clue_prompt_id_lens, clue_inputs, clue_attention_masks = data
                 inputs = inputs.to(torch.cuda.current_device())
                 attention_mask = attention_masks.to(torch.cuda.current_device())
                 labels = torch.where(attention_mask.bool(), inputs, self.loss_fn.IGNORE_INDEX)
@@ -249,16 +251,10 @@ class FDSMTrainerV2(ABC):
                 if self.args.lora_rank != 0:
                     self.model.model.base_model.enable_adapter_layers()
 
-                if not self.pretrain_mode:
-                    if self.is_adjust_weight:
-                        adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
-                    else:
-                        adv_embeddings = self.perturb_partial_sequence(embeddings, self.adv_epsilon, infos["clue_poss"])
+                if self.w_annotation:
+                    adv_embeddings = self.adjust_weights_by_gradient(embeddings, self.adv_epsilon)                    
                 else:
-                    if self.is_adjust_weight:
-                        adv_embeddings = self.adjust_weights_by_gradient(embeddings, self.adv_epsilon)                    
-                    else:
-                        adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
+                    adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
 
                 # detach from the original gradient graph
                 adv_embeddings = adv_embeddings.detach().requires_grad_(True)
@@ -340,7 +336,7 @@ class FDSMTrainerV2(ABC):
                 disable=not self.strategy.is_rank_0(),
             )
 
-            for prompt_id_lens, inputs, attention_masks, infos in eval_dataloader:
+            for prompt_id_lens, inputs, attention_masks, infos, _, _, _ in eval_dataloader:
                 if self.packing_samples:
                     inputs = inputs.to(torch.cuda.current_device())
                     attention_mask = attention_masks.to(torch.cuda.current_device())
