@@ -471,14 +471,15 @@ def get_proportion_wla(saliency, class_poss, final_poss):
     return proportions
 
 
-def find_multi_needle_idx(input_ids, tokenizer, needles):
+def find_multi_needle_idx(input_ids, tokenizer, needles, showlog = True):
     all_evi_pos = []
     for i, evi in enumerate(needles):
         if isinstance(evi, str):
             needle_ids = tokenizer(evi, add_special_tokens=False)["input_ids"]
         else:
             needle_ids = evi
-        logger.info(f"evidence {i} --> {tokenizer.decode(needle_ids, skip_special_tokens=False)}")
+        if showlog:
+            logger.info(f"evidence {i} --> {tokenizer.decode(needle_ids, skip_special_tokens=False)}")
         span_len = len(needle_ids)
         for j in range(len(input_ids)):
             token_span = input_ids[j : j + span_len]
@@ -486,7 +487,8 @@ def find_multi_needle_idx(input_ids, tokenizer, needles):
             overlap = float(len(span_ids.intersection(set(needle_ids)))) / len(set(needle_ids))
             if(overlap > 0.8):
                 all_evi_pos.append((j + 1, j + span_len))
-                logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {tokenizer.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
+                if showlog:
+                    logger.info(f"find evidence {i} at --> {(j + 1, j + span_len)} --> {tokenizer.decode(input_ids[j + 1: j + span_len], skip_special_tokens=False)}")
                 break
     return all_evi_pos
 
@@ -528,8 +530,9 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
             pros_dict[i][score_type] = {'score': [proportion1, proportion2, proportion3, proportion4, proportion5], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
     return pros_dict
 
-def random_combine(ref:list, att:list, return_snd_pos = False):
-
+def random_combine(ref:list, att:list, return_snd_pos = False, seed = None):
+    if seed is not None:
+        random.seed(seed)
     att_list =[[] for _ in range(len(ref) + 1)]
     for p_att in att[:-1]:
         att_list[random.randint(0,len(ref)-1)].append(p_att)
@@ -553,8 +556,11 @@ def random_combine(ref:list, att:list, return_snd_pos = False):
     return results
 
 
-def get_random_emoji(tokenizer, num=50, return_idx=True):
+
+def get_random_emoji(tokenizer, num=50, return_idx=True, seed=None):
     all_emojis = list(emoji.EMOJI_DATA.keys())  # get all emojis
+    if seed is not None:
+        random.seed(seed)
     random_emojis = random.sample(all_emojis, num)
     print(f"your chose emoji: {random_emojis}")
     if return_idx:
@@ -568,9 +574,9 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     if background_text is not None:
 
         if use_emoji:
-            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True)
+            emojis10 = get_random_emoji(tokenizer, 10, return_idx = True, seed = 42)
             background_text, emoji_pos = random_combine(background_text, emojis10, 
-                                                         return_snd_pos = True)
+                                                         return_snd_pos = True, seed = 42)
             emoji_pos = set(emoji_pos)
             cumsum_num = 0
             emoji_spans = []
@@ -597,7 +603,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
             if use_emoji:
                 cumsum_num += sum((len(l) for l in updated_sample[i]), 0)
     else:
-        updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]])
+        updated_sample = random_combine(evidence[:-1], disturb_tok_needles+[evidence[-1]], seed = 42)
         updated_sample = [[k] for k in updated_sample]
         # print("updated_sample:", updated_sample)
     
@@ -629,6 +635,13 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
     inp = inp.to(model.device)
+
+
+    print("ref:",search_pos)
+    print("att:",attack_pos)
+    print("emj:",emoji_spans)
+    # return
+
     
     with torch.no_grad():
         pred_res = tokenizer.decode(model.generate(inp, max_new_tokens=32, do_sample=False)[0, inp.size(-1):])
