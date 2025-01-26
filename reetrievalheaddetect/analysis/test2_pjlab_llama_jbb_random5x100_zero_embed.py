@@ -19,6 +19,7 @@ from accelerate.utils import get_balanced_memory
 
 # nohup python test2_pjlab_llama_jbb_random5x100_zero_embed.py > jbb_zero_embed.log 2>&1 &
 
+#  nohup python test2_pjlab_llama_jbb_random5x100_retain_grad_gpu015.py > jbb_retain.log && python test2_pjlab_llama_jbb_random5x100_zero_embed.py > jbb_zero_embed.log
 def combine_pkl_files_to_one(dir_name, delete = True):
     ret = {}
     for file_name in os.listdir(dir_name):
@@ -67,8 +68,8 @@ if __name__ == "__main__":
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_new.jsonl"
     # args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws"
     
-    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample100_gws"
-    args.selected_idx = list(range(0, 100))
+    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample3x100_gws_control"
+    args.selected_idx = list(range(1, 200, 2))
 
     args.use_emoji = True
 
@@ -90,10 +91,10 @@ if __name__ == "__main__":
     
         # print("evidence:", pe)
 
-
+    random.seed(42)
     for context_length in [
         11900,
-        7900,
+        # 7900,
         # 3900,
         # 1900,
             # 900,
@@ -125,12 +126,13 @@ if __name__ == "__main__":
                     noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=42)
                     background_text = noise_sampler_test.get_sample(args.context_length)  
                     disturb_tok_needles = [i for i in needle if i not in evidence]
+                    np.random.seed(42)
                     disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+                    print("disturb:",disturb_pos)
                 else:
                     background_text = None
                     disturb_tok_needles = [i for i in needle if i not in evidence]
                     disturb_pos = None
-
                 # combinations_number = 5
                 # all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                 # all_combinations = random.sample(all_combinations, combinations_number)
@@ -138,6 +140,7 @@ if __name__ == "__main__":
                 combinations_number = 100
                 all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                 all_combinations = random.sample(all_combinations, combinations_number)
+                # all_combinations = [(0, 2, 4, 6, 8), (1, 2, 3, 4, 5),(5, 6, 7, 8, 9)]
                 model = None
                 cnt = 0
                 with tqdm(total=len(all_combinations)) as pbar:
@@ -147,7 +150,7 @@ if __name__ == "__main__":
 
                         del model
                         torch.cuda.empty_cache()
-                        if cnt == 5: break
+                        if cnt == 3: break
                         # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
                         #                                              device_map='auto',
                         #                                              torch_dtype=torch.bfloat16,
@@ -241,6 +244,8 @@ if __name__ == "__main__":
                                     factor = args.factor)
                             pbar.update(1)
                             cnt += 1
+                            
+                            print("dep_p:",depth_percent)
                         except ZeroDivisionError as ze:
                             continue
 
@@ -255,8 +260,8 @@ if __name__ == "__main__":
 
             
             print("Start merge:")
-            file_dir =f"{model_name}_factor{args.factor}/{args.context_length}/{args.loss_type}/"
-            combine_pkl_files_to_one(file_dir)
+            file_dir =f"{args.save_dir}/{model_name}_factor{args.factor}/{args.context_length}/{args.loss_type}/"
+            # combine_pkl_files_to_one(file_dir)
 
         print("OVER:",context_length, loss_type)
 

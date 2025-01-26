@@ -1,4 +1,4 @@
-from acl2025.MyRLHF.reetrievalheaddetect.analysis.test_jbb_retain_gpu015 import begin_test
+from test_jbb_retain_gpu015 import begin_test
 import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from loguru import logger
@@ -59,13 +59,14 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, default=None, help='path to dataset')
     parser.add_argument('--save_dir', type=str, default=None, help='path to dataset')
     args = parser.parse_args()
-    args.model_path = "/data/hf_models/meta-llama-3.1-8b"
+    # args.model_path = "/data/hf_models/meta-llama-3.1-8b"
+    args.model_path = "/data/hf_models/Meta-Llama-3.1-8B-Instruct"
     args.adapter_path = ""#"/mnt/petrelfs/tangzecheng/local_ckpt/merge_v1/Llama-3.1-8B-Instruct/simpo/global_step325"
     args.dataset_path = "/data/pub_data/pg19-test"
     args.needle_path = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/haystack_for_detect/reasoning_needle_new.jsonl"
     # args.save_dir = "/data/zecheng/acl2025/MyRLHF/reetrievalheaddetect/analysis/information_flow_normal_max12k_sample200_gws"
-    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample200_gws"
-    args.selected_idx = list(range(0, 200))
+    args.save_dir ="/data/zecheng/acl2025/Long-form-reasoning/preliminary/babilong_random5x100/results/information_flow_normal_max12k_sample3x100_gws_control"
+    args.selected_idx = list(range(1, 200, 2))
 
     args.use_emoji = True
 
@@ -87,10 +88,10 @@ if __name__ == "__main__":
     
         # print("evidence:", pe)
 
-
+    random.seed(42)
     for context_length in [
         11900,
-        0,
+        # 0,
         # 7900,
         # 3900,
         # 1900,
@@ -123,7 +124,9 @@ if __name__ == "__main__":
                     noise_sampler_test = SentenceSampler(haystack, tokenizer=tokenizer, shuffle=False, random_seed=42)
                     background_text = noise_sampler_test.get_sample(args.context_length)  
                     disturb_tok_needles = [i for i in needle if i not in evidence]
+                    np.random.seed(42)
                     disturb_pos = np.random.choice(len(background_text)+1, len(disturb_tok_needles))
+                    print("disturb:",disturb_pos)
                 else:
                     background_text = None
                     disturb_tok_needles = [i for i in needle if i not in evidence]
@@ -136,6 +139,7 @@ if __name__ == "__main__":
                 combinations_number = 100
                 all_combinations = list(itertools.combinations(list(range(10)), len(evidence)))
                 all_combinations = random.sample(all_combinations, combinations_number)
+                # all_combinations = [(0, 2, 4, 6, 8), (1, 2, 3, 4, 5),(5, 6, 7, 8, 9)]
                 model = None
                 cnt = 0
                 with tqdm(total=len(all_combinations)) as pbar:
@@ -145,7 +149,7 @@ if __name__ == "__main__":
 
                         del model
                         torch.cuda.empty_cache()
-                        if cnt == 5: break
+                        if cnt == 3: break
                         # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
                         #                                              device_map='auto',
                         #                                              torch_dtype=torch.bfloat16,
@@ -238,6 +242,7 @@ if __name__ == "__main__":
                             begin_test(args, question, answer, s_id, model, tokenizer, depth_percent, background_text, disturb_pos,disturb_tok_needles, evidence, evidence_list, save_file_name, model_name, is_0k = (context_length == 0), use_emoji = args.use_emoji, with_adapter= True if args.adapter_path else False,                                   start_layer = 24)
                             pbar.update(1)
                             cnt += 1
+                            print("dep_p:",depth_percent)
                         except ZeroDivisionError as ze:
                             continue
 
@@ -249,5 +254,7 @@ if __name__ == "__main__":
                         print(f"args.loss_type: {args.loss_type}")
                         print(f"cnt: {cnt}")
                         print(f"s_id: {s_id}")
-
+            print("Start merge:")
+            file_dir =f"{args.save_dir}/{model_name}/{args.context_length}/{args.loss_type}/"
+            combine_pkl_files_to_one(file_dir)
         print("OVER:",context_length, loss_type)

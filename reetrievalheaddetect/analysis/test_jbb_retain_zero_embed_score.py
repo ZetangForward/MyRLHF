@@ -20,104 +20,6 @@ from transformers.modeling_outputs import (
     BaseModelOutputWithPast,
 )
 
-def hack_attn_llama(
-    self,
-    hidden_states: torch.Tensor,
-    attention_mask: Optional[torch.Tensor] = None,
-    position_ids: Optional[torch.LongTensor] = None,
-    past_key_value: Optional[Cache] = None,
-    output_attentions: bool = False,
-    use_cache: bool = False,
-    cache_position: Optional[torch.LongTensor] = None,
-    position_embeddings: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-    attention_adapter=None,
-    **kwargs,
-) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
-    bsz, q_len, _ = hidden_states.size()
-    if self.config.pretraining_tp > 1:
-        key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp
-        query_slices = self.q_proj.weight.split(
-            (self.num_heads * self.head_dim) // self.config.pretraining_tp, dim=0
-        )
-        key_slices = self.k_proj.weight.split(key_value_slicing, dim=0)
-        value_slices = self.v_proj.weight.split(key_value_slicing, dim=0)
-
-        query_states = [F.linear(hidden_states, query_slices[i]) for i in range(self.config.pretraining_tp)]
-        query_states = torch.cat(query_states, dim=-1)
-
-        key_states = [F.linear(hidden_states, key_slices[i]) for i in range(self.config.pretraining_tp)]
-        key_states = torch.cat(key_states, dim=-1)
-
-        value_states = [F.linear(hidden_states, value_slices[i]) for i in range(self.config.pretraining_tp)]
-        value_states = torch.cat(value_states, dim=-1)
-
-    else:
-        query_states = self.q_proj(hidden_states)
-        key_states = self.k_proj(hidden_states)
-        value_states = self.v_proj(hidden_states)
-
-    query_states = query_states.view(bsz, q_len, self.num_heads, self.head_dim).transpose(1, 2)
-    key_states = key_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-    value_states = value_states.view(bsz, q_len, self.num_key_value_heads, self.head_dim).transpose(1, 2)
-
-    if position_embeddings is None:
-        logger.warning_once(
-            "The attention layers in this model are transitioning from computing the RoPE embeddings internally "
-            "through `position_ids` (2D tensor with the indexes of the tokens), to using externally computed "
-            "`position_embeddings` (Tuple of tensors, containing cos and sin). In v4.46 `position_ids` will be "
-            "removed and `position_embeddings` will be mandatory."
-        )
-        cos, sin = self.rotary_emb(value_states, position_ids)
-    else:
-        cos, sin = position_embeddings
-    
-    query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin)
-
-    if past_key_value is not None:
-        # sin and cos are specific to RoPE models; cache_position needed for the static cache
-        cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
-        key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-
-    key_states = repeat_kv(key_states, self.num_key_value_groups)
-    value_states = repeat_kv(value_states, self.num_key_value_groups)
-    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-
-    if attention_mask is not None:  # no matter the length, we just slice it
-        causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
-        attn_weights = attn_weights + causal_mask
-
-    # upcast attention to fp32
-    # attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-    attn_weights = nn.functional.softmax(attn_weights, dim=-1).to(query_states.dtype) # FIXME: use bf16 to save memory
-
-
-    if attention_adapter is not None:  # pass attention weights to adapter
-        attn_weights = attention_adapter(attn_weights)
-
-    attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
-    attn_output = torch.matmul(attn_weights, value_states)
-
-    if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
-        raise ValueError(
-            f"`attn_output` should be of size {(bsz, self.num_heads, q_len, self.head_dim)}, but is"
-            f" {attn_output.size()}"
-        )
-
-    attn_output = attn_output.transpose(1, 2).contiguous()
-    attn_output = attn_output.reshape(bsz, q_len, -1)
-
-    if self.config.pretraining_tp > 1:
-        attn_output = attn_output.split(self.hidden_size // self.config.pretraining_tp, dim=2)
-        o_proj_slices = self.o_proj.weight.split(self.hidden_size // self.config.pretraining_tp, dim=1)
-        attn_output = sum([F.linear(attn_output[i], o_proj_slices[i]) for i in range(self.config.pretraining_tp)])
-    else:
-        attn_output = self.o_proj(attn_output)
-
-    if not output_attentions:
-        attn_weights = None
-
-    return attn_output, attn_weights, past_key_value
-
 
 def hack_forward_llama(
         self,
@@ -314,117 +216,6 @@ def manager_decoractor(manager):
 
 
 
-class AttentionerManagerBase:
-    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False):
-        self.model = model
-        self.model_name = model_name
-        self.with_adapter = with_adapter
-        self.attention_adapters = self.register_attentioner_to_model()
-        self.model.forward = manager_decoractor(self)(self.model.forward)
-
-    @property
-    def input_ids(self):
-        return self._input_ids
-
-    @input_ids.setter
-    def input_ids(self, input_ids):
-        self._input_ids = input_ids
-        for attention_adapter in self.attention_adapters:
-            if attention_adapter is None:continue
-            attention_adapter.register_input_ids(input_ids)
-
-    def register_input_ids(self, input_ids):
-        self.input_ids = input_ids
-
-    def register_attentioner_to_model(self):
-        raise NotImplementedError
-
-    def zero_grad(self,set_to_none=True):
-        
-        if set_to_none:
-            for attention_adapter in self.attention_adapters:
-                if attention_adapter is None:continue
-                attention_adapter.params = None
-        else:
-            for attention_adapter in self.attention_adapters:
-                if attention_adapter is None:continue
-                attention_adapter.zero_grad(set_to_none=True)
-
-    def grad_process(self, grad,use_abs = True):
-        assert len(grad.shape) == 4
-        grad = grad.sum(1)
-        if use_abs:
-            grad = abs(grad)
-        return grad
-
-    def grad(self,*args,**kwargs):
-        grads = []
-        for attention_adapter in self.attention_adapters:
-            if attention_adapter is None:continue
-            grads.append(self.grad_process(attention_adapter.grad,*args,**kwargs))
-        return grads
-    
-    def saliency(self,*args,**kwargs):
-        saliencies= []
-
-        for attention_adapter in self.attention_adapters:
-            if attention_adapter is None:continue
-            saliencies.append(self.grad_process(attention_adapter.saliency,*args,**kwargs))
-        return saliencies
-
-    def weight(self, *args, **kwargs):
-        weights = []
-        for attention_adapter in self.attention_adapters:
-            if attention_adapter is None:continue
-            weights.append(self.grad_process(attention_adapter.weight,*args,**kwargs))
-        return weights
-
-
-# class AttentionerManager(AttentionerManagerBase):
-#     def __init__(self, model: PreTrainedModel, attention_adapters: List[AttentionAdapterBase]):
-#         super().__init__(model, attention_adapters)
-
-#     def register_attentioner_to_model(self):
-#         for i, layer in enumerate(self.model.model.layers):
-#             # layer.config = self.model.config
-#             layer.self_attn.forward = partial(hack_attn, layer.self_attn, attention_adapter=self.attention_adapters[i])
-
-
-class AttentionerManager(AttentionerManagerBase):
-    def __init__(self, model: PreTrainedModel, model_name: str, with_adapter: bool = False, start_layer = 0):
-        self.start_layer = start_layer
-
-        super().__init__(model, model_name, with_adapter)
-        self.model_name = model_name
-        
-
-    def register_attentioner_to_model(self):
-        attention_adapters = []
-        if self.with_adapter:
-            layer_module = self.model.base_model.model.model.layers
-        else:
-            layer_module = self.model.model.layers
-        for i, layer in enumerate(layer_module):
-            if i< self.start_layer:
-                print("ignore layer:",i,"!")
-                attention_adapters.append(None)
-                continue
-            attention_adapter = AttentionAdapter()
-            if "llama" in self.model_name.lower() or "tulu" in self.model_name.lower():
-                layer.self_attn.forward = partial(hack_attn_llama, layer.self_attn, attention_adapter=attention_adapter)
-            # elif "qwen" in self.model_name.lower():
-            #     layer.self_attn.forward = partial(hack_attn_qwen, layer.self_attn, attention_adapter=attention_adapter)
-            # elif "phi" in self.model_name.lower():
-            #     layer.self_attn.forward = partial(hack_attn_phi, layer.self_attn, attention_adapter=attention_adapter)
-            # elif "mistral" in self.model_name.lower():
-            #     layer.self_attn.forward = partial(hack_attn_mistral, layer.self_attn, attention_adapter=attention_adapter)
-            else:
-                raise NotImplementedError(f"{self.model_name} not supported")
-            attention_adapters.append(attention_adapter)
-        return attention_adapters
-    
-
-
 class ZeroEmbedAdapter(nn.Module):
     def __init__(self, nonzero_poss, factor):
         super().__init__()
@@ -509,133 +300,6 @@ def cal_temp(saliency, target_poss, span_ids):
     return temp/(target_poss[1] - target_poss[0]), length
 
 
-def calculate_portions(saliency, evi_poss: List[Tuple[int, int]], attack_pos: List[Tuple[int, int]], emoji_pos: List[Tuple[int, int]], target_poss: Tuple[int, int], is_0k):
-    """
-    saliency: [batch_size, seq_len, seq_len] 倒数第二个位置对应prediction token
-
-    target_poss: [l, r)
-    """
-    print("is_0k:",is_0k)
-    saliency = saliency.float().detach().clone().cpu()
-    assert len(saliency.shape) == 2 or (len(saliency.shape) == 3 and saliency.shape[0] == 1)
-    if len(saliency.shape) == 3:
-        saliency = saliency.squeeze(0)
-        
-    saliency = saliency.numpy() #(seq_len, seq_len)
-    np.fill_diagonal(saliency, 0)
-    total_context_length = saliency.shape[1]
-
-    # zecheng_note: 查询信息流里面的Peak Tokens, 关键词Flow
-    # _, topk_indices = np_topk(saliency[target_poss, :], 20)
-    
-    _, topk_indices = multi_torch_topk(saliency, target_poss, 20)
-
-    # add: proportion-n: each evidence -> target token
-    evidence_proportions = []
-
-    
-    # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
-    proportion1 = 0
-    evidence_length = 0
-    for span_idx in evi_poss:
-        temp_proportion1 = 0
-        for target_pos in range(*target_poss):
-            temp_proportion1 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
-        proportion1 += temp_proportion1/(target_poss[1] - target_poss[0])
-        
-        # evidence proportions
-        evidence_length += span_idx[1] - span_idx[0]
-        temp_evidence_length = 0
-        for target_pos in range(*target_poss):
-            temp_evidence_length += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum() / (span_idx[1] - span_idx[0])
-        
-        evidence_proportions.append(temp_evidence_length/(target_poss[1] - target_poss[0]))
-
-    # proportion2: all context -> target token
-
-    temp_proportion2 = 0
-    for target_pos in range(*target_poss):
-        temp_proportion2 +=saliency[target_pos, :].sum()
-    proportion2 = temp_proportion2/(target_poss[1] - target_poss[0])
-
-    # proportion3: irrevelent evidence -> target token
-    proportion3 = 0
-    irr_evidence_length = 0
-    for span_idx in attack_pos:
-        temp_proportion3 = 0
-        for target_pos in range(*target_poss):
-            temp_proportion3 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
-
-        proportion3 += temp_proportion3/(target_poss[1] - target_poss[0])
-        
-        irr_evidence_length += span_idx[1] - span_idx[0]
-
-
-
-    # proportion4: remain context -> target token
-    proportion4 = proportion2 - proportion1 - proportion3
-
-    proportion5 = 0 #emoji context -> target token
-    emoji_length = 0
-    if emoji_pos:
-        for span_idx in emoji_pos:
-            temp_proportion5 = 0
-            for target_pos in range(*target_poss):
-                temp_proportion5 += saliency[target_pos, np.array(range(span_idx[0], span_idx[1]))].sum()
-            proportion5 += temp_proportion5 / (target_poss[1] - target_poss[0])
-            emoji_length += span_idx[1] -span_idx[0]
-
-    else:
-        emoji_length = 1
-
-    if is_0k:
-        proportion2 = (proportion1 + proportion3) /(evidence_length + irr_evidence_length)
-    else:
-        proportion2 = proportion2 / total_context_length
-
-    proportion1 = proportion1 / evidence_length# if evidence_length != 0 else 0  # zecheng note: evidence 长度可能会为0
-
-    
-    proportion3 = proportion3 / irr_evidence_length# if irr_evidence_length != 0 else 0 # zecheng note: irr_evidence_length 长度可能会为0
-    
-    proportion5 = proportion5 / emoji_length
-    if is_0k:
-        proportion4 = 0.
-    else:
-        proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
-
-    
-
-    return proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices
-
-    # proportion1: evidence -> target token (zecheng_note: 需要被查询的位置放前面)
-    proportion1 = 0
-    evidence_length = 0
-    for span_idx in evi_poss:
-        proportion1 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
-        evidence_length += span_idx[1] - span_idx[0]
-        # evidence proportions
-        evidence_proportions.append(saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum() / (span_idx[1] - span_idx[0]))
-
-    # proportion2: all context -> target token
-    proportion2 = saliency[target_poss, :].sum()
-
-    # proportion3: irrevelent evidence -> target token
-    proportion3 = 0
-    irr_evidence_length = 0
-    for span_idx in attack_pos:
-        proportion3 += saliency[target_poss, np.array(range(span_idx[0], span_idx[1]))].sum()
-        irr_evidence_length += span_idx[1] - span_idx[0]
-
-    # proportion4: remain context -> target token
-    proportion4 = proportion2 - proportion1 - proportion3
-
-    proportion1 = proportion1 / evidence_length
-    proportion2 = proportion2 / total_context_length
-    proportion3 = proportion3 / irr_evidence_length
-    proportion4 = proportion4 / (total_context_length - evidence_length - irr_evidence_length)
-
-    return proportion1, proportion2, proportion3, proportion4, evidence_proportions, topk_indices
     
 
 def get_proportion_wla(saliency, class_poss, final_poss):
@@ -701,38 +365,9 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     loss.backward()
 
 
-    attentionermanger = AttentionerManager(model, model_name, with_adapter=with_adapter, start_layer = start_layer)
-    attentionermanger.zero_grad()
-
-    output = model(input)
-    # print("input_golden_size:", input.size(),golden.size())
-    if input.size(-1) == golden.size(-1):
-        logits = output['logits'][:, :-1, :]
-        labels = golden[:, 1:]
-    else:
-        logits = output['logits'][:, -1, :]
-        labels = golden[:, -1]
-    # print("logits_shape:",logits.shape, labels)
-    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
-    loss.backward()
-
-    pros_dict = dict()
-
+    return model
     
-    for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
-        pros_dict[i] = {}        
-    
-    for score_type in ["grad","weight","saliency"]:
-        saliencies = getattr(attentionermanger, score_type)(use_abs=True)
-        for i in trange(attentionermanger.start_layer, len(attentionermanger.attention_adapters)):
-            saliency = saliencies[i-attentionermanger.start_layer]        
-            proportion1, proportion2, proportion3, proportion4, proportion5, evidence_proportions, topk_indices = calculate_portions(saliency, search_pos, attack_pos, emoji_pos, target_poss, is_0k)
-            top_tokens = []
-            for idx in topk_indices:
-                top_tokens.append(tokenizer.decode(input[0][idx].item()))
 
-            pros_dict[i][score_type] = {'score': [proportion1, proportion2, proportion3, proportion4, proportion5], 'topk_tokens': top_tokens, 'evidence_proportions': evidence_proportions}
-    return pros_dict
 
 def random_combine(ref:list, att:list, return_snd_pos = False, seed = None):
     if seed is not None:
@@ -827,13 +462,6 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
     emoji_spans = [(k[0] + shift, k[1] + shift) for k in emoji_spans]
 
     
-    # if use_emoji:
-    #     print("emoji:")
-
-    #     for emoji_span, emj in zip(emoji_spans,emojis10):
-    #         print("O:",tokenizer.decode(emj),emj)
-    #         print("N:",tokenizer.decode(inp[0,emoji_span[0]:emoji_span[1]].tolist()),inp[0,emoji_span[0]:emoji_span[1]].tolist())
-    #         print()
 
     search_pos = find_multi_needle_idx(inp[0], tokenizer, evidence_list[selected_idx])
     attack_pos = find_multi_needle_idx(inp[0], tokenizer, disturb_tok_needles)
@@ -875,7 +503,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        flow_res = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
+        model = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
                                                      emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
@@ -884,19 +512,16 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
                                                       start_layer = start_layer,
                                                       factor = factor)
     
-    elif args.loss_type == "ce":
-         # shift to left before the label token
-        flow_res = test_model_with_attention_adapter(model, inp, inp, search_pos, attack_pos, 
-                                                     emoji_spans,
-                                                     (target_pos[0] - 1,
-                                                      target_pos[1] - 1), 
-                                                      is_0k,
-                                                      model_name, tokenizer, with_adapter=with_adapter,
-                                                      start_layer = start_layer,
-                                                      factor = factor)
+    with torch.no_grad():
+        pred_res_z = tokenizer.decode(model.generate(inp, max_new_tokens=32, do_sample=False)[0, inp.size(-1):])
+        logger.info(pred_res_z)
+        
+    flow_res = {}
+    
 
     flow_res["pred_res"] = pred_res
-    flow_res["score"] = 100 if answer.lower() in pred_res.lower() else 0
+    flow_res["pred_res"] = pred_res_z
+    flow_res["score"] = 100 if answer.lower() in pred_res_z.lower() else 0
 
     logger.info(flow_res)
     auto_save_data(flow_res, f"{args.save_dir}/{save_file_name}.pkl")
