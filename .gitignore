@@ -9,6 +9,7 @@ reetrievalheaddetect/results/
 sbatch_logs/
 openrlhf/wandb/
 *.err
+back/
 
 # C extensions
 *.so
@@ -26,6 +27,8 @@ eggs/
 lib/
 lib64/
 parts/
+*.json
+*.csv
 sdist/
 var/
 wheels/

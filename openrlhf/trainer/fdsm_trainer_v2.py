@@ -7,7 +7,7 @@ from flash_attn.utils.distributed import all_gather
 from torch.optim import Optimizer
 from torch.nn import functional as F
 from tqdm import tqdm
-from openrlhf.models import GPTLMLoss, SimPOLoss
+from openrlhf.models import GPTLMLoss
 from openrlhf.utils.distributed_sampler import DistributedSampler
 
 
@@ -43,7 +43,10 @@ class FDSMTrainerV2(ABC):
         max_epochs: int = 2,
         tokenizer=None,
         adv_epsilon: float = 0.1,
+        opposite: bool = False,
+        loss_weight: float = 1.0, 
         w_annotation: bool = False,
+        perturb_type: str = None
     ) -> None:
         super().__init__()
         self.strategy = strategy
@@ -60,7 +63,9 @@ class FDSMTrainerV2(ABC):
         self.args = strategy.args
         self.adv_epsilon = adv_epsilon
         self.w_annotation = w_annotation
-        self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group)
+        self.perturb_type = perturb_type
+        self.opposite = opposite
+        self.loss_fn = GPTLMLoss(ring_attn_group=self.strategy.ring_attn_group, loss_weight=loss_weight)
 
         # packing samples
         self.packing_samples = strategy.args.packing_samples
@@ -124,7 +129,7 @@ class FDSMTrainerV2(ABC):
         return adjusted_sequence
 
 
-    def perturb_whole_sequence(self, sequence, epsilon):
+    def perturb_ipt_embedding(self, sequence, epsilon=None, return_pos=False, opposite=False):
         """ 
         Perturb the entire sequence based on the gradient of the sequence.
 
@@ -153,13 +158,15 @@ class FDSMTrainerV2(ABC):
 
         # Calculate the L2 norm of the gradient for each position in the sequence
         grad_l2_norm = torch.norm(sequence.grad, p=2, dim=2)  # (b, l)
-        sigma = epsilon / (1 + grad_l2_norm)  # (b, l)
         avg_grad_l2_norm = grad_l2_norm.mean(dim=-1, keepdim=True)  # (b, 1)
         
         # Create a mask indicating whether each position's gradient is larger than the average
         is_large_gradient = grad_l2_norm > avg_grad_l2_norm  # (b, l)
-        # grad_sign = sequence.grad.sign()  # (b, l, d)
         
+        if return_pos:
+            return sequence, is_large_gradient
+        
+        sigma = epsilon / (1 + grad_l2_norm)  # (b, l)
         # Generate Gaussian noise with the same shape as the sequence
         # noise = torch.randn_like(sequence, device=sequence.device)  # (b, l, d)
         # noise = noise * grad_sign  # (b, l, d)
@@ -167,7 +174,10 @@ class FDSMTrainerV2(ABC):
         # Apply perturbation in the direction based on gradient size
         # For large gradients, perturb in the opposite direction
         # For small or equal gradients, perturb in the same direction
-        perturbation = -sigma.unsqueeze(-1) * sequence.grad * is_large_gradient.unsqueeze(-1)
+        if opposite:
+            perturbation = -sigma.unsqueeze(-1) * sequence.grad * ~is_large_gradient.unsqueeze(-1)
+        else:
+            perturbation = -sigma.unsqueeze(-1) * sequence.grad * is_large_gradient.unsqueeze(-1)
         # perturbation = torch.where(
         #     is_large_gradient.unsqueeze(-1),  # (b, l, 1)
         #     -sigma.unsqueeze(-1) * sequence.grad,    # Opposite direction for large gradients
@@ -175,7 +185,7 @@ class FDSMTrainerV2(ABC):
         #     # sigma.unsqueeze(-1) * sequence.grad      # Same direction for small gradients
         # )
 
-        return sequence + perturbation
+        return sequence + perturbation, None
 
     def fit(self, args, consumed_samples=0, num_update_steps_per_epoch=None):
         # get eval and save steps
@@ -231,6 +241,7 @@ class FDSMTrainerV2(ABC):
                     embedding_layer = self.model.model.base_model.model.get_input_embeddings()
                 else:
                     embedding_layer = self.model.model.get_input_embeddings()
+
                 embeddings = embedding_layer(inputs)
                 embeddings.requires_grad = True
                 
@@ -251,11 +262,12 @@ class FDSMTrainerV2(ABC):
                 if self.args.lora_rank != 0:
                     self.model.model.base_model.enable_adapter_layers()
 
-                if self.w_annotation:
+                if False:  # FIXME: we do not take this into consideration
                     adv_embeddings = self.adjust_weights_by_gradient(embeddings, self.adv_epsilon)                    
-                else:
-                    adv_embeddings = self.perturb_whole_sequence(embeddings, self.adv_epsilon)
-
+                elif self.perturb_type == "embedding":
+                    adv_embeddings, perturb_pos = self.perturb_ipt_embedding(embeddings, self.adv_epsilon, return_pos=False, opposite=self.opposite)
+                elif self.perturb_type == "loss":
+                    adv_embeddings, perturb_pos = self.perturb_ipt_embedding(embeddings, return_pos=True)
                 # detach from the original gradient graph
                 adv_embeddings = adv_embeddings.detach().requires_grad_(True)
 
@@ -270,7 +282,7 @@ class FDSMTrainerV2(ABC):
                     packed_seq_lens=infos["input_length"],
                 )
 
-                gpt_loss = self.loss_fn(output.logits, labels)
+                gpt_loss = self.loss_fn(output.logits, labels, perturb_pos)
                 self.strategy.backward(gpt_loss, self.model, self.optimizer)
                 self.strategy.optimizer_step(self.optimizer, self.model, self.scheduler)
                 loss_mean = loss_mean * 0.9 + 0.1 * gpt_loss.item()

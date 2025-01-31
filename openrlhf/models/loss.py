@@ -13,34 +13,49 @@ class GPTLMLoss(nn.Module):
     GPT Language Model Loss
     """
 
-    def __init__(self, ring_attn_group=None):
+    def __init__(self, ring_attn_group=None, loss_weight=1.0):
         super().__init__()
         self.IGNORE_INDEX = -100
         self.loss = nn.CrossEntropyLoss(ignore_index=self.IGNORE_INDEX)
-
+        self.loss_weight = loss_weight
         self.ring_attn_group = ring_attn_group
         if self.ring_attn_group:
             self.ring_attn_rank = dist.get_rank(self.ring_attn_group)
             self.ring_attn_world_size = dist.get_world_size(self.ring_attn_group)
 
-    def forward(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def forward(self, logits: torch.Tensor, labels: torch.Tensor, perturb_pos = None) -> torch.Tensor:
         # RingAttention
+        if perturb_pos is not None:
+            perturb_pos = perturb_pos * self.loss_weight
+            perturb_pos = torch.where(perturb_pos!=0, perturb_pos, 1)
+        else: 
+            perturb_pos = torch.ones_like(labels, device=labels.device)
+        
         if self.ring_attn_group is not None:
             total_seq_len = labels.size(-1)
             seq_len_per_process = total_seq_len // self.ring_attn_world_size
             start_idx = self.ring_attn_rank * seq_len_per_process
             end_idx = min(start_idx + seq_len_per_process, total_seq_len)
             labels = labels[..., start_idx:end_idx]
+            sub_perturb_pos = perturb_pos[..., start_idx:end_idx]
 
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
+            shift_perturb_pos = sub_perturb_pos[..., 1:].contiguous()
 
             # if labels are all IGNORE_INDEX, then nn.CrossEntropyLoss will be nan
             if torch.all(shift_labels == self.IGNORE_INDEX):
                 # Use mean of logits multiplied by 0 to maintain gradient flow
                 loss = shift_logits.mean() * 0
             else:
-                loss = self.loss(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+                # Compute log softmax
+                log_probs = F.log_softmax(shift_logits, dim=-1)
+                # Gather the log probabilities of the true labels
+                nll_loss = -log_probs.gather(dim=-1, index=shift_labels.unsqueeze(-1)).squeeze(-1)
+                # Apply the weights from perturb_pos
+                weighted_loss = nll_loss * shift_perturb_pos
+                # Compute the mean loss
+                loss = weighted_loss.mean()
 
             dist.all_reduce(loss, op=dist.ReduceOp.SUM, group=self.ring_attn_group)
             loss = loss / self.ring_attn_world_size

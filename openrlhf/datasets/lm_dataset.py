@@ -200,4 +200,4 @@ class LanguageModelingDataset(Dataset):
             packed_input_ids = F.pad(packed_input_ids, (0, padding_len), value=self.tokenizer.pad_token_id)
             packed_attention_masks = F.pad(packed_attention_masks, (0, padding_len), value=0)
 
-        return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos
+        return prompt_ids_lens, packed_input_ids, packed_attention_masks, infos, None, None, None

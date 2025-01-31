@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import datasets
 from functools import wraps, partial
 from transformers.cache_utils import Cache, DynamicCache
-from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv
+from transformers.models.llama.modeling_llama import apply_rotary_pos_emb, repeat_kv, LlamaModel
 import numpy as np
 from transformers import PreTrainedModel
 import itertools
@@ -245,7 +245,8 @@ class ZeroEmbedAdapter(nn.Module):
         # print(fac_poss.flatten().tolist().count(1.0))
         self.zero_grad()
 
-        return input_embeds - fac_poss
+        self.grad_input_embeds = input_embeds - fac_poss
+        return self.grad_input_embeds
 
     def zero_grad(self):
         self.inputs_embeds.grad.zero_()
@@ -260,6 +261,8 @@ class ZeroEmbedManager:
         self.model_name = model_name
         # self.attention_adapters = self.register_attentioner_to_model()
         self.zeroembed_adapter = ZeroEmbedAdapter(nonzero_poss, factor)
+
+        self.model_origin_forward = self.model.model.forward
 
         self.model.model.forward = partial(hack_forward_llama, 
                                            self.model.model, 
@@ -364,8 +367,9 @@ def test_model_with_attention_adapter(model, input, golden, search_pos, attack_p
     loss = F.cross_entropy(logits.view(-1, logits.size(-1)), labels.view(-1))
     loss.backward()
 
+    output = model(input)
 
-    return model
+    return model, zeroembed_manager.zeroembed_adapter.grad_input_embeds, zeroembed_manager.model_origin_forward
     
 
 
@@ -503,7 +507,7 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
         for sub_pos in range(*target_pos):
             label[0, sub_pos] = inp[0, sub_pos]
 
-        model = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
+        model, input_embeds, origin_forward = test_model_with_attention_adapter(model, inp, label, search_pos, attack_pos, 
                                                      emoji_spans,
                                                      (target_pos[0] - 1,
                                                       target_pos[1] - 1), 
@@ -512,15 +516,33 @@ def begin_test(args, question, answer, selected_idx, model, tokenizer, depth_per
                                                       start_layer = start_layer,
                                                       factor = factor)
     
+    print("NEW@!")
+    # input_embeds = input_embeds.cpu()
+    # del model
+    # torch.cuda.empty_cache()
     with torch.no_grad():
-        pred_res_z = tokenizer.decode(model.generate(inp, max_new_tokens=32, do_sample=False)[0, inp.size(-1):])
+        # model = AutoModelForCausalLM.from_pretrained(args.model_path, 
+        #                                                                 attn_implementation = "flash_attention_2"
+        #                                                                 ).half().eval()
+        model.model.forward = origin_forward
+        print("valid:", inp.shape, input_embeds.shape)
+        output = model.eval().generate(inputs_embeds = input_embeds.to(model.device),
+                                                    #  max_length=32, 
+                                                     max_new_tokens=32, 
+                                                    do_sample=False,
+                                                    pad_token_id = tokenizer.eos_token_id,
+                                                     )
+        # print("output:",output)
+        pred_res_z = tokenizer.decode(output[0, :])
+        # pred_res_z = "none"
+        logger.info("pred:")
         logger.info(pred_res_z)
-        
     flow_res = {}
     
 
-    flow_res["pred_res"] = pred_res
-    flow_res["pred_res"] = pred_res_z
+    flow_res["pred_res_origin"] = pred_res.lower()
+    flow_res["pred_res"] = pred_res_z.lower()
+    flow_res["answer"] = answer.lower() 
     flow_res["score"] = 100 if answer.lower() in pred_res_z.lower() else 0
 
     logger.info(flow_res)

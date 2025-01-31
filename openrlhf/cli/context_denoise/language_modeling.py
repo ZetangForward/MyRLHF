@@ -1,7 +1,7 @@
 import argparse
 import math
 import os
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from datetime import datetime
 from transformers.trainer import get_scheduler
 from openrlhf.datasets.lm_dataset import LanguageModelingDataset
@@ -19,6 +19,7 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # configure datasets
+    # dataset = load_from_disk(args.dataset)
     dataset = load_dataset(args.dataset, trust_remote_code=True)
     train_data, eval_data = dataset['train'], dataset['validation']
 
@@ -132,6 +133,9 @@ def train(args):
         max_epochs=args.max_epochs,
         tokenizer=tokenizer,
         adv_epsilon=args.adv_epsilon,
+        perturb_type=args.perturb_type, 
+        loss_weight=args.loss_weight,
+        opposite=args.opposite
     )
 
     trainer.fit(args, consumed_samples, num_update_steps_per_epoch)
@@ -170,6 +174,9 @@ if __name__ == "__main__":
     parser.add_argument("--disable_fast_tokenizer", action="store_true", default=False)
 
     # SFT & FSDM
+    parser.add_argument("--opposite", action='store_true')
+    parser.add_argument("--perturb_type", type=str, default="loss")
+    parser.add_argument("--loss_weight", type=float, default=1.0)
     parser.add_argument("--max_epochs", type=int, default=2)
     parser.add_argument("--aux_loss_coef", type=float, default=0, help="MoE balancing loss")
     parser.add_argument("--pretrain", type=str, default=None)

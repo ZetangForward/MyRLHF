@@ -1,7 +1,7 @@
 import argparse
 import math
 import os
-from datasets import load_dataset, concatenate_datasets
+from datasets import load_dataset, load_from_disk
 from datetime import datetime
 from transformers.trainer import get_scheduler
 from openrlhf.datasets.lm_dataset import LanguageModelingDataset
@@ -19,9 +19,10 @@ def train(args):
     tokenizer = get_tokenizer(args.pretrain, None, "right", strategy, use_fast=not args.disable_fast_tokenizer)
 
     # configure datasets
-    dataset = load_dataset(args.dataset, trust_remote_code=True)
+    dataset = load_from_disk(args.dataset, trust_remote_code=True)
     train_data, eval_data = dataset['train'], dataset['validation']
 
+    
     train_dataset = LanguageModelingDataset(
         train_data,
         tokenizer,
@@ -173,6 +174,8 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=5e-6)
     parser.add_argument("--lr_warmup_ratio", type=float, default=0.03)
     parser.add_argument("--pretrain_mode", action="store_true", default=False, help="Use pretrain loss")
+    parser.add_argument("--perturb_type", type=str, default="loss")
+    parser.add_argument("--loss_weight", type=float, default=1.0)
     parser.add_argument("--lr_scheduler", type=str, default="cosine_with_min_lr")
     parser.add_argument("--l2", type=float, default=0, help="weight decay loss")
     parser.add_argument("--adam_betas", type=float, nargs=2, default=(0.9, 0.95), help="Betas for Adam optimizer")
